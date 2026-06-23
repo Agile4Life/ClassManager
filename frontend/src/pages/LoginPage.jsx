@@ -8,8 +8,8 @@ export default function LoginPage() {
   const { user, login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [username, setUsername] = useState('admin');
-  const [password, setPassword] = useState('Admin@123');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
@@ -58,7 +58,6 @@ export default function LoginPage() {
           <Button appearance="primary" size="large" type="submit" disabled={submitting || !username || !password}>
             {submitting ? 'Đang đăng nhập...' : 'Vào ClassManager'}
           </Button>
-          <p className="login-form__hint">Tài khoản mẫu đã được điền để bạn xem nhanh giao diện.</p>
         </form>
       </section>
     </main>
