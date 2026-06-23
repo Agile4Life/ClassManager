@@ -15,18 +15,24 @@ const academicRoutes = require('./routes/academic.routes');
 const reportRoutes = require('./routes/report.routes');
 const financeRoutes = require('./routes/finance.routes');
 const { notFound, errorHandler } = require('./middlewares/error.middleware');
+const { parseOrigins, isOriginAllowed } = require('./utils/cors');
 
 const app = express();
-const configuredOrigins = (process.env.CORS_ORIGIN || '*').split(',').map((origin) => origin.trim());
+const configuredOrigins = parseOrigins(process.env.CORS_ORIGIN);
 
 app.disable('x-powered-by');
-app.use(cors({
-  origin(origin, callback) {
-    if (!origin || configuredOrigins.includes('*') || configuredOrigins.includes(origin)) return callback(null, true);
-    return callback(new Error('Origin is not allowed by CORS'));
+app.use(cors((req, callback) => callback(null, {
+  origin(origin, originCallback) {
+    if (isOriginAllowed({
+      req,
+      origin,
+      configuredOrigins,
+      nodeEnv: process.env.NODE_ENV,
+    })) return originCallback(null, true);
+    return originCallback(new Error('Origin is not allowed by CORS'));
   },
   credentials: true,
-}));
+})));
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: false }));
 

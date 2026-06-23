@@ -38,7 +38,7 @@ npm start
 
 When `NODE_ENV=production`, Express serves `frontend/dist` and keeps all API routes under `/api`.
 
-For local PostgreSQL without TLS, set `DATABASE_SSL=false`. `CORS_ORIGIN` accepts a comma-separated allowlist.
+For local PostgreSQL without TLS, set `DATABASE_SSL=false`. `CORS_ORIGIN` accepts a comma-separated allowlist for cross-origin clients. Same-origin requests are accepted automatically; development also accepts loopback origins on any port.
 
 ## API conventions
 

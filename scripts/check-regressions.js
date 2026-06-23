@@ -1,6 +1,7 @@
 const assert = require('assert');
 const { buildInsert, buildUpdate } = require('../src/utils/query');
 const { timeToMinutes, isIsoDate, getPagination } = require('../src/utils/validation');
+const { parseOrigins, isOriginAllowed } = require('../src/utils/cors');
 
 const insert = buildInsert('students', { student_code: 'S100', full_name: 'Test Student' });
 assert.strictEqual(
@@ -26,5 +27,47 @@ assert.strictEqual(isIsoDate('2026-06-23'), true);
 assert.strictEqual(isIsoDate('2026-02-30'), false);
 assert.deepStrictEqual(getPagination({ page: '2', limit: '10' }), { page: 2, limit: 10, offset: 10 });
 assert.throws(() => getPagination({ page: '0' }), /page must be a positive integer/);
+
+const requestFrom = (host, forwardedHost, protocol = 'https', forwardedProtocol) => ({
+  protocol,
+  get(header) {
+    if (header === 'host') return host;
+    if (header === 'x-forwarded-host') return forwardedHost;
+    if (header === 'x-forwarded-proto') return forwardedProtocol;
+    return undefined;
+  },
+});
+const configuredOrigins = parseOrigins('https://admin.example.com, https://staff.example.com');
+assert.deepStrictEqual(configuredOrigins, ['https://admin.example.com', 'https://staff.example.com']);
+assert.strictEqual(isOriginAllowed({
+  req: requestFrom('api.example.com'),
+  origin: 'https://admin.example.com',
+  configuredOrigins,
+  nodeEnv: 'production',
+}), true);
+assert.strictEqual(isOriginAllowed({
+  req: requestFrom('class-manager.vercel.app'),
+  origin: 'https://class-manager.vercel.app',
+  configuredOrigins,
+  nodeEnv: 'production',
+}), true);
+assert.strictEqual(isOriginAllowed({
+  req: requestFrom('internal-host', 'class-manager.vercel.app', 'http', 'https'),
+  origin: 'https://class-manager.vercel.app',
+  configuredOrigins,
+  nodeEnv: 'production',
+}), true);
+assert.strictEqual(isOriginAllowed({
+  req: requestFrom('localhost:3005', undefined, 'http'),
+  origin: 'http://127.0.0.1:5174',
+  configuredOrigins,
+  nodeEnv: 'development',
+}), true);
+assert.strictEqual(isOriginAllowed({
+  req: requestFrom('api.example.com'),
+  origin: 'https://evil.example.com',
+  configuredOrigins,
+  nodeEnv: 'production',
+}), false);
 
 console.log('Regression checks passed.');
