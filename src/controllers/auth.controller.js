@@ -1,0 +1,135 @@
+const crypto = require('crypto');
+const pool = require('../config/db');
+const asyncHandler = require('../utils/async-handler');
+const { AppError } = require('../utils/errors');
+const { signAccessToken } = require('../utils/jwt');
+const { success } = require('../utils/response');
+
+function requestMeta(req) {
+  return { ip: req.ip || null, userAgent: req.get('user-agent') || null };
+}
+
+const login = asyncHandler(async (req, res) => {
+  const { username, password } = req.body;
+  if (!username || !password) throw new AppError(400, 'username and password are required');
+
+  const { ip, userAgent } = requestMeta(req);
+  const userResult = await pool.query(
+    `select user_id, username, full_name, email, phone, role, status,
+            teacher_id, student_id, parent_id
+     from user_accounts
+     where username = $1 and password_hash = crypt($2, password_hash) and status = 'active'`,
+    [username, password],
+  );
+
+  if (!userResult.rowCount) {
+    const account = await pool.query('select user_id from user_accounts where username = $1', [username]);
+    await pool.query(
+      `insert into login_logs (user_id, username_input, success, failure_reason, ip_address, user_agent)
+       values ($1, $2, false, $3, $4, $5)`,
+      [account.rows[0]?.user_id || null, username, 'Invalid credentials or inactive account', ip, userAgent],
+    );
+    throw new AppError(401, 'Invalid username or password');
+  }
+
+  const user = userResult.rows[0];
+  const days = Math.max(Number(process.env.REFRESH_TOKEN_EXPIRES_DAYS) || 7, 1);
+  const client = await pool.connect();
+  try {
+    await client.query('begin');
+    const sessionResult = await client.query(
+      `insert into user_sessions (user_id, ip_address, user_agent, expires_at)
+       values ($1, $2, $3, now() + ($4 * interval '1 day')) returning session_id`,
+      [user.user_id, ip, userAgent, days],
+    );
+    const sessionId = sessionResult.rows[0].session_id;
+    const token = signAccessToken(user, sessionId);
+    await client.query(
+      `update user_sessions set refresh_token_hash = encode(digest($1, 'sha256'), 'hex') where session_id = $2`,
+      [token, sessionId],
+    );
+    await client.query('update user_accounts set last_login_at = now(), updated_at = now() where user_id = $1', [user.user_id]);
+    await client.query(
+      `insert into login_logs (user_id, username_input, success, ip_address, user_agent)
+       values ($1, $2, true, $3, $4)`,
+      [user.user_id, username, ip, userAgent],
+    );
+    await client.query('commit');
+    return success(res, { token, user }, 'Login successful');
+  } catch (error) {
+    await client.query('rollback');
+    throw error;
+  } finally {
+    client.release();
+  }
+});
+
+const logout = asyncHandler(async (req, res) => {
+  await pool.query(
+    `update user_sessions set is_revoked = true, logout_at = now()
+     where session_id = $1 and user_id = $2 and is_revoked = false`,
+    [req.user.session_id, req.user.user_id],
+  );
+  return success(res, null, 'Logout successful');
+});
+
+const me = asyncHandler(async (req, res) => success(res, req.user, 'Profile fetched successfully'));
+
+const forgotPassword = asyncHandler(async (req, res) => {
+  const identifier = req.body.email || req.body.username;
+  if (!identifier) throw new AppError(400, 'email or username is required');
+  const result = await pool.query(
+    `select user_id from user_accounts where (email = $1 or username = $1) and status = 'active'`,
+    [identifier],
+  );
+  let resetToken;
+  if (result.rowCount) {
+    resetToken = crypto.randomBytes(32).toString('hex');
+    await pool.query(
+      `insert into password_reset_tokens (user_id, token_hash, expires_at)
+       values ($1, encode(digest($2, 'sha256'), 'hex'), now() + interval '30 minutes')`,
+      [result.rows[0].user_id, resetToken],
+    );
+  }
+  const exposeToken = process.env.NODE_ENV !== 'production' && process.env.EXPOSE_RESET_TOKEN === 'true';
+  const data = exposeToken ? { reset_token: resetToken || null } : null;
+  return success(res, data, 'If the account exists, password reset instructions have been created');
+});
+
+const resetPassword = asyncHandler(async (req, res) => {
+  const { token, new_password: newPassword } = req.body;
+  if (!token || !newPassword) throw new AppError(400, 'token and new_password are required');
+  if (newPassword.length < 8) throw new AppError(400, 'new_password must contain at least 8 characters');
+
+  const client = await pool.connect();
+  try {
+    await client.query('begin');
+    const tokenResult = await client.query(
+      `select reset_token_id, user_id from password_reset_tokens
+       where token_hash = encode(digest($1, 'sha256'), 'hex')
+         and used_at is null and expires_at > now() for update`,
+      [token],
+    );
+    if (!tokenResult.rowCount) throw new AppError(400, 'Reset token is invalid or expired');
+    const row = tokenResult.rows[0];
+    await client.query(
+      `update user_accounts set password_hash = crypt($1, gen_salt('bf')), updated_at = now() where user_id = $2`,
+      [newPassword, row.user_id],
+    );
+    await client.query('update password_reset_tokens set used_at = now() where reset_token_id = $1', [row.reset_token_id]);
+    await client.query(
+      `update user_sessions set is_revoked = true, logout_at = now()
+       where user_id = $1 and is_revoked = false`,
+      [row.user_id],
+    );
+    await client.query('commit');
+    return success(res, null, 'Password reset successful');
+  } catch (error) {
+    await client.query('rollback');
+    throw error;
+  } finally {
+    client.release();
+  }
+});
+
+module.exports = { login, logout, me, forgotPassword, resetPassword };

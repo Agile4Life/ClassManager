@@ -1,0 +1,101 @@
+const express = require('express');
+const createCrudController = require('../controllers/crud.controller');
+const requireAuth = require('../middlewares/auth.middleware');
+const requireRole = require('../middlewares/role.middleware');
+const { AppError } = require('../utils/errors');
+
+const managers = ['admin', 'staff'];
+
+function validateClass(body) {
+  if (body.max_students !== undefined
+      && (!Number.isInteger(Number(body.max_students)) || Number(body.max_students) <= 0)) {
+    throw new AppError(400, 'max_students must be a positive integer');
+  }
+  if (body.tuition_fee !== undefined
+      && (!Number.isFinite(Number(body.tuition_fee)) || Number(body.tuition_fee) < 0)) {
+    throw new AppError(400, 'tuition_fee must be a non-negative number');
+  }
+}
+
+function scopeStudents(req, values, conditions) {
+  if (req.user.role === 'teacher') {
+    values.push(req.user.teacher_id);
+    conditions.push(`student_id in (
+      select e.student_id from enrollments e join classes c on c.class_id = e.class_id
+      where c.teacher_id = $${values.length}
+    )`);
+  }
+}
+
+function scopeClasses(req, values, conditions) {
+  if (req.user.role === 'teacher') {
+    values.push(req.user.teacher_id);
+    conditions.push(`teacher_id = $${values.length}`);
+  } else if (req.user.role === 'student') {
+    values.push(req.user.student_id);
+    conditions.push(`class_id in (select class_id from enrollments where student_id = $${values.length})`);
+  } else if (req.user.role === 'parent') {
+    values.push(req.user.parent_id);
+    conditions.push(`class_id in (
+      select e.class_id from enrollments e join student_parents sp on sp.student_id = e.student_id
+      where sp.parent_id = $${values.length}
+    )`);
+  }
+}
+
+const resources = {
+  students: {
+    table: 'students', primaryKey: 'student_id',
+    columns: ['student_code', 'full_name', 'date_of_birth', 'gender', 'phone', 'email', 'address', 'school_name', 'grade_level', 'status', 'note'],
+    required: ['student_code', 'full_name'], searchColumns: ['student_code', 'full_name', 'phone', 'email'], filterColumns: ['status', 'grade_level'],
+    readRoles: ['admin', 'staff', 'teacher'], writeRoles: managers,
+    scope: scopeStudents,
+  },
+  parents: {
+    table: 'parents', primaryKey: 'parent_id',
+    columns: ['full_name', 'phone', 'email', 'address', 'occupation'],
+    required: ['full_name', 'phone'], searchColumns: ['full_name', 'phone', 'email'],
+    readRoles: managers, writeRoles: managers,
+  },
+  teachers: {
+    table: 'teachers', primaryKey: 'teacher_id',
+    columns: ['teacher_code', 'full_name', 'phone', 'email', 'address', 'specialization', 'hourly_rate', 'status', 'note'],
+    required: ['teacher_code', 'full_name'], searchColumns: ['teacher_code', 'full_name', 'email'], filterColumns: ['status'],
+    readRoles: ['admin', 'staff', 'teacher', 'student', 'parent'], writeRoles: managers,
+  },
+  subjects: {
+    table: 'subjects', primaryKey: 'subject_id',
+    columns: ['subject_code', 'subject_name', 'description', 'status'],
+    required: ['subject_code', 'subject_name'], searchColumns: ['subject_code', 'subject_name'], filterColumns: ['status'],
+    readRoles: ['admin', 'staff', 'teacher', 'student', 'parent'], writeRoles: managers,
+  },
+  rooms: {
+    table: 'rooms', primaryKey: 'room_id',
+    columns: ['room_name', 'capacity', 'location', 'status'],
+    required: ['room_name', 'capacity'], searchColumns: ['room_name', 'location'], filterColumns: ['status'],
+    readRoles: ['admin', 'staff', 'teacher'], writeRoles: managers,
+  },
+  classes: {
+    table: 'classes', primaryKey: 'class_id',
+    columns: ['class_code', 'class_name', 'subject_id', 'teacher_id', 'room_id', 'grade_level', 'max_students', 'tuition_fee', 'start_date', 'end_date', 'status', 'note'],
+    required: ['class_code', 'class_name', 'subject_id'], searchColumns: ['class_code', 'class_name'], filterColumns: ['status', 'subject_id', 'teacher_id', 'grade_level'],
+    readRoles: ['admin', 'staff', 'teacher', 'student', 'parent'], writeRoles: managers,
+    scope: scopeClasses,
+    validate: validateClass,
+  },
+};
+
+function createResourceRouter(name) {
+  const config = resources[name];
+  const controller = createCrudController(config);
+  const router = express.Router();
+  router.use(requireAuth);
+  router.get('/', requireRole(...config.readRoles), controller.list);
+  router.get('/:id', requireRole(...config.readRoles), controller.getById);
+  router.post('/', requireRole(...config.writeRoles), controller.create);
+  router.put('/:id', requireRole(...config.writeRoles), controller.update);
+  router.delete('/:id', requireRole(...config.writeRoles), controller.remove);
+  return router;
+}
+
+module.exports = { createResourceRouter };
