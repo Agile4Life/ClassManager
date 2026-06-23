@@ -10,7 +10,8 @@
     "db:check": "node scripts/check-database.js",
     "test": "node scripts/check-regressions.js",
     "dev:frontend": "npm --prefix frontend run dev -- --configLoader runner",
-    "build:frontend": "npm --prefix frontend run build"
+    "build:frontend": "npm --prefix frontend run build",
+    "build": "npm --prefix frontend install --include=dev && npm --prefix frontend run build"
   },
   "engines": {
     "node": ">=18"
