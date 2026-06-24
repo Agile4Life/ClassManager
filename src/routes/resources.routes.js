@@ -19,13 +19,6 @@ function validateClass(body, mode) {
 }
 
 function scopeStudents(req, values, conditions) {
-  if (req.user.role === 'teacher') {
-    values.push(req.user.teacher_id);
-    conditions.push(`student_id in (
-      select e.student_id from enrollments e join classes c on c.class_id = e.class_id
-      where c.teacher_id = $${values.length}
-    )`);
-  }
 }
 
 function scopeClasses(req, values, conditions) {

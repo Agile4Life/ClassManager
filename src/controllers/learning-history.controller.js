@@ -149,10 +149,6 @@ const listEvents = asyncHandler(async (req, res) => {
   const { page, limit, offset } = getPagination(req.query);
   const values = [];
   const conditions = [];
-  if (req.user.role === 'teacher') {
-    values.push(req.user.teacher_id);
-    conditions.push(`e.class_id in (select class_id from classes where teacher_id = $${values.length})`);
-  }
   for (const field of ['class_id', 'student_id']) {
     if (req.query[field] !== undefined && req.query[field] !== '') {
       if (!/^\d+$/.test(String(req.query[field]))) throw new AppError(400, `${field} is invalid`);
