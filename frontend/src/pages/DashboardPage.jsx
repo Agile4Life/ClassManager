@@ -7,6 +7,7 @@ import { EmptyState, ErrorState, LoadingState } from '../components/FeedbackStat
 import StatusBadge from '../components/StatusBadge';
 import { usePageData } from '../hooks/usePageData';
 import { dayLabels, formatTime } from '../utils/format';
+import { THEME_OPTIONS, useTheme } from '../theme/ThemeContext';
 
 function timetablePath(user) {
   if (user.role === 'student') return `/timetable/student/${user.student_id}`;
@@ -16,6 +17,7 @@ function timetablePath(user) {
 
 export default function DashboardPage() {
   const { user } = useAuth();
+  const theme = useTheme();
   const { data, loading, error, refresh } = usePageData(async () => {
     const requests = [api.get('/classes?limit=4'), api.get(timetablePath(user))];
     if (['admin', 'staff', 'teacher'].includes(user.role)) requests.push(api.get('/students?limit=1'));
@@ -36,6 +38,8 @@ export default function DashboardPage() {
         <div><span>Chào buổi học mới, {firstName}</span><h1>Mọi thứ đang đi đúng nhịp.</h1><p>Xem nhanh lớp học, lịch dạy và những việc cần chú ý hôm nay.</p></div>
         <div className="welcome-strip__stamp"><BookStamp /></div>
       </section>
+
+      <ThemePicker {...theme} />
 
       {loading && <LoadingState rows={5} />}
       {error && <ErrorState message={error} onRetry={refresh} />}
@@ -71,6 +75,48 @@ export default function DashboardPage() {
         </>
       )}
     </div>
+  );
+}
+
+function ThemePicker({ preference, setPreference, activeTheme }) {
+  return (
+    <section className="theme-panel" aria-labelledby="theme-panel-title">
+      <div className="theme-panel__copy">
+        <span>Màu giao diện</span>
+        <h2 id="theme-panel-title">Chọn sắc màu cho ngày học</h2>
+        <p>
+          {preference === 'auto'
+            ? `Đang tự động dùng màu ${activeTheme.label.toLowerCase()}.`
+            : `Đang cố định màu ${activeTheme.label.toLowerCase()}.`}
+        </p>
+      </div>
+      <div className="theme-choices" role="radiogroup" aria-label="Chọn màu giao diện">
+        <button
+          type="button"
+          role="radio"
+          aria-checked={preference === 'auto'}
+          className={`theme-choice theme-choice--auto ${preference === 'auto' ? 'theme-choice--active' : ''}`}
+          onClick={() => setPreference('auto')}
+        >
+          <span className="theme-choice__swatch" aria-hidden="true" />
+          <span>Tự động</span>
+        </button>
+        {THEME_OPTIONS.map((theme) => (
+          <button
+            type="button"
+            role="radio"
+            aria-checked={preference === theme.id}
+            className={`theme-choice ${preference === theme.id ? 'theme-choice--active' : ''}`}
+            style={{ '--theme-choice-color': theme.color }}
+            key={theme.id}
+            onClick={() => setPreference(theme.id)}
+          >
+            <span className="theme-choice__swatch" aria-hidden="true" />
+            <span>{theme.label}</span>
+          </button>
+        ))}
+      </div>
+    </section>
   );
 }
 
