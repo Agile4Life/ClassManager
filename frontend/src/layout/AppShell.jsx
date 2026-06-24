@@ -3,7 +3,7 @@ import { Avatar, Button } from '@fluentui/react-components';
 import {
   BookOpen24Filled, CalendarLtr24Regular, DataTrending24Regular, Dismiss24Regular,
   Home24Regular, MailTemplate24Regular, Navigation24Regular, PeopleCommunity24Regular,
-  PeopleCheckmark24Regular, SignOut24Regular, WindowApps24Regular,
+  PeopleCheckmark24Regular, SignOut24Regular, WindowApps24Regular, Person24Regular
 } from '@fluentui/react-icons';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
@@ -12,6 +12,7 @@ const roleLabels = { admin: 'Quản trị viên', staff: 'Nhân viên', teacher:
 
 const navItems = [
   { to: '/', label: 'Tổng quan', icon: Home24Regular, roles: ['admin', 'staff', 'teacher', 'student', 'parent'], end: true },
+  { to: '/teachers', label: 'Giáo viên', icon: Person24Regular, roles: ['admin'] },
   { to: '/students', label: 'Học sinh', icon: PeopleCommunity24Regular, roles: ['admin', 'staff', 'teacher'] },
   { to: '/classes', label: 'Lớp học', icon: WindowApps24Regular, roles: ['admin', 'staff', 'teacher', 'student', 'parent'] },
   { to: '/timetable', label: 'Thời khóa biểu', icon: CalendarLtr24Regular, roles: ['admin', 'staff', 'teacher', 'student', 'parent'] },

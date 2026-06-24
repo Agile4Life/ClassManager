@@ -8,6 +8,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 const LoginPage = lazy(() => import('./pages/LoginPage'));
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 const DashboardPage = lazy(() => import('./pages/DashboardPage'));
+const TeachersPage = lazy(() => import('./pages/TeachersPage'));
 const StudentsPage = lazy(() => import('./pages/StudentsPage'));
 const ClassesPage = lazy(() => import('./pages/ClassesPage'));
 const TimetablePage = lazy(() => import('./pages/TimetablePage'));
@@ -22,6 +23,7 @@ export default function App() {
       <Route element={<ProtectedRoute />}>
         <Route element={<AppShell />}>
           <Route index element={<DashboardPage />} />
+          <Route path="teachers" element={<TeachersPage />} />
           <Route path="students" element={<StudentsPage />} />
           <Route path="classes" element={<ClassesPage />} />
           <Route path="timetable" element={<TimetablePage />} />
