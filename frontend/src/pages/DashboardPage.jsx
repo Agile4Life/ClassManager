@@ -78,25 +78,28 @@ export default function DashboardPage() {
   );
 }
 
-function ThemePicker({ preference, setPreference, activeTheme }) {
+function ThemePicker({ preference, setPreference, randomizeTheme, activeTheme, todayThemeId }) {
   return (
     <section className="theme-panel" aria-labelledby="theme-panel-title">
       <div className="theme-panel__copy">
         <span>Màu giao diện</span>
         <h2 id="theme-panel-title">Chọn sắc màu cho ngày học</h2>
         <p>
-          {preference === 'auto'
-            ? `Đang tự động dùng màu ${activeTheme.label.toLowerCase()}.`
-            : `Đang cố định màu ${activeTheme.label.toLowerCase()}.`}
+          {preference === 'random'
+            ? `Đã chọn ngẫu nhiên màu ${activeTheme.label.toLowerCase()}. Nhấn Tự động để đổi tiếp.`
+            : preference === 'today'
+              ? `Mặc định theo hôm nay: màu ${activeTheme.label.toLowerCase()}.`
+              : `Đang cố định màu ${activeTheme.label.toLowerCase()}.`}
         </p>
       </div>
       <div className="theme-choices" role="radiogroup" aria-label="Chọn màu giao diện">
         <button
           type="button"
           role="radio"
-          aria-checked={preference === 'auto'}
-          className={`theme-choice theme-choice--auto ${preference === 'auto' ? 'theme-choice--active' : ''}`}
-          onClick={() => setPreference('auto')}
+          aria-checked={preference === 'random'}
+          className={`theme-choice theme-choice--auto ${preference === 'random' ? 'theme-choice--active' : ''}`}
+          title="Chọn ngẫu nhiên một màu khác"
+          onClick={randomizeTheme}
         >
           <span className="theme-choice__swatch" aria-hidden="true" />
           <span>Tự động</span>
@@ -105,8 +108,8 @@ function ThemePicker({ preference, setPreference, activeTheme }) {
           <button
             type="button"
             role="radio"
-            aria-checked={preference === theme.id}
-            className={`theme-choice ${preference === theme.id ? 'theme-choice--active' : ''}`}
+            aria-checked={preference === theme.id || (preference === 'today' && todayThemeId === theme.id)}
+            className={`theme-choice ${preference === theme.id || (preference === 'today' && todayThemeId === theme.id) ? 'theme-choice--active' : ''}`}
             style={{ '--theme-choice-color': theme.color }}
             key={theme.id}
             onClick={() => setPreference(theme.id)}

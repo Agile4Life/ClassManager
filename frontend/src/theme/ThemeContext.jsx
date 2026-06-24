@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useLayoutEffect, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useState } from 'react';
 
 const STORAGE_KEY = 'classmanager-color-theme';
 const DAY_THEME_IDS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
@@ -59,22 +59,35 @@ function getTodayThemeId() {
   return DAY_THEME_IDS[new Date().getDay()];
 }
 
-function getInitialPreference() {
+function getInitialSelection() {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored === 'auto' || THEME_OPTIONS.some((theme) => theme.id === stored)) return stored;
+    if (stored?.startsWith('random:')) {
+      const randomThemeId = stored.slice('random:'.length);
+      if (THEME_OPTIONS.some((theme) => theme.id === randomThemeId)) {
+        return { preference: 'random', randomThemeId };
+      }
+    }
+    if (THEME_OPTIONS.some((theme) => theme.id === stored)) {
+      return { preference: stored, randomThemeId: null };
+    }
+    // The old "auto" setting followed the current day, so migrate it to the new default.
+    if (stored === 'auto') return { preference: 'today', randomThemeId: null };
   } catch {
     // Storage can be unavailable in private or restricted browser contexts.
   }
-  return 'auto';
+  return { preference: 'today', randomThemeId: null };
 }
 
 const ThemeContext = createContext(null);
 
 export function ThemeProvider({ children }) {
-  const [preference, setPreferenceState] = useState(getInitialPreference);
+  const [selection, setSelection] = useState(getInitialSelection);
   const [todayThemeId, setTodayThemeId] = useState(getTodayThemeId);
-  const activeThemeId = preference === 'auto' ? todayThemeId : preference;
+  const { preference, randomThemeId } = selection;
+  const activeThemeId = preference === 'today'
+    ? todayThemeId
+    : preference === 'random' ? randomThemeId : preference;
   const activeTheme = THEME_OPTIONS.find((theme) => theme.id === activeThemeId) || THEME_OPTIONS[0];
 
   useEffect(() => {
@@ -93,19 +106,29 @@ export function ThemeProvider({ children }) {
     Object.entries(activeTheme.variables).forEach(([name, value]) => root.style.setProperty(name, value));
   }, [activeTheme]);
 
-  function setPreference(value) {
-    const nextValue = value === 'auto' || THEME_OPTIONS.some((theme) => theme.id === value) ? value : 'auto';
-    setPreferenceState(nextValue);
+  const saveSelection = useCallback((nextSelection, storedValue) => {
+    setSelection(nextSelection);
     try {
-      localStorage.setItem(STORAGE_KEY, nextValue);
+      localStorage.setItem(STORAGE_KEY, storedValue);
     } catch {
       // The selected theme still applies for the current session.
     }
-  }
+  }, []);
+
+  const setPreference = useCallback((value) => {
+    const nextValue = THEME_OPTIONS.some((theme) => theme.id === value) ? value : 'today';
+    saveSelection({ preference: nextValue, randomThemeId: null }, nextValue);
+  }, [saveSelection]);
+
+  const randomizeTheme = useCallback(() => {
+    const candidates = THEME_OPTIONS.filter((theme) => theme.id !== activeThemeId);
+    const randomTheme = candidates[Math.floor(Math.random() * candidates.length)] || THEME_OPTIONS[0];
+    saveSelection({ preference: 'random', randomThemeId: randomTheme.id }, `random:${randomTheme.id}`);
+  }, [activeThemeId, saveSelection]);
 
   const contextValue = useMemo(() => ({
-    preference, setPreference, activeTheme, todayThemeId,
-  }), [activeTheme, preference, todayThemeId]);
+    preference, setPreference, randomizeTheme, activeTheme, todayThemeId,
+  }), [activeTheme, preference, randomizeTheme, setPreference, todayThemeId]);
 
   return <ThemeContext.Provider value={contextValue}>{children}</ThemeContext.Provider>;
 }
