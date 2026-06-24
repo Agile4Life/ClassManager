@@ -13,12 +13,14 @@ const roleLabels = { admin: 'Quản trị viên', staff: 'Nhân viên', teacher:
 const navItems = [
   { to: '/', label: 'Tổng quan', icon: Home24Regular, roles: ['admin', 'staff', 'teacher', 'student', 'parent'], end: true },
   { to: '/teachers', label: 'Giáo viên', icon: Person24Regular, roles: ['admin'] },
+  { to: '/accounts', label: 'Tài khoản', icon: Person24Regular, roles: ['admin'] },
   { to: '/students', label: 'Học sinh', icon: PeopleCommunity24Regular, roles: ['admin', 'staff', 'teacher'] },
   { to: '/classes', label: 'Lớp học', icon: WindowApps24Regular, roles: ['admin', 'staff', 'teacher', 'student', 'parent'] },
   { to: '/timetable', label: 'Thời khóa biểu', icon: CalendarLtr24Regular, roles: ['admin', 'staff', 'teacher', 'student', 'parent'] },
   { to: '/attendance', label: 'Điểm danh', icon: PeopleCheckmark24Regular, roles: ['admin', 'teacher'] },
   { to: '/reports', label: 'Báo cáo học tập', icon: DataTrending24Regular, roles: ['admin', 'staff', 'teacher', 'student', 'parent'] },
   { to: '/parent-notifications', label: 'Thông báo phụ huynh', icon: MailTemplate24Regular, roles: ['admin', 'staff', 'teacher'] },
+  { to: '/learning-history', label: 'Quá trình học tập', icon: DataTrending24Regular, roles: ['admin', 'teacher'] },
 ];
 
 export default function AppShell() {

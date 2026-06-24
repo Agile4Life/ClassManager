@@ -40,6 +40,11 @@ export function AuthProvider({ children }) {
     return response.data.user;
   }, []);
 
+  const register = useCallback(async (details) => {
+    const response = await api.post('/auth/register', details);
+    return response.data;
+  }, []);
+
   const logout = useCallback(async () => {
     const logoutRequest = api.post('/auth/logout', {}).catch(() => undefined);
     localStorage.removeItem('classmanager_token');
@@ -48,7 +53,10 @@ export function AuthProvider({ children }) {
     await logoutRequest;
   }, []);
 
-  const value = useMemo(() => ({ user, login, logout, checkingSession }), [user, login, logout, checkingSession]);
+  const value = useMemo(
+    () => ({ user, login, register, logout, checkingSession }),
+    [user, login, register, logout, checkingSession],
+  );
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 

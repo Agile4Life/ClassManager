@@ -29,6 +29,10 @@ export default function ParentNotificationPage() {
   const [lines, setLines] = useState([{ id: 1, ...createNotificationLine() }]);
   const [finalText, setFinalText] = useState('');
   const [copied, setCopied] = useState(false);
+  const [savingHistory, setSavingHistory] = useState(false);
+  const [historyMessage, setHistoryMessage] = useState('');
+  const [historyError, setHistoryError] = useState('');
+  const lastSavedSignature = useRef('');
 
   const { data: classes, loading: classesLoading, error: classesError, refresh } = usePageData(
     () => api.get('/classes?limit=100').then((response) => response.data.items),
@@ -134,20 +138,76 @@ export default function ParentNotificationPage() {
     }));
   }
 
+  function getHistoryObservations() {
+    return lines
+      .filter((line) => line.audience === 'students' && line.studentIds.length && line.content.trim())
+      .map((line) => ({
+        template_id: line.templateId,
+        category_label: NOTIFICATION_TEMPLATES.find((item) => item.id === line.templateId)?.label || 'Nhận xét khác',
+        detail: line.content.trim(),
+        student_note: line.studentNote.trim() || null,
+        student_ids: line.studentIds,
+      }));
+  }
+
+  async function persistHistory() {
+    const observations = getHistoryObservations();
+    if (!observations.length) return { reports_created: 0, skipped: true };
+    const signature = JSON.stringify({ classId, observations, finalText });
+    if (signature === lastSavedSignature.current) return { reports_created: 0, alreadySaved: true };
+    const response = await api.post('/learning-history/events', {
+      class_id: Number(classId),
+      notification_text: finalText,
+      observations,
+    });
+    lastSavedSignature.current = signature;
+    return response.data;
+  }
+
   async function copyNotification() {
+    setSavingHistory(true);
+    setHistoryError('');
+    setHistoryMessage('');
     try {
-      await navigator.clipboard.writeText(finalText);
-    } catch {
-      const textarea = document.createElement('textarea');
-      textarea.value = finalText;
-      textarea.style.position = 'fixed';
-      textarea.style.opacity = '0';
-      document.body.appendChild(textarea);
-      textarea.select();
-      document.execCommand('copy');
-      textarea.remove();
+      const saved = await persistHistory();
+      try {
+        await navigator.clipboard.writeText(finalText);
+      } catch {
+        const textarea = document.createElement('textarea');
+        textarea.value = finalText;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        textarea.remove();
+      }
+      setCopied(true);
+      if (!saved.skipped) {
+        setHistoryMessage(saved.reports_created
+          ? `Đã lưu lịch sử và tạo ${saved.reports_created} cảnh báo trong báo cáo học tập.`
+          : 'Đã lưu các mục được đánh dấu vào quá trình học tập.');
+      }
+    } catch (error) {
+      setHistoryError(error.message || 'Không thể lưu quá trình học tập.');
+    } finally {
+      setSavingHistory(false);
     }
-    setCopied(true);
+  }
+
+  async function printNotification() {
+    setSavingHistory(true);
+    setHistoryError('');
+    setHistoryMessage('');
+    try {
+      const saved = await persistHistory();
+      if (!saved.skipped) setHistoryMessage('Đã lưu các mục được đánh dấu vào quá trình học tập.');
+      window.print();
+    } catch (error) {
+      setHistoryError(error.message || 'Không thể lưu quá trình học tập.');
+    } finally {
+      setSavingHistory(false);
+    }
   }
 
   return (
@@ -300,9 +360,12 @@ export default function ParentNotificationPage() {
               />
               <pre className="notification-preview__print">{finalText}</pre>
               {copied && <MessageBar intent="success"><MessageBarBody>Đã sao chép thông báo.</MessageBarBody></MessageBar>}
+              {historyMessage && <MessageBar intent="success"><MessageBarBody>{historyMessage}</MessageBarBody></MessageBar>}
+              {historyError && <MessageBar intent="error"><MessageBarBody>{historyError}</MessageBarBody></MessageBar>}
+              <p className="notification-history-hint">Khi sao chép hoặc in, các học sinh được chọn sẽ tự động được ghi vào Quá trình học tập.</p>
               <div className="notification-preview__actions">
-                <Button appearance="primary" icon={<Copy24Regular />} disabled={!finalText.trim()} onClick={copyNotification}>Sao chép</Button>
-                <Button icon={<Print24Regular />} disabled={!finalText.trim()} onClick={() => window.print()}>In thông báo</Button>
+                <Button appearance="primary" icon={<Copy24Regular />} disabled={savingHistory || !finalText.trim()} onClick={copyNotification}>{savingHistory ? 'Đang lưu...' : 'Lưu và sao chép'}</Button>
+                <Button icon={<Print24Regular />} disabled={savingHistory || !finalText.trim()} onClick={printNotification}>Lưu và in</Button>
               </div>
             </aside>
           </div>

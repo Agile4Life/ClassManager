@@ -4,26 +4,65 @@ const asyncHandler = require('../utils/async-handler');
 const { AppError } = require('../utils/errors');
 const { signAccessToken } = require('../utils/jwt');
 const { success } = require('../utils/response');
+const { validateRegistration } = require('../utils/registration');
 
 function requestMeta(req) {
   return { ip: req.ip || null, userAgent: req.get('user-agent') || null };
 }
 
+const register = asyncHandler(async (req, res) => {
+  const { username, fullName, phone, email, password } = validateRegistration(req.body);
+  const client = await pool.connect();
+  try {
+    await client.query('begin');
+    await client.query('select pg_advisory_xact_lock(hashtext($1))', [`register:username:${username}`]);
+    if (email) await client.query('select pg_advisory_xact_lock(hashtext($1))', [`register:email:${email}`]);
+    const duplicate = await client.query(
+      `select 1 from user_accounts
+       where lower(username) = $1 or ($2::text is not null and lower(email) = $2)
+       limit 1`,
+      [username, email],
+    );
+    if (duplicate.rowCount) throw new AppError(409, 'Tên đăng nhập hoặc email đã được sử dụng');
+
+    const parentResult = await client.query(
+      `insert into parents (full_name, phone, email)
+       values ($1, $2, $3) returning parent_id`,
+      [fullName, phone, email],
+    );
+    const accountResult = await client.query(
+      `insert into user_accounts
+         (username, password_hash, full_name, email, phone, role, status, parent_id)
+       values ($1, crypt($2, gen_salt('bf')), $3, $4, $5, 'parent', 'active', $6)
+       returning user_id, username, full_name, email, phone, role, status, parent_id, created_at`,
+      [username, password, fullName, email, phone, parentResult.rows[0].parent_id],
+    );
+    await client.query('commit');
+    return success(res, accountResult.rows[0], 'Đăng ký tài khoản phụ huynh thành công', 201);
+  } catch (error) {
+    await client.query('rollback');
+    throw error;
+  } finally {
+    client.release();
+  }
+});
+
 const login = asyncHandler(async (req, res) => {
   const { username, password } = req.body;
   if (!username || !password) throw new AppError(400, 'username and password are required');
+  const normalizedUsername = String(username).trim().toLowerCase();
 
   const { ip, userAgent } = requestMeta(req);
   const userResult = await pool.query(
     `select user_id, username, full_name, email, phone, role, status,
             teacher_id, student_id, parent_id
      from user_accounts
-     where username = $1 and password_hash = crypt($2, password_hash) and status = 'active'`,
-    [username, password],
+     where lower(username) = $1 and password_hash = crypt($2, password_hash) and status = 'active'`,
+    [normalizedUsername, password],
   );
 
   if (!userResult.rowCount) {
-    const account = await pool.query('select user_id from user_accounts where username = $1', [username]);
+    const account = await pool.query('select user_id from user_accounts where lower(username) = $1', [normalizedUsername]);
     await pool.query(
       `insert into login_logs (user_id, username_input, success, failure_reason, ip_address, user_agent)
        values ($1, $2, false, $3, $4, $5)`,
@@ -132,4 +171,4 @@ const resetPassword = asyncHandler(async (req, res) => {
   }
 });
 
-module.exports = { login, logout, me, forgotPassword, resetPassword };
+module.exports = { register, login, logout, me, forgotPassword, resetPassword };

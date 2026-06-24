@@ -73,11 +73,11 @@ export default function ClassesPage() {
 
       <Dialog open={dialogOpen} onOpenChange={(_, details) => setDialogOpen(details.open)}><DialogSurface><form onSubmit={createClass}><DialogBody><DialogTitle>Tạo lớp học mới</DialogTitle><DialogContent className="form-grid">
         {formError && <MessageBar intent="error" className="form-grid__wide"><MessageBarBody>{formError}</MessageBarBody></MessageBar>}
-        <Field label="Mã lớp" required><Input value={form.class_code} onChange={(_, value) => updateField('class_code', value.value)} placeholder="C004" /></Field><Field label="Tên lớp" required><Input value={form.class_name} onChange={(_, value) => updateField('class_name', value.value)} /></Field>
+        <Field label="Mã lớp"><Input disabled value="Tự động tạo khi lưu" /></Field><Field label="Tên lớp" required><Input value={form.class_name} onChange={(_, value) => updateField('class_name', value.value)} /></Field>
         <Field label="Môn học" required><Select value={form.subject_id} onChange={(event) => updateField('subject_id', event.target.value)}><option value="">Chọn môn học</option>{referenceData?.subjects.map((item) => <option key={item.subject_id} value={item.subject_id}>{item.subject_name}</option>)}</Select></Field>
         <Field label="Giáo viên"><Select value={form.teacher_id} onChange={(event) => updateField('teacher_id', event.target.value)}><option value="">Chưa phân công</option>{referenceData?.teachers.map((item) => <option key={item.teacher_id} value={item.teacher_id}>{item.full_name}</option>)}</Select></Field>
         <Field label="Phòng học"><Select value={form.room_id} onChange={(event) => updateField('room_id', event.target.value)}><option value="">Chưa xếp phòng</option>{referenceData?.rooms.map((item) => <option key={item.room_id} value={item.room_id}>{item.room_name}</option>)}</Select></Field><Field label="Khối lớp"><Input value={form.grade_level} onChange={(_, value) => updateField('grade_level', value.value)} /></Field>
-      </DialogContent><DialogActions><Button appearance="secondary" onClick={() => setDialogOpen(false)}>Hủy</Button><Button appearance="primary" type="submit" disabled={saving || !form.class_code || !form.class_name || !form.subject_id}>{saving ? 'Đang tạo...' : 'Tạo lớp'}</Button></DialogActions></DialogBody></form></DialogSurface></Dialog>
+      </DialogContent><DialogActions><Button appearance="secondary" onClick={() => setDialogOpen(false)}>Hủy</Button><Button appearance="primary" type="submit" disabled={saving || !form.class_name || !form.subject_id}>{saving ? 'Đang tạo...' : 'Tạo lớp'}</Button></DialogActions></DialogBody></form></DialogSurface></Dialog>
     </div>
   );
 }

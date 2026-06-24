@@ -119,4 +119,31 @@ const getClassPerformance = asyncHandler(async (req, res) => {
   return success(res, result.rows, 'Class performance fetched successfully');
 });
 
-module.exports = { getStudentReports, createReport, updateReport, deleteReport, getWeakTopics, getStudentWeakTopics, getAssignmentSummary, getClassPerformance };
+const getLearningHistoryAlerts = asyncHandler(async (req, res) => {
+  const values = [];
+  let teacherScope = '';
+  if (req.user.role === 'teacher') {
+    values.push(req.user.teacher_id);
+    teacherScope = `and (pr.teacher_id = $1 or pr.class_id in (select class_id from classes where teacher_id = $1))`;
+  }
+  const result = await pool.query(
+    `select pr.*, s.student_code, s.full_name as student_name,
+            c.class_code, c.class_name, t.full_name as teacher_name,
+            (select count(*)::int from student_learning_events e
+             where e.student_id = pr.student_id and e.category_key = pr.source_key) as occurrence_count
+     from progress_reports pr
+     join students s on s.student_id = pr.student_id
+     left join classes c on c.class_id = pr.class_id
+     left join teachers t on t.teacher_id = pr.teacher_id
+     where pr.report_source = 'learning_history' ${teacherScope}
+     order by pr.created_at desc`,
+    values,
+  );
+  return success(res, result.rows, 'Learning history alerts fetched successfully');
+});
+
+module.exports = {
+  getStudentReports, createReport, updateReport, deleteReport,
+  getWeakTopics, getStudentWeakTopics, getAssignmentSummary, getClassPerformance,
+  getLearningHistoryAlerts,
+};

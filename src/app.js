@@ -15,6 +15,9 @@ const sessionRoutes = require('./routes/session.routes');
 const academicRoutes = require('./routes/academic.routes');
 const reportRoutes = require('./routes/report.routes');
 const financeRoutes = require('./routes/finance.routes');
+const learningHistoryRoutes = require('./routes/learning-history.routes');
+const accountRoutes = require('./routes/account.routes');
+const studentImportRoutes = require('./routes/student-import.routes');
 const { notFound, errorHandler } = require('./middlewares/error.middleware');
 const { parseOrigins, isOriginAllowed } = require('./utils/cors');
 
@@ -51,6 +54,9 @@ app.use('/api', sessionRoutes);
 app.use('/api', academicRoutes);
 app.use('/api', reportRoutes);
 app.use('/api', financeRoutes);
+app.use('/api', learningHistoryRoutes);
+app.use('/api/admin', accountRoutes);
+app.use('/api/students', studentImportRoutes);
 
 // Specialized class subpaths and generic /classes/:id routes have distinct
 // path shapes. Keeping specialized routers first makes that intent explicit.

@@ -28,6 +28,7 @@ drop table if exists login_logs cascade;
 drop table if exists user_sessions cascade;
 drop table if exists user_accounts cascade;
 
+drop table if exists student_learning_events cascade;
 drop table if exists progress_reports cascade;
 drop table if exists student_answers cascade;
 drop table if exists assignment_submissions cascade;
@@ -642,6 +643,9 @@ create table progress_reports (
     teacher_recommendation text,
     parent_note text,
 
+    report_source varchar(30) not null default 'manual',
+    source_key varchar(100),
+
     status varchar(20) not null default 'draft',
     sent_at timestamptz,
 
@@ -650,12 +654,36 @@ create table progress_reports (
     constraint chk_report_status
         check (status in ('draft', 'sent', 'archived')),
 
+    constraint chk_report_source
+        check (report_source in ('manual', 'learning_history')),
+
     constraint chk_report_period
         check (period_end is null or period_start is null or period_end >= period_start)
 );
 
 -- =========================================================
--- 20. INDEXES
+-- 20. STUDENT LEARNING HISTORY
+-- Every marked notification item is retained for teacher review.
+-- =========================================================
+
+create table student_learning_events (
+    event_id bigint generated always as identity primary key,
+    student_id bigint not null references students(student_id) on delete cascade,
+    class_id bigint references classes(class_id) on delete set null,
+    teacher_id bigint references teachers(teacher_id) on delete set null,
+    recorded_by_user_id bigint references user_accounts(user_id) on delete set null,
+    report_id bigint references progress_reports(report_id) on delete set null,
+
+    category_key varchar(100) not null,
+    category_label varchar(200) not null,
+    detail text not null,
+    student_note varchar(200),
+    notification_text text,
+    created_at timestamptz not null default now()
+);
+
+-- =========================================================
+-- 21. INDEXES
 -- =========================================================
 
 create index idx_students_full_name on students(full_name);
@@ -697,9 +725,16 @@ create index idx_assignment_submissions_assignment_id on assignment_submissions(
 create index idx_student_answers_submission_id on student_answers(submission_id);
 create index idx_student_answers_question_id on student_answers(question_id);
 create index idx_progress_reports_student_id on progress_reports(student_id);
+create unique index uq_learning_history_report
+    on progress_reports(student_id, report_source, source_key)
+    where report_source = 'learning_history';
+create index idx_learning_events_student_category
+    on student_learning_events(student_id, category_key, created_at desc);
+create index idx_learning_events_class_created
+    on student_learning_events(class_id, created_at desc);
 
 -- =========================================================
--- 21. REPORTING VIEWS
+-- 22. REPORTING VIEWS
 -- =========================================================
 
 create view v_student_topic_performance as

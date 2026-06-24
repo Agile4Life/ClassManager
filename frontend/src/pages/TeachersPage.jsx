@@ -80,6 +80,7 @@ export default function TeachersPage() {
     const payload = Object.fromEntries(
       Object.entries(form).map(([field, value]) => [field, value === '' ? null : value]),
     );
+    if (!editingTeacher) delete payload.teacher_code;
     
     if (payload.hourly_rate !== null && payload.hourly_rate !== undefined) {
         payload.hourly_rate = Number(payload.hourly_rate);
@@ -172,7 +173,7 @@ export default function TeachersPage() {
           <DialogTitle>{editingTeacher ? `Chỉnh sửa ${editingTeacher.full_name}` : 'Thêm giáo viên mới'}</DialogTitle>
           <DialogContent className="form-grid student-form">
             {formError && <MessageBar intent="error" className="form-grid__wide"><MessageBarBody>{formError}</MessageBarBody></MessageBar>}
-            <Field label="Mã giáo viên" required><Input value={form.teacher_code} onChange={(_, dataValue) => updateField('teacher_code', dataValue.value)} placeholder="T001" /></Field>
+            <Field label="Mã giáo viên"><Input disabled={!editingTeacher} value={editingTeacher ? form.teacher_code : 'Tự động tạo khi lưu'} onChange={(_, dataValue) => updateField('teacher_code', dataValue.value)} /></Field>
             <Field label="Họ và tên" required><Input value={form.full_name} onChange={(_, dataValue) => updateField('full_name', dataValue.value)} /></Field>
             <Field label="Số điện thoại"><Input value={form.phone} onChange={(_, dataValue) => updateField('phone', dataValue.value)} /></Field>
             <Field label="Email"><Input type="email" value={form.email} onChange={(_, dataValue) => updateField('email', dataValue.value)} /></Field>
@@ -182,7 +183,7 @@ export default function TeachersPage() {
             <Field label="Địa chỉ"><Input value={form.address} onChange={(_, dataValue) => updateField('address', dataValue.value)} /></Field>
             <Field className="form-grid__wide" label="Ghi chú"><Textarea resize="vertical" value={form.note} onChange={(_, dataValue) => updateField('note', dataValue.value)} /></Field>
           </DialogContent>
-          <DialogActions><Button type="button" appearance="secondary" disabled={saving} onClick={() => closeTeacherDialog()}>Hủy</Button><Button appearance="primary" type="submit" disabled={saving || !form.teacher_code.trim() || !form.full_name.trim()}>{saving ? 'Đang lưu...' : editingTeacher ? 'Lưu thay đổi' : 'Lưu giáo viên'}</Button></DialogActions>
+          <DialogActions><Button type="button" appearance="secondary" disabled={saving} onClick={() => closeTeacherDialog()}>Hủy</Button><Button appearance="primary" type="submit" disabled={saving || !form.full_name.trim() || (editingTeacher && !form.teacher_code.trim())}>{saving ? 'Đang lưu...' : editingTeacher ? 'Lưu thay đổi' : 'Lưu giáo viên'}</Button></DialogActions>
         </DialogBody></form></DialogSurface>
       </Dialog>
 

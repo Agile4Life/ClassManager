@@ -13,5 +13,6 @@ router.get('/reports/weak-topics', requireRole('admin', 'staff', 'teacher'), con
 router.get('/reports/student/:studentId/weak-topics', requireRole('admin', 'staff', 'teacher', 'student', 'parent'), controller.getStudentWeakTopics);
 router.get('/reports/student/:studentId/assignment-summary', requireRole('admin', 'staff', 'teacher', 'student', 'parent'), controller.getAssignmentSummary);
 router.get('/reports/class/:classId/performance', requireRole('admin', 'staff', 'teacher'), controller.getClassPerformance);
+router.get('/reports/learning-history-alerts', requireRole('admin', 'teacher'), controller.getLearningHistoryAlerts);
 
 module.exports = router;

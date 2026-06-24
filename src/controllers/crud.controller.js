@@ -2,6 +2,7 @@ const pool = require('../config/db');
 const asyncHandler = require('../utils/async-handler');
 const { AppError } = require('../utils/errors');
 const { pick, buildInsert, buildUpdate, assertIdentifier } = require('../utils/query');
+const { generateNextCode } = require('../utils/code-generator');
 const { getPagination } = require('../utils/validation');
 const { success } = require('../utils/response');
 
@@ -14,6 +15,7 @@ function createCrudController(config) {
     searchColumns = [],
     filterColumns = [],
     orderBy = primaryKey,
+    autoCode,
   } = config;
 
   [table, primaryKey, orderBy, ...columns, ...searchColumns, ...filterColumns]
@@ -72,14 +74,32 @@ function createCrudController(config) {
 
   const create = asyncHandler(async (req, res) => {
     for (const field of required) {
+      if (autoCode?.column === field) continue;
       if (req.body[field] === undefined || req.body[field] === null || req.body[field] === '') {
         throw new AppError(400, `${field} is required`);
       }
     }
     if (config.validate) config.validate(req.body, 'create');
-    const query = buildInsert(table, pick(req.body, columns));
-    const result = await pool.query(query);
-    return success(res, result.rows[0], 'Record created successfully', 201);
+    const values = pick(req.body, columns);
+    if (!autoCode) {
+      const result = await pool.query(buildInsert(table, values));
+      return success(res, result.rows[0], 'Record created successfully', 201);
+    }
+
+    const client = await pool.connect();
+    try {
+      await client.query('begin');
+      delete values[autoCode.column];
+      values[autoCode.column] = await generateNextCode(client, { ...autoCode, table });
+      const result = await client.query(buildInsert(table, values));
+      await client.query('commit');
+      return success(res, result.rows[0], 'Record created successfully', 201);
+    } catch (error) {
+      await client.query('rollback');
+      throw error;
+    } finally {
+      client.release();
+    }
   });
 
   const update = asyncHandler(async (req, res) => {
