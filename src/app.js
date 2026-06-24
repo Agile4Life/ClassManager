@@ -17,7 +17,7 @@ const reportRoutes = require('./routes/report.routes');
 const financeRoutes = require('./routes/finance.routes');
 const learningHistoryRoutes = require('./routes/learning-history.routes');
 const accountRoutes = require('./routes/account.routes');
-const studentImportRoutes = require('./routes/student-import.routes');
+const studentRoutes = require('./routes/student.routes');
 const { notFound, errorHandler } = require('./middlewares/error.middleware');
 const { parseOrigins, isOriginAllowed } = require('./utils/cors');
 
@@ -56,11 +56,11 @@ app.use('/api', reportRoutes);
 app.use('/api', financeRoutes);
 app.use('/api', learningHistoryRoutes);
 app.use('/api/admin', accountRoutes);
-app.use('/api/students', studentImportRoutes);
+app.use('/api/students', studentRoutes);
 
 // Specialized class subpaths and generic /classes/:id routes have distinct
 // path shapes. Keeping specialized routers first makes that intent explicit.
-for (const resource of ['students', 'parents', 'teachers', 'subjects', 'rooms', 'classes']) {
+for (const resource of ['parents', 'teachers', 'subjects', 'rooms', 'classes']) {
   app.use(`/api/${resource}`, createResourceRouter(resource));
 }
 

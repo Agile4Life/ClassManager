@@ -10,8 +10,8 @@ import { ErrorState, LoadingState } from '../components/FeedbackState';
 import PageHeader from '../components/PageHeader';
 import { usePageData } from '../hooks/usePageData';
 import {
-  buildParentNotification, createNotificationLine, findStudentsWithoutSubmission,
-  getStudentNames, NOTIFICATION_TEMPLATES,
+  buildParentNotification, createNotificationLine,
+  NOTIFICATION_TEMPLATES,
 } from '../utils/parent-notification';
 
 const allowedRoles = ['admin', 'staff', 'teacher'];
@@ -20,12 +20,9 @@ export default function ParentNotificationPage() {
   const { user } = useAuth();
   const nextLineId = useRef(2);
   const [classId, setClassId] = useState('');
-  const [assignmentId, setAssignmentId] = useState('');
-  const [context, setContext] = useState({ students: [], assignments: [] });
+  const [context, setContext] = useState({ students: [] });
   const [contextLoading, setContextLoading] = useState(false);
   const [contextError, setContextError] = useState('');
-  const [submissions, setSubmissions] = useState([]);
-  const [submissionsLoading, setSubmissionsLoading] = useState(false);
   const [lines, setLines] = useState([{ id: 1, ...createNotificationLine() }]);
   const [finalText, setFinalText] = useState('');
   const [copied, setCopied] = useState(false);
@@ -41,25 +38,18 @@ export default function ParentNotificationPage() {
 
   useEffect(() => {
     if (!classId) {
-      setContext({ students: [], assignments: [] });
-      setAssignmentId('');
+      setContext({ students: [] });
       setContextError('');
       return undefined;
     }
     let active = true;
     setContextLoading(true);
     setContextError('');
-    setAssignmentId('');
-    setSubmissions([]);
-    Promise.all([
-      api.get(`/classes/${classId}/students`),
-      api.get(`/classes/${classId}/assignments`),
-    ])
-      .then(([studentsResponse, assignmentsResponse]) => {
+    api.get(`/classes/${classId}/students`)
+      .then((studentsResponse) => {
         if (!active) return;
         setContext({
           students: studentsResponse.data.filter((student) => student.enrollment_status === 'studying'),
-          assignments: assignmentsResponse.data,
         });
         setLines([{ id: nextLineId.current++, ...createNotificationLine() }]);
       })
@@ -68,25 +58,7 @@ export default function ParentNotificationPage() {
     return () => { active = false; };
   }, [classId]);
 
-  useEffect(() => {
-    if (!assignmentId) {
-      setSubmissions([]);
-      return undefined;
-    }
-    let active = true;
-    setSubmissionsLoading(true);
-    setContextError('');
-    api.get(`/assignments/${assignmentId}/submissions`)
-      .then((response) => active && setSubmissions(response.data))
-      .catch((requestError) => active && setContextError(requestError.message))
-      .finally(() => active && setSubmissionsLoading(false));
-    return () => { active = false; };
-  }, [assignmentId]);
 
-  const missingStudentIds = useMemo(
-    () => (assignmentId ? findStudentsWithoutSubmission(context.students, submissions) : []),
-    [assignmentId, context.students, submissions],
-  );
   const generatedText = useMemo(
     () => buildParentNotification(lines, context.students),
     [lines, context.students],
@@ -119,14 +91,7 @@ export default function ParentNotificationPage() {
     ]);
   }
 
-  function addMissingStudents() {
-    const existing = lines.find((line) => line.templateId === 'homework_missing' && line.audience === 'students');
-    if (existing) {
-      updateLine(existing.id, { studentIds: [...new Set([...existing.studentIds, ...missingStudentIds])] });
-    } else {
-      addLine('homework_missing', missingStudentIds);
-    }
-  }
+
 
   function toggleStudent(lineId, studentId, checked) {
     setLines((current) => current.map((line) => {
@@ -225,12 +190,7 @@ export default function ParentNotificationPage() {
               {classes.map((item) => <option key={item.class_id} value={item.class_id}>{item.class_name} ({item.class_code})</option>)}
             </Select>
           </Field>
-          <Field label="Bài tập cần kiểm tra" hint="Không bắt buộc">
-            <Select value={assignmentId} disabled={!classId || contextLoading} onChange={(event) => setAssignmentId(event.target.value)}>
-              <option value="">Không đối chiếu bài tập</option>
-              {context.assignments.map((item) => <option key={item.assignment_id} value={item.assignment_id}>{item.title}</option>)}
-            </Select>
-          </Field>
+
           <div className="notification-context__count" role="status" aria-live="polite">
             <span>Sĩ số đang học</span>
             <div><strong>{context.students.length}</strong><small>học sinh</small></div>
@@ -243,19 +203,7 @@ export default function ParentNotificationPage() {
 
       {classId && !contextLoading && !contextError && (
         <>
-          {submissionsLoading && <LoadingState rows={2} />}
-          {assignmentId && !submissionsLoading && (
-            <MessageBar intent={missingStudentIds.length ? 'warning' : 'success'}>
-              <MessageBarBody>
-                {missingStudentIds.length ? (
-                  <div className="missing-homework-message">
-                    <span><strong>{getStudentNames(missingStudentIds, context.students)}</strong> chưa có bài nộp hoặc đang được đánh dấu thiếu bài.</span>
-                    <Button size="small" onClick={addMissingStudents}>Thêm vào thông báo</Button>
-                  </div>
-                ) : 'Tất cả học sinh trong lớp đã có bài nộp.'}
-              </MessageBarBody>
-            </MessageBar>
-          )}
+
 
           <div className="notification-workspace">
             <section className="notification-editor" aria-labelledby="notification-lines-title">

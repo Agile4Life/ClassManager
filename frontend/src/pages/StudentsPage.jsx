@@ -16,15 +16,13 @@ import { formatDate } from '../utils/format';
 import { downloadStudentCsvTemplate, parseStudentCsv } from '../utils/student-csv';
 
 const initialForm = {
-  student_code: '', full_name: '', date_of_birth: '', gender: '', phone: '', email: '',
-  address: '', school_name: '', grade_level: '', status: 'active', note: '',
+  student_code: '', full_name: '', status: 'active', father_phone: '', mother_phone: '', student_phone: '',
 };
 
 function studentToForm(student) {
   return {
     ...initialForm,
     ...Object.fromEntries(Object.keys(initialForm).map((field) => [field, student[field] ?? ''])),
-    date_of_birth: student.date_of_birth ? String(student.date_of_birth).slice(0, 10) : '',
   };
 }
 
@@ -210,17 +208,13 @@ export default function StudentsPage() {
             <TableHeader><TableRow>
               <TableHeaderCell>Học sinh</TableHeaderCell>
               <TableHeaderCell>Liên hệ</TableHeaderCell>
-              <TableHeaderCell>Trường và khối</TableHeaderCell>
-              <TableHeaderCell>Ngày sinh</TableHeaderCell>
               <TableHeaderCell>Trạng thái</TableHeaderCell>
               {(canEdit || canDelete) && <TableHeaderCell>Thao tác</TableHeaderCell>}
             </TableRow></TableHeader>
             <TableBody>{data.items.map((student) => (
               <TableRow key={student.student_id}>
                 <TableCell><div className="primary-cell"><span className="initial-tile">{student.full_name.slice(0, 1)}</span><div><strong>{student.full_name}</strong><span>{student.student_code}</span></div></div></TableCell>
-                <TableCell><div className="stacked-cell"><span>{student.phone || 'Chưa có số điện thoại'}</span><small>{student.email || 'Chưa có email'}</small></div></TableCell>
-                <TableCell><div className="stacked-cell"><span>{student.school_name || 'Chưa cập nhật trường'}</span><small>{student.grade_level || 'Chưa cập nhật khối'}</small></div></TableCell>
-                <TableCell>{formatDate(student.date_of_birth)}</TableCell>
+                <TableCell><div className="stacked-cell"><span>Ba: {student.father_phone || 'Chưa có'}</span><span>Mẹ: {student.mother_phone || 'Chưa có'}</span><span>Học sinh: {student.student_phone || 'Chưa có'}</span></div></TableCell>
                 <TableCell><StatusBadge status={student.status} /></TableCell>
                 {(canEdit || canDelete) && (
                   <TableCell>
@@ -244,15 +238,10 @@ export default function StudentsPage() {
             {formError && <MessageBar intent="error" className="form-grid__wide"><MessageBarBody>{formError}</MessageBarBody></MessageBar>}
             <Field label="Mã học sinh"><Input disabled={!editingStudent} value={editingStudent ? form.student_code : 'Tự động tạo khi lưu'} onChange={(_, dataValue) => updateField('student_code', dataValue.value)} /></Field>
             <Field label="Họ và tên" required><Input value={form.full_name} onChange={(_, dataValue) => updateField('full_name', dataValue.value)} /></Field>
-            <Field label="Ngày sinh"><Input type="date" value={form.date_of_birth} onChange={(_, dataValue) => updateField('date_of_birth', dataValue.value)} /></Field>
-            <Field label="Giới tính"><Select value={form.gender} onChange={(event) => updateField('gender', event.target.value)}><option value="">Chọn giới tính</option><option value="male">Nam</option><option value="female">Nữ</option><option value="other">Khác</option></Select></Field>
-            <Field label="Số điện thoại"><Input value={form.phone} onChange={(_, dataValue) => updateField('phone', dataValue.value)} /></Field>
-            <Field label="Email"><Input type="email" value={form.email} onChange={(_, dataValue) => updateField('email', dataValue.value)} /></Field>
-            <Field label="Trường học"><Input value={form.school_name} onChange={(_, dataValue) => updateField('school_name', dataValue.value)} /></Field>
-            <Field label="Khối lớp"><Input value={form.grade_level} onChange={(_, dataValue) => updateField('grade_level', dataValue.value)} placeholder="Khối 9" /></Field>
+            <Field label="Điện thoại ba"><Input value={form.father_phone} onChange={(_, dataValue) => updateField('father_phone', dataValue.value)} /></Field>
+            <Field label="Điện thoại mẹ"><Input value={form.mother_phone} onChange={(_, dataValue) => updateField('mother_phone', dataValue.value)} /></Field>
+            <Field label="Điện thoại học sinh"><Input value={form.student_phone} onChange={(_, dataValue) => updateField('student_phone', dataValue.value)} /></Field>
             <Field label="Trạng thái"><Select value={form.status} onChange={(event) => updateField('status', event.target.value)}><option value="active">Đang hoạt động</option><option value="inactive">Ngừng hoạt động</option><option value="paused">Tạm nghỉ</option><option value="graduated">Đã tốt nghiệp</option></Select></Field>
-            <Field label="Địa chỉ"><Input value={form.address} onChange={(_, dataValue) => updateField('address', dataValue.value)} /></Field>
-            <Field className="form-grid__wide" label="Ghi chú"><Textarea resize="vertical" value={form.note} onChange={(_, dataValue) => updateField('note', dataValue.value)} /></Field>
           </DialogContent>
           <DialogActions><Button type="button" appearance="secondary" disabled={saving} onClick={() => closeStudentDialog()}>Hủy</Button><Button appearance="primary" type="submit" disabled={saving || !form.full_name.trim() || (editingStudent && !form.student_code.trim())}>{saving ? 'Đang lưu...' : editingStudent ? 'Lưu thay đổi' : 'Lưu học sinh'}</Button></DialogActions>
         </DialogBody></form></DialogSurface>
@@ -293,7 +282,7 @@ export default function StudentsPage() {
                 {importRows.length > 0 && !importErrors.length && (
                   <section className="student-import-preview">
                     <div className="student-import-preview__heading"><div><strong>3. Kiểm tra dữ liệu</strong><span>{importRows.length} học sinh sẵn sàng được nhập</span></div><span>Hiển thị {Math.min(importRows.length, 8)} dòng đầu</span></div>
-                    <div className="table-surface"><Table aria-label="Xem trước danh sách CSV"><TableHeader><TableRow><TableHeaderCell>Họ và tên</TableHeaderCell><TableHeaderCell>Điện thoại ba</TableHeaderCell><TableHeaderCell>Điện thoại mẹ</TableHeaderCell><TableHeaderCell>Điện thoại học sinh</TableHeaderCell></TableRow></TableHeader><TableBody>{importRows.slice(0, 8).map((row, index) => <TableRow key={`${row.full_name}-${index}`}><TableCell><strong>{row.full_name}</strong></TableCell><TableCell>{row.father_phone || 'Để trống'}</TableCell><TableCell>{row.mother_phone || 'Để trống'}</TableCell><TableCell>{row.student_phone || 'Để trống'}</TableCell></TableRow>)}</TableBody></Table></div>
+                    <div className="table-surface"><Table aria-label="Xem trước danh sách CSV"><TableHeader><TableRow><TableHeaderCell>Họ và tên</TableHeaderCell><TableHeaderCell>Điện thoại ba</TableHeaderCell><TableHeaderCell>Điện thoại mẹ</TableHeaderCell><TableHeaderCell>Điện thoại học sinh</TableHeaderCell></TableRow></TableHeader><TableBody>{importRows.slice(0, 8).map((row, index) => <TableRow key={`${row.full_name}-${index}`}><TableCell><strong>{row.full_name}</strong></TableCell><TableCell>{row.father_phone || 'Chưa có'}</TableCell><TableCell>{row.mother_phone || 'Chưa có'}</TableCell><TableCell>{row.student_phone || 'Chưa có'}</TableCell></TableRow>)}</TableBody></Table></div>
                   </section>
                 )}
               </>

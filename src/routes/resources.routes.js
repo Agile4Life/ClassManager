@@ -35,16 +35,6 @@ function scopeClasses(req, values, conditions) {
 }
 
 const resources = {
-  students: {
-    table: 'students', primaryKey: 'student_id',
-    columns: ['student_code', 'full_name', 'date_of_birth', 'gender', 'phone', 'email', 'address', 'school_name', 'grade_level', 'status', 'note'],
-    required: ['student_code', 'full_name'], searchColumns: ['student_code', 'full_name', 'phone', 'email'], filterColumns: ['status', 'grade_level'],
-    autoCode: { column: 'student_code', prefix: 'S', digits: 3 },
-    readRoles: ['admin', 'staff', 'teacher'], writeRoles: managers,
-    createRoles: [...managers, 'teacher'],
-    updateRoles: [...managers, 'teacher'],
-    scope: scopeStudents,
-  },
   parents: {
     table: 'parents', primaryKey: 'parent_id',
     columns: ['full_name', 'phone', 'email', 'address', 'occupation'],
