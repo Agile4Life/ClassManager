@@ -147,6 +147,52 @@ a { color: inherit; }
 .report-summary p { margin: 0; color: #76662f; font-size: 13px; line-height: 1.5; }
 .mastery-value { color: #9b3d3d; font-variant-numeric: tabular-nums; font-weight: 800; }
 
+.notification-context {
+  display: grid; grid-template-columns: minmax(240px, 1fr) minmax(240px, 1fr) 130px;
+  align-items: end; gap: 16px; padding: 20px; border: 1px solid var(--line);
+  border-radius: var(--radius); background: var(--paper);
+}
+.notification-context__count {
+  min-height: 58px; display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 10px 14px; color: var(--muted); border-radius: var(--radius-control); background: var(--paper-blue);
+  font-size: 12px;
+}
+.notification-context__count strong { color: var(--accent-dark); font-size: 24px; }
+.missing-homework-message { display: flex; align-items: center; justify-content: space-between; gap: 16px; width: 100%; }
+.notification-workspace { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(360px, 0.8fr); gap: 18px; align-items: start; }
+.notification-editor, .notification-preview {
+  border: 1px solid var(--line); border-radius: var(--radius); background: var(--paper);
+  box-shadow: 0 10px 34px rgba(38, 78, 132, 0.065);
+}
+.notification-editor { padding: 22px; }
+.notification-preview { position: sticky; top: 24px; padding: 22px; }
+.notification-section-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.notification-section-heading h2 { margin: 0; font-size: 19px; letter-spacing: -0.025em; }
+.notification-section-heading p { margin: 6px 0 0; color: var(--muted); font-size: 12px; line-height: 1.5; }
+.notification-lines { display: grid; gap: 14px; margin-top: 18px; }
+.notification-line { padding: 17px; border: 1px solid #e0e8f2; border-radius: var(--radius-control); background: #f9fbfd; }
+.notification-line__heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.notification-line__heading strong { color: var(--accent-dark); font-size: 12px; }
+.notification-line__grid { display: grid; grid-template-columns: 1fr 1fr; gap: 13px; }
+.notification-line__wide { grid-column: 1 / -1; }
+.notification-line textarea { min-height: 62px; }
+.notification-preview__text { display: block; margin-top: 18px; }
+.notification-preview__text textarea { min-height: 390px; padding: 16px; line-height: 1.65; }
+.notification-preview__print { display: none; }
+.notification-preview__actions { display: flex; gap: 9px; margin-top: 13px; }
+
+@media print {
+  .sidebar, .mobile-topbar, .page-header, .notification-context, .notification-editor,
+  .notification-preview .notification-section-heading, .notification-preview__actions,
+  .notification-preview .fui-MessageBar { display: none !important; }
+  .main-stage { margin: 0; }
+  .page-container { width: 100%; padding: 0; }
+  .notification-workspace { display: block; }
+  .notification-preview { position: static; padding: 0; border: 0; box-shadow: none; }
+  .notification-preview__text { display: none; }
+  .notification-preview__print { display: block; margin: 0; white-space: pre-wrap; font: 14pt/1.65 'Segoe UI', Arial, sans-serif; }
+}
+
 .login-page { min-height: 100dvh; display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(430px, 0.9fr); background: #f8fafc; }
 .login-story { position: relative; min-height: 100dvh; padding: 42px clamp(38px, 6vw, 90px); display: flex; flex-direction: column; overflow: hidden; color: #f7faff; background-color: #284f86; background-image: linear-gradient(rgba(255,255,255,0.07) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.07) 1px, transparent 1px); background-size: 31px 31px; }
 .login-story__brand { display: flex; align-items: center; gap: 10px; font-size: 17px; font-weight: 800; }
@@ -180,6 +226,8 @@ a { color: inherit; }
   .stat-grid { grid-template-columns: 1fr 1fr; }
   .dashboard-grid { grid-template-columns: 1fr; }
   .timetable-board { grid-template-columns: repeat(7, 190px); }
+  .notification-workspace { grid-template-columns: 1fr; }
+  .notification-preview { position: static; }
 }
 
 @media (max-width: 960px) {
@@ -223,6 +271,11 @@ a { color: inherit; }
   .form-grid__wide { grid-column: auto; }
   .login-story__copy { margin-top: 56px; }
   .login-story p { font-size: 15px; }
+  .notification-context { grid-template-columns: 1fr; }
+  .notification-line__grid { grid-template-columns: 1fr; }
+  .notification-line__wide { grid-column: auto; }
+  .notification-section-heading, .missing-homework-message { align-items: stretch; flex-direction: column; }
+  .notification-preview__actions { display: grid; }
 }
 
 @media (max-width: 360px) {

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Avatar, Button, Tooltip } from '@fluentui/react-components';
 import {
   BookOpen24Filled, CalendarLtr24Regular, DataTrending24Regular, Dismiss24Regular,
-  Home24Regular, Money24Regular, Navigation24Regular, PeopleCommunity24Regular,
+  Home24Regular, MailTemplate24Regular, Money24Regular, Navigation24Regular, PeopleCommunity24Regular,
   SignOut24Regular, WindowApps24Regular,
 } from '@fluentui/react-icons';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
@@ -17,6 +17,7 @@ const navItems = [
   { to: '/timetable', label: 'Thời khóa biểu', icon: CalendarLtr24Regular, roles: ['admin', 'staff', 'teacher', 'student', 'parent'] },
   { to: '/finance', label: 'Học phí', icon: Money24Regular, roles: ['admin', 'staff', 'student', 'parent'] },
   { to: '/reports', label: 'Báo cáo học tập', icon: DataTrending24Regular, roles: ['admin', 'staff', 'teacher', 'student', 'parent'] },
+  { to: '/parent-notifications', label: 'Thông báo phụ huynh', icon: MailTemplate24Regular, roles: ['admin', 'staff', 'teacher'] },
 ];
 
 export default function AppShell() {

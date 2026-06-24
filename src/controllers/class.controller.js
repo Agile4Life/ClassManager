@@ -3,6 +3,7 @@ const asyncHandler = require('../utils/async-handler');
 const { AppError } = require('../utils/errors');
 const { pick, buildUpdate } = require('../utils/query');
 const { success } = require('../utils/response');
+const { assertTeacherClassAccess } = require('../utils/access');
 
 const linkParent = asyncHandler(async (req, res) => {
   const { relationship, is_primary_contact = false } = req.body;
@@ -29,6 +30,7 @@ const getStudentParents = asyncHandler(async (req, res) => {
 });
 
 const getClassStudents = asyncHandler(async (req, res) => {
+  await assertTeacherClassAccess(req.user, req.params.classId);
   const result = await pool.query(
     `select e.enrollment_id, e.enrolled_date, e.status as enrollment_status,
             e.discount_percent, e.note as enrollment_note, s.*
