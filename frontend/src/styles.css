@@ -77,6 +77,7 @@ a { color: inherit; }
 .book-stamp span { margin: 0 !important; font-size: 12px !important; text-transform: uppercase; letter-spacing: 0.08em; }
 
 .stat-grid { display: grid; grid-template-columns: 1.12fr 0.88fr 1.12fr 0.88fr; gap: 14px; }
+.stat-grid--three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .stat-block { min-height: 132px; padding: 20px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--paper); box-shadow: 0 8px 28px rgba(38, 78, 132, 0.06); }
 .stat-block > span { width: 36px; height: 36px; display: grid; place-items: center; margin-bottom: 13px; border-radius: 10px; }
 .stat-block--blue > span { color: var(--accent-dark); background: var(--accent-soft); }
@@ -109,6 +110,13 @@ a { color: inherit; }
 .table-surface table { min-width: 850px; }
 .table-surface th { color: #53617a; background: #f6f9fc; font-size: 12px; font-weight: 700; }
 .table-surface td { padding-top: 13px; padding-bottom: 13px; color: #26334d; font-size: 13px; border-bottom-color: #e8eef5; }
+.student-table table { min-width: 980px; }
+.student-actions { display: flex; align-items: center; gap: 2px; }
+.student-dialog { width: min(760px, calc(100vw - 32px)) !important; max-width: 760px !important; max-height: min(860px, calc(100dvh - 32px)); overflow-y: auto; }
+.student-form textarea { min-height: 74px; }
+.delete-confirmation { margin: 8px 0 0; color: var(--muted); line-height: 1.6; }
+.danger-button { color: #fff !important; background: #a33a3a !important; }
+.danger-button:hover { background: #8c3030 !important; }
 .primary-cell { display: flex; align-items: center; gap: 11px; min-width: 180px; }
 .primary-cell strong, .primary-cell span, .stacked-cell strong, .stacked-cell span, .stacked-cell small { display: block; }
 .primary-cell > div > span, .stacked-cell small { margin-top: 3px; color: var(--muted); font-size: 11px; }

@@ -1,7 +1,7 @@
 import { Badge } from '@fluentui/react-components';
 
 const labels = {
-  active: 'Đang hoạt động', inactive: 'Ngừng hoạt động', paused: 'Tạm dừng',
+  active: 'Đang hoạt động', inactive: 'Ngừng hoạt động', paused: 'Tạm dừng', graduated: 'Đã tốt nghiệp',
   completed: 'Hoàn thành', cancelled: 'Đã hủy', studying: 'Đang học',
   unpaid: 'Chưa thanh toán', partial: 'Thanh toán một phần', paid: 'Đã thanh toán',
   available: 'Sẵn sàng', maintenance: 'Bảo trì', assigned: 'Đã giao',

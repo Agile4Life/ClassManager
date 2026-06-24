@@ -10,7 +10,6 @@ const DashboardPage = lazy(() => import('./pages/DashboardPage'));
 const StudentsPage = lazy(() => import('./pages/StudentsPage'));
 const ClassesPage = lazy(() => import('./pages/ClassesPage'));
 const TimetablePage = lazy(() => import('./pages/TimetablePage'));
-const FinancePage = lazy(() => import('./pages/FinancePage'));
 const ReportsPage = lazy(() => import('./pages/ReportsPage'));
 const ParentNotificationPage = lazy(() => import('./pages/ParentNotificationPage'));
 
@@ -24,7 +23,7 @@ export default function App() {
           <Route path="students" element={<StudentsPage />} />
           <Route path="classes" element={<ClassesPage />} />
           <Route path="timetable" element={<TimetablePage />} />
-          <Route path="finance" element={<FinancePage />} />
+          <Route path="finance" element={<Navigate to="/" replace />} />
           <Route path="reports" element={<ReportsPage />} />
           <Route path="parent-notifications" element={<ParentNotificationPage />} />
         </Route>

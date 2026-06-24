@@ -175,7 +175,7 @@ create table classes (
     room_id bigint references rooms(room_id),
 
     grade_level varchar(30),
-    max_students int not null default 20,
+    max_students int not null default 40,
     tuition_fee numeric(12,2) not null default 0,
 
     start_date date,

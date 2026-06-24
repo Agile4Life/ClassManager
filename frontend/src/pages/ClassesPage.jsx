@@ -12,9 +12,9 @@ import PageHeader from '../components/PageHeader';
 import Pagination from '../components/Pagination';
 import StatusBadge from '../components/StatusBadge';
 import { usePageData } from '../hooks/usePageData';
-import { formatCurrency, formatDate } from '../utils/format';
+import { formatDate } from '../utils/format';
 
-const initialForm = { class_code: '', class_name: '', subject_id: '', teacher_id: '', room_id: '', grade_level: '', max_students: '20', tuition_fee: '', start_date: '', end_date: '', status: 'active' };
+const initialForm = { class_code: '', class_name: '', subject_id: '', teacher_id: '', room_id: '', grade_level: '', status: 'active' };
 
 export default function ClassesPage() {
   const { user } = useAuth();
@@ -45,7 +45,8 @@ export default function ClassesPage() {
     event.preventDefault(); setSaving(true); setFormError('');
     try {
       const payload = Object.fromEntries(Object.entries(form).filter(([, value]) => value !== ''));
-      for (const key of ['subject_id', 'teacher_id', 'room_id', 'max_students', 'tuition_fee']) if (payload[key] !== undefined) payload[key] = Number(payload[key]);
+      for (const key of ['subject_id', 'teacher_id', 'room_id']) if (payload[key] !== undefined) payload[key] = Number(payload[key]);
+      payload.max_students = 40;
       await api.post('/classes', payload);
       setDialogOpen(false); setForm(initialForm); setPage(1); refresh();
     } catch (requestError) { setFormError(requestError.message); } finally { setSaving(false); }
@@ -57,10 +58,10 @@ export default function ClassesPage() {
       <form className="toolbar" onSubmit={(event) => { event.preventDefault(); setPage(1); setSearch(searchInput.trim()); }}><Input aria-label="Tìm lớp học" contentBefore={<Search24Regular />} placeholder="Tìm theo tên hoặc mã lớp" value={searchInput} onChange={(_, value) => setSearchInput(value.value)} /><Button type="submit">Tìm kiếm</Button></form>
       {loading && <LoadingState rows={7} />}{error && <ErrorState message={error} onRetry={refresh} />}
       {data && !data.classes.items.length && <EmptyState title="Chưa có lớp học" description="Tạo lớp đầu tiên để bắt đầu xếp lịch." />}
-      {data?.classes.items.length > 0 && <div className="table-surface"><Table aria-label="Danh sách lớp học"><TableHeader><TableRow><TableHeaderCell>Lớp</TableHeaderCell><TableHeaderCell>Môn học</TableHeaderCell><TableHeaderCell>Giáo viên</TableHeaderCell><TableHeaderCell>Thời gian</TableHeaderCell><TableHeaderCell>Học phí</TableHeaderCell><TableHeaderCell>Trạng thái</TableHeaderCell></TableRow></TableHeader><TableBody>{data.classes.items.map((item) => <TableRow key={item.class_id}>
+      {data?.classes.items.length > 0 && <div className="table-surface"><Table aria-label="Danh sách lớp học"><TableHeader><TableRow><TableHeaderCell>Lớp</TableHeaderCell><TableHeaderCell>Môn học</TableHeaderCell><TableHeaderCell>Giáo viên</TableHeaderCell><TableHeaderCell>Thời gian</TableHeaderCell><TableHeaderCell>Trạng thái</TableHeaderCell></TableRow></TableHeader><TableBody>{data.classes.items.map((item) => <TableRow key={item.class_id}>
         <TableCell><div className="primary-cell"><span className="class-code">{item.class_code}</span><div><strong>{item.class_name}</strong><span>{maps.rooms[item.room_id] || 'Chưa xếp phòng'}</span></div></div></TableCell>
         <TableCell>{maps.subjects[item.subject_id] || `Môn #${item.subject_id}`}</TableCell><TableCell>{maps.teachers[item.teacher_id] || 'Chưa phân công'}</TableCell>
-        <TableCell><div className="stacked-cell"><span>{formatDate(item.start_date)}</span><small>đến {formatDate(item.end_date)}</small></div></TableCell><TableCell>{formatCurrency(item.tuition_fee)}</TableCell><TableCell><StatusBadge status={item.status} /></TableCell>
+        <TableCell><div className="stacked-cell"><span>{formatDate(item.start_date)}</span><small>đến {formatDate(item.end_date)}</small></div></TableCell><TableCell><StatusBadge status={item.status} /></TableCell>
       </TableRow>)}</TableBody></Table><Pagination pagination={data.classes.pagination} onPageChange={setPage} /></div>}
 
       <Dialog open={dialogOpen} onOpenChange={(_, details) => setDialogOpen(details.open)}><DialogSurface><form onSubmit={createClass}><DialogBody><DialogTitle>Tạo lớp học mới</DialogTitle><DialogContent className="form-grid">
@@ -69,8 +70,6 @@ export default function ClassesPage() {
         <Field label="Môn học" required><Select value={form.subject_id} onChange={(event) => updateField('subject_id', event.target.value)}><option value="">Chọn môn học</option>{data?.subjects.map((item) => <option key={item.subject_id} value={item.subject_id}>{item.subject_name}</option>)}</Select></Field>
         <Field label="Giáo viên"><Select value={form.teacher_id} onChange={(event) => updateField('teacher_id', event.target.value)}><option value="">Chưa phân công</option>{data?.teachers.map((item) => <option key={item.teacher_id} value={item.teacher_id}>{item.full_name}</option>)}</Select></Field>
         <Field label="Phòng học"><Select value={form.room_id} onChange={(event) => updateField('room_id', event.target.value)}><option value="">Chưa xếp phòng</option>{data?.rooms.map((item) => <option key={item.room_id} value={item.room_id}>{item.room_name}</option>)}</Select></Field><Field label="Khối lớp"><Input value={form.grade_level} onChange={(_, value) => updateField('grade_level', value.value)} /></Field>
-        <Field label="Sĩ số tối đa"><Input type="number" min="1" value={form.max_students} onChange={(_, value) => updateField('max_students', value.value)} /></Field><Field label="Học phí"><Input type="number" min="0" value={form.tuition_fee} onChange={(_, value) => updateField('tuition_fee', value.value)} /></Field>
-        <Field label="Ngày bắt đầu"><Input type="date" value={form.start_date} onChange={(_, value) => updateField('start_date', value.value)} /></Field><Field label="Ngày kết thúc"><Input type="date" value={form.end_date} onChange={(_, value) => updateField('end_date', value.value)} /></Field>
       </DialogContent><DialogActions><Button appearance="secondary" onClick={() => setDialogOpen(false)}>Hủy</Button><Button appearance="primary" type="submit" disabled={saving || !form.class_code || !form.class_name || !form.subject_id}>{saving ? 'Đang tạo...' : 'Tạo lớp'}</Button></DialogActions></DialogBody></form></DialogSurface></Dialog>
     </div>
   );

@@ -19,6 +19,18 @@ function createCrudController(config) {
   [table, primaryKey, orderBy, ...columns, ...searchColumns, ...filterColumns]
     .forEach((identifier) => assertIdentifier(identifier, 'CRUD configuration identifier'));
 
+  async function assertRecordScope(req, id) {
+    if (!config.scope) return;
+    const values = [id];
+    const conditions = [`${primaryKey} = $1`];
+    config.scope(req, values, conditions);
+    const result = await pool.query(
+      `select 1 from ${table} where ${conditions.join(' and ')} limit 1`,
+      values,
+    );
+    if (!result.rowCount) throw new AppError(404, 'Record not found');
+  }
+
   const list = asyncHandler(async (req, res) => {
     const { limit, page, offset } = getPagination(req.query);
     const values = [];
@@ -71,6 +83,7 @@ function createCrudController(config) {
   });
 
   const update = asyncHandler(async (req, res) => {
+    await assertRecordScope(req, req.params.id);
     if (config.validate) config.validate(req.body, 'update');
     const query = buildUpdate(table, primaryKey, req.params.id, pick(req.body, columns));
     const result = await pool.query(query);
@@ -79,6 +92,7 @@ function createCrudController(config) {
   });
 
   const remove = asyncHandler(async (req, res) => {
+    await assertRecordScope(req, req.params.id);
     const result = await pool.query(`delete from ${table} where ${primaryKey} = $1 returning ${primaryKey}`, [req.params.id]);
     if (!result.rowCount) throw new AppError(404, 'Record not found');
     return success(res, result.rows[0], 'Record deleted successfully');

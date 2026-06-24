@@ -6,7 +6,8 @@ const { AppError } = require('../utils/errors');
 
 const managers = ['admin', 'staff'];
 
-function validateClass(body) {
+function validateClass(body, mode) {
+  if (mode === 'create' && body.max_students === undefined) body.max_students = 40;
   if (body.max_students !== undefined
       && (!Number.isInteger(Number(body.max_students)) || Number(body.max_students) <= 0)) {
     throw new AppError(400, 'max_students must be a positive integer');
@@ -49,6 +50,7 @@ const resources = {
     columns: ['student_code', 'full_name', 'date_of_birth', 'gender', 'phone', 'email', 'address', 'school_name', 'grade_level', 'status', 'note'],
     required: ['student_code', 'full_name'], searchColumns: ['student_code', 'full_name', 'phone', 'email'], filterColumns: ['status', 'grade_level'],
     readRoles: ['admin', 'staff', 'teacher'], writeRoles: managers,
+    updateRoles: [...managers, 'teacher'],
     scope: scopeStudents,
   },
   parents: {
@@ -92,9 +94,9 @@ function createResourceRouter(name) {
   router.use(requireAuth);
   router.get('/', requireRole(...config.readRoles), controller.list);
   router.get('/:id', requireRole(...config.readRoles), controller.getById);
-  router.post('/', requireRole(...config.writeRoles), controller.create);
-  router.put('/:id', requireRole(...config.writeRoles), controller.update);
-  router.delete('/:id', requireRole(...config.writeRoles), controller.remove);
+  router.post('/', requireRole(...(config.createRoles || config.writeRoles)), controller.create);
+  router.put('/:id', requireRole(...(config.updateRoles || config.writeRoles)), controller.update);
+  router.delete('/:id', requireRole(...(config.deleteRoles || config.writeRoles)), controller.remove);
   return router;
 }
 

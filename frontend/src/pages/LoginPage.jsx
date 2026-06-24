@@ -36,7 +36,7 @@ export default function LoginPage() {
         <div className="login-story__copy">
           <span className="school-label">Một lớp học gọn gàng hơn</span>
           <h1>Quản lý lớp học, nhẹ đầu hơn mỗi ngày.</h1>
-          <p>Lịch học, học sinh và học phí nằm cùng một nơi để thầy cô có thêm thời gian cho việc dạy.</p>
+          <p>Lịch học, lớp học và hồ sơ học sinh nằm cùng một nơi để thầy cô có thêm thời gian cho việc dạy.</p>
         </div>
         <div className="notebook-card" aria-hidden="true">
           <div className="notebook-card__line"><span>Thứ hai</span><strong>Toán 9</strong></div>
