@@ -2,7 +2,7 @@ import { useState } from 'react';
 import {
   Button, Dialog, DialogActions, DialogBody, DialogContent, DialogSurface, DialogTitle,
   Field, Input, MessageBar, MessageBarBody, Select, Table, TableBody, TableCell,
-  TableHeader, TableHeaderCell, TableRow, Textarea,
+  TableHeader, TableHeaderCell, TableRow, Combobox, Option
 } from '@fluentui/react-components';
 import { Add24Regular, Delete24Regular, Edit24Regular, Search24Regular } from '@fluentui/react-icons';
 import { api } from '../api/client';
@@ -16,7 +16,7 @@ import { formatDate } from '../utils/format';
 import { downloadStudentCsvTemplate, parseStudentCsv } from '../utils/student-csv';
 
 const initialForm = {
-  student_code: '', full_name: '', status: 'active', father_phone: '', mother_phone: '', student_phone: '',
+  student_code: '', full_name: '', status: 'active', father_phone: '', mother_phone: '', student_phone: '', class_id: null,
 };
 
 function studentToForm(student) {
@@ -54,6 +54,12 @@ export default function StudentsPage() {
     () => api.get(`/students?page=${page}&limit=10&search=${encodeURIComponent(search)}`).then((response) => response.data),
     [page, search],
   );
+
+  const { data: classesData } = usePageData(
+    () => api.get('/classes?limit=1000').then((response) => response.data),
+    [],
+  );
+  const classes = classesData?.items || [];
 
   function updateField(field, value) {
     setForm((current) => ({ ...current, [field]: value }));
@@ -209,6 +215,7 @@ export default function StudentsPage() {
               <TableHeaderCell>Học sinh</TableHeaderCell>
               <TableHeaderCell>Liên hệ</TableHeaderCell>
               <TableHeaderCell>Trạng thái</TableHeaderCell>
+              <TableHeaderCell>Lớp</TableHeaderCell>
               {(canEdit || canDelete) && <TableHeaderCell>Thao tác</TableHeaderCell>}
             </TableRow></TableHeader>
             <TableBody>{data.items.map((student) => (
@@ -216,6 +223,7 @@ export default function StudentsPage() {
                 <TableCell><div className="primary-cell"><span className="initial-tile">{student.full_name.slice(0, 1)}</span><div><strong>{student.full_name}</strong><span>{student.student_code}</span></div></div></TableCell>
                 <TableCell><div className="stacked-cell"><span>Số điện thoại ba: {student.father_phone || 'Chưa có'}</span><span>Số điện thoại mẹ: {student.mother_phone || 'Chưa có'}</span><span>Số điện thoại học sinh: {student.student_phone || 'Chưa có'}</span></div></TableCell>
                 <TableCell><StatusBadge status={student.status} /></TableCell>
+                <TableCell>{student.class_name || 'Không có lớp'}</TableCell>
                 {(canEdit || canDelete) && (
                   <TableCell>
                     <div className="student-actions">
@@ -241,6 +249,12 @@ export default function StudentsPage() {
             <Field label="Điện thoại ba"><Input value={form.father_phone} onChange={(_, dataValue) => updateField('father_phone', dataValue.value)} /></Field>
             <Field label="Điện thoại mẹ"><Input value={form.mother_phone} onChange={(_, dataValue) => updateField('mother_phone', dataValue.value)} /></Field>
             <Field label="Điện thoại học sinh"><Input value={form.student_phone} onChange={(_, dataValue) => updateField('student_phone', dataValue.value)} /></Field>
+            <Field label="Lớp">
+              <Select value={form.class_id || ''} onChange={(event) => updateField('class_id', event.target.value)}>
+                <option value="">Không có lớp</option>
+                {classes.map((c) => <option key={c.class_id} value={c.class_id}>{c.class_name}</option>)}
+              </Select>
+            </Field>
             <Field label="Trạng thái"><Select value={form.status} onChange={(event) => updateField('status', event.target.value)}><option value="active">Đang hoạt động</option><option value="inactive">Ngừng hoạt động</option><option value="paused">Tạm nghỉ</option><option value="graduated">Đã tốt nghiệp</option></Select></Field>
           </DialogContent>
           <DialogActions><Button type="button" appearance="secondary" disabled={saving} onClick={() => closeStudentDialog()}>Hủy</Button><Button appearance="primary" type="submit" disabled={saving || !form.full_name.trim() || (editingStudent && !form.student_code.trim())}>{saving ? 'Đang lưu...' : editingStudent ? 'Lưu thay đổi' : 'Lưu học sinh'}</Button></DialogActions>

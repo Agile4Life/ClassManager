@@ -14,7 +14,7 @@ export class ApiError extends Error {
 }
 
 export async function apiRequest(path, options = {}) {
-  const { timeoutMs = 15_000, signal: externalSignal, ...fetchOptions } = options;
+  const { timeoutMs = 60_000, signal: externalSignal, ...fetchOptions } = options;
   const token = localStorage.getItem('classmanager_token');
   const headers = new Headers(options.headers || {});
   if (options.body && !(options.body instanceof FormData)) headers.set('Content-Type', 'application/json');

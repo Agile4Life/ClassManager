@@ -93,7 +93,7 @@ const importStudents = asyncHandler(async (req, res) => {
              is_primary_contact = excluded.is_primary_contact`,
           [student.student_id, parentId, contact.relationship, contact.relationship === primaryRelationship],
         );
-        parentLinks += 1;
+        parentLinks += 1; console.log('Processed contact');
       }
     }
     await client.query('commit');
@@ -131,10 +131,13 @@ const list = asyncHandler(async (req, res) => {
   const query = `
     select s.student_id, s.student_code, s.full_name, s.phone as student_phone, s.status,
       max(case when sp.relationship = 'father' then p.phone end) as father_phone,
-      max(case when sp.relationship = 'mother' then p.phone end) as mother_phone
+      max(case when sp.relationship = 'mother' then p.phone end) as mother_phone,
+      max(c.class_id) as class_id, max(c.class_name) as class_name
     from students s
     left join student_parents sp on sp.student_id = s.student_id
     left join parents p on p.parent_id = sp.parent_id
+    left join enrollments e on e.student_id = s.student_id
+    left join classes c on c.class_id = e.class_id
     ${where}
     group by s.student_id
     order by s.student_id desc
@@ -152,10 +155,13 @@ const getById = asyncHandler(async (req, res) => {
   const result = await pool.query(`
     select s.student_id, s.student_code, s.full_name, s.phone as student_phone, s.status,
       max(case when sp.relationship = 'father' then p.phone end) as father_phone,
-      max(case when sp.relationship = 'mother' then p.phone end) as mother_phone
+      max(case when sp.relationship = 'mother' then p.phone end) as mother_phone,
+      max(c.class_id) as class_id, max(c.class_name) as class_name
     from students s
     left join student_parents sp on sp.student_id = s.student_id
     left join parents p on p.parent_id = sp.parent_id
+    left join enrollments e on e.student_id = s.student_id
+    left join classes c on c.class_id = e.class_id
     where s.student_id = $1
     group by s.student_id
   `, [req.params.id]);
@@ -164,7 +170,7 @@ const getById = asyncHandler(async (req, res) => {
 });
 
 const create = asyncHandler(async (req, res) => {
-  const { full_name, status, student_phone, father_phone, mother_phone } = req.body;
+  const { full_name, status, student_phone, father_phone, mother_phone, class_id } = req.body;
   if (!full_name) throw new AppError(400, 'full_name is required');
 
   const client = await pool.connect();
@@ -191,8 +197,12 @@ const create = asyncHandler(async (req, res) => {
       );
     }
     
+    if (class_id) {
+      await client.query(`insert into enrollments (student_id, class_id) values ($1, $2)`, [student.student_id, class_id]);
+    }
+
     await client.query('commit');
-    return success(res, { ...student, father_phone, mother_phone }, 'Record created successfully', 201);
+    return success(res, { ...student, father_phone, mother_phone, class_id }, 'Record created successfully', 201);
   } catch (error) {
     await client.query('rollback');
     throw error;
@@ -202,7 +212,7 @@ const create = asyncHandler(async (req, res) => {
 });
 
 const update = asyncHandler(async (req, res) => {
-  const { full_name, status, student_phone, father_phone, mother_phone } = req.body;
+  const { full_name, status, student_phone, father_phone, mother_phone, class_id } = req.body;
   if (!full_name) throw new AppError(400, 'full_name is required');
 
   const client = await pool.connect();
@@ -231,8 +241,13 @@ const update = asyncHandler(async (req, res) => {
       );
     }
     
+    await client.query(`delete from enrollments where student_id = $1`, [student.student_id]);
+    if (class_id) {
+      await client.query(`insert into enrollments (student_id, class_id) values ($1, $2)`, [student.student_id, class_id]);
+    }
+
     await client.query('commit');
-    return success(res, { ...student, father_phone, mother_phone }, 'Record updated successfully');
+    return success(res, { ...student, father_phone, mother_phone, class_id }, 'Record updated successfully');
   } catch (error) {
     await client.query('rollback');
     throw error;
