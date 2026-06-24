@@ -2,7 +2,9 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Button, Checkbox, Field, Input, MessageBar, MessageBarBody, Select, Textarea,
 } from '../components/bootstrap-ui';
-import { Add24Regular, Copy24Regular, Delete24Regular, Print24Regular } from '../components/bootstrap-icons';
+import {
+  Add24Regular, Copy24Regular, Delete24Regular, Print24Regular, Search24Regular,
+} from '../components/bootstrap-icons';
 import { Navigate } from 'react-router-dom';
 import { api } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
@@ -15,6 +17,82 @@ import {
 } from '../utils/parent-notification';
 
 const allowedRoles = ['admin', 'staff', 'teacher'];
+
+function normalizeSearchText(value) {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd')
+    .replace(/Đ/g, 'D')
+    .toLowerCase()
+    .trim();
+}
+
+function StudentPicker({ students, selectedStudentIds, onToggle, onSelectAll, onClear, labelledBy }) {
+  const [query, setQuery] = useState('');
+  const normalizedQuery = normalizeSearchText(query);
+  const visibleStudents = useMemo(
+    () => students.filter((student) => normalizeSearchText(student.full_name).includes(normalizedQuery)),
+    [normalizedQuery, students],
+  );
+
+  return (
+    <div className="student-picker" role="group" aria-labelledby={labelledBy}>
+      <div className="student-picker__toolbar">
+        <div className="student-picker__summary" aria-live="polite">
+          <span>Đã chọn</span>
+          <strong>{selectedStudentIds.size}</strong>
+          <span>/ {students.length} học sinh</span>
+        </div>
+        <div className="student-picker__actions">
+          <Button
+            appearance="subtle"
+            size="small"
+            disabled={!students.length || selectedStudentIds.size === students.length}
+            onClick={onSelectAll}
+          >
+            Chọn tất cả
+          </Button>
+          <Button appearance="subtle" size="small" disabled={!selectedStudentIds.size} onClick={onClear}>
+            Bỏ chọn
+          </Button>
+        </div>
+      </div>
+
+      <div className="student-picker__search">
+        <Input
+          type="search"
+          value={query}
+          contentBefore={<Search24Regular />}
+          aria-label="Tìm học sinh theo tên"
+          placeholder="Tìm theo tên học sinh..."
+          onChange={(_, data) => setQuery(data.value)}
+        />
+        {query && <span className="student-picker__result-count">{visibleStudents.length} kết quả</span>}
+      </div>
+
+      <div className="student-picker__list">
+        {visibleStudents.map((student) => {
+          const studentId = String(student.student_id);
+          const checked = selectedStudentIds.has(studentId);
+          return (
+            <Checkbox
+              className={checked ? 'student-picker__option student-picker__option--selected' : 'student-picker__option'}
+              key={studentId}
+              checked={checked}
+              label={student.full_name}
+              onChange={(_, data) => onToggle(studentId, data.checked === true)}
+            />
+          );
+        })}
+        {!students.length && <span className="student-picker__empty">Lớp chưa có học sinh đang học.</span>}
+        {!!students.length && !visibleStudents.length && (
+          <span className="student-picker__empty">Không tìm thấy học sinh phù hợp.</span>
+        )}
+      </div>
+    </div>
+  );
+}
 
 export default function ParentNotificationPage() {
   const { user } = useAuth();
@@ -240,45 +318,19 @@ export default function ParentNotificationPage() {
                           </Select>
                         </Field>
                         {line.audience === 'students' && (
-                          <Field className="notification-line__wide" label="Học sinh" required>
-                            <div className="student-picker" role="group" aria-label={`Chọn học sinh cho dòng ${index + 1}`}>
-                              <div className="student-picker__toolbar">
-                                <span>Đã chọn <strong>{line.studentIds.length}</strong>/{context.students.length}</span>
-                                <div>
-                                  <Button
-                                    appearance="subtle"
-                                    size="small"
-                                    disabled={!context.students.length || line.studentIds.length === context.students.length}
-                                    onClick={() => updateLine(line.id, { studentIds: context.students.map((student) => String(student.student_id)) })}
-                                  >
-                                    Chọn tất cả
-                                  </Button>
-                                  <Button
-                                    appearance="subtle"
-                                    size="small"
-                                    disabled={!line.studentIds.length}
-                                    onClick={() => updateLine(line.id, { studentIds: [] })}
-                                  >
-                                    Bỏ chọn
-                                  </Button>
-                                </div>
-                              </div>
-                              <div className="student-picker__list">
-                                {context.students.map((student) => {
-                                  const studentId = String(student.student_id);
-                                  return (
-                                    <Checkbox
-                                      key={studentId}
-                                      checked={selectedStudentIds.has(studentId)}
-                                      label={student.full_name}
-                                      onChange={(_, data) => toggleStudent(line.id, studentId, data.checked === true)}
-                                    />
-                                  );
-                                })}
-                                {!context.students.length && <span className="student-picker__empty">Lớp chưa có học sinh đang học.</span>}
-                              </div>
-                            </div>
-                          </Field>
+                          <div className="form-field notification-line__wide">
+                            <span className="form-label" id={`student-picker-label-${line.id}`}>
+                              Học sinh<span className="required-mark" aria-hidden="true">*</span>
+                            </span>
+                            <StudentPicker
+                              students={context.students}
+                              selectedStudentIds={selectedStudentIds}
+                              labelledBy={`student-picker-label-${line.id}`}
+                              onToggle={(studentId, checked) => toggleStudent(line.id, studentId, checked)}
+                              onSelectAll={() => updateLine(line.id, { studentIds: context.students.map((student) => String(student.student_id)) })}
+                              onClear={() => updateLine(line.id, { studentIds: [] })}
+                            />
+                          </div>
                         )}
                         <Field label="Ghi chú sau tên" hint="Ví dụ: quên tập">
                           <Input value={line.studentNote} onChange={(_, data) => updateLine(line.id, { studentNote: data.value })} />
