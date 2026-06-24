@@ -231,9 +231,9 @@ export default function ParentNotificationPage() {
               {context.assignments.map((item) => <option key={item.assignment_id} value={item.assignment_id}>{item.title}</option>)}
             </Select>
           </Field>
-          <div className="notification-context__count">
+          <div className="notification-context__count" role="status" aria-live="polite">
             <span>Sĩ số đang học</span>
-            <strong>{context.students.length}</strong>
+            <div><strong>{context.students.length}</strong><small>học sinh</small></div>
           </div>
         </section>
       )}

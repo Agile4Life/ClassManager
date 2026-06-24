@@ -150,16 +150,26 @@ a { color: inherit; }
 .day-column__empty { min-height: 100px; display: grid; place-content: center; justify-items: center; gap: 7px; color: #9aa6b9; font-size: 11px; }
 
 .notification-context {
-  display: grid; grid-template-columns: minmax(240px, 1fr) minmax(240px, 1fr) 130px;
-  align-items: end; gap: 16px; padding: 20px; border: 1px solid var(--line);
+  display: grid; grid-template-columns: repeat(2, minmax(240px, 1fr)) minmax(150px, 0.22fr);
+  align-items: start; gap: 20px; padding: 22px 24px; border: 1px solid var(--line);
   border-radius: var(--radius); background: var(--paper);
 }
-.notification-context__count {
-  min-height: 58px; display: flex; align-items: center; justify-content: space-between; gap: 12px;
-  padding: 10px 14px; color: var(--muted); border-radius: var(--radius-control); background: var(--paper-blue);
-  font-size: 12px;
+.notification-context .fui-Field {
+  min-width: 0; grid-template-rows: auto 44px 18px; align-self: start;
 }
-.notification-context__count strong { color: var(--accent-dark); font-size: 24px; }
+.notification-context .fui-Field__label { margin-bottom: 6px; font-weight: 600; }
+.notification-context .fui-Select { width: 100%; min-width: 0; min-height: 44px; }
+.notification-context .fui-Field__hint { margin-top: 5px; font-size: 12px; line-height: 1.2; }
+.notification-context__count {
+  min-width: 0; display: grid; grid-template-rows: auto 44px 18px; align-self: start;
+}
+.notification-context__count > span { margin-bottom: 6px; color: var(--ink); font-size: 14px; font-weight: 600; }
+.notification-context__count > div {
+  min-height: 44px; display: flex; align-items: baseline; justify-content: space-between; gap: 8px;
+  padding: 7px 13px; border: 1px solid #d5e1ef; border-radius: var(--radius-control); background: var(--paper-blue);
+}
+.notification-context__count strong { color: var(--accent-dark); font-size: 24px; line-height: 1; }
+.notification-context__count small { color: var(--muted); font-size: 11px; white-space: nowrap; }
 .missing-homework-message { display: flex; align-items: center; justify-content: space-between; gap: 16px; width: 100%; }
 .notification-workspace { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(360px, 0.8fr); gap: 18px; align-items: start; }
 .notification-editor, .notification-preview {
@@ -457,7 +467,8 @@ a { color: inherit; }
     border-radius: 14px;
   }
   .notification-context .fui-Field, .notification-context .fui-Select { width: 100%; min-width: 0; }
-  .notification-context__count { min-height: 50px; padding: 8px 12px; }
+  .notification-context__count { min-height: 0; }
+  .notification-context__count > div { padding: 7px 12px; }
   .notification-context__count strong { font-size: 22px; }
   .notification-workspace { min-width: 0; gap: 14px; }
   .notification-editor, .notification-preview {
