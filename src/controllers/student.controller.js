@@ -172,7 +172,7 @@ const create = asyncHandler(async (req, res) => {
     await client.query('begin');
     const student_code = await generateNextCode(client, { table: 'students', column: 'student_code', prefix: 'S', digits: 3 });
     const result = await client.query(
-      \`insert into students (student_code, full_name, status, phone) values ($1, $2, $3, $4) returning student_id, student_code, full_name, status, phone as student_phone\`,
+      `insert into students (student_code, full_name, status, phone) values ($1, $2, $3, $4) returning student_id, student_code, full_name, status, phone as student_phone`,
       [student_code, full_name, status || 'active', student_phone || null]
     );
     const student = result.rows[0];
@@ -183,10 +183,10 @@ const create = asyncHandler(async (req, res) => {
     ].filter((contact) => contact.phone);
     const primaryRelationship = contacts.some((contact) => contact.relationship === 'mother') ? 'mother' : 'father';
     for (const contact of contacts) {
-      await client.query('select pg_advisory_xact_lock(hashtext($1))', [\`parent-contact:\${contact.relationship}:\${contact.phone}\`]);
+      await client.query('select pg_advisory_xact_lock(hashtext($1))', [`parent-contact:${contact.relationship}:${contact.phone}`]);
       const parentId = await getOrCreateParent(client, { ...contact, studentName: full_name });
       await client.query(
-        \`insert into student_parents (student_id, parent_id, relationship, is_primary_contact) values ($1, $2, $3, $4)\`,
+        `insert into student_parents (student_id, parent_id, relationship, is_primary_contact) values ($1, $2, $3, $4)`,
         [student.student_id, parentId, contact.relationship, contact.relationship === primaryRelationship]
       );
     }
@@ -209,13 +209,13 @@ const update = asyncHandler(async (req, res) => {
   try {
     await client.query('begin');
     const result = await client.query(
-      \`update students set full_name = $1, status = $2, phone = $3 where student_id = $4 returning student_id, student_code, full_name, status, phone as student_phone\`,
+      `update students set full_name = $1, status = $2, phone = $3 where student_id = $4 returning student_id, student_code, full_name, status, phone as student_phone`,
       [full_name, status || 'active', student_phone || null, req.params.id]
     );
     if (!result.rowCount) throw new AppError(404, 'Record not found');
     const student = result.rows[0];
 
-    await client.query(\`delete from student_parents where student_id = $1\`, [student.student_id]);
+    await client.query(`delete from student_parents where student_id = $1`, [student.student_id]);
 
     const contacts = [
       { phone: father_phone, relationship: 'father' },
@@ -223,10 +223,10 @@ const update = asyncHandler(async (req, res) => {
     ].filter((contact) => contact.phone);
     const primaryRelationship = contacts.some((contact) => contact.relationship === 'mother') ? 'mother' : 'father';
     for (const contact of contacts) {
-      await client.query('select pg_advisory_xact_lock(hashtext($1))', [\`parent-contact:\${contact.relationship}:\${contact.phone}\`]);
+      await client.query('select pg_advisory_xact_lock(hashtext($1))', [`parent-contact:${contact.relationship}:${contact.phone}`]);
       const parentId = await getOrCreateParent(client, { ...contact, studentName: full_name });
       await client.query(
-        \`insert into student_parents (student_id, parent_id, relationship, is_primary_contact) values ($1, $2, $3, $4)\`,
+        `insert into student_parents (student_id, parent_id, relationship, is_primary_contact) values ($1, $2, $3, $4)`,
         [student.student_id, parentId, contact.relationship, contact.relationship === primaryRelationship]
       );
     }
@@ -242,7 +242,7 @@ const update = asyncHandler(async (req, res) => {
 });
 
 const remove = asyncHandler(async (req, res) => {
-  const result = await pool.query(\`delete from students where student_id = $1 returning student_id\`, [req.params.id]);
+  const result = await pool.query(`delete from students where student_id = $1 returning student_id`, [req.params.id]);
   if (!result.rowCount) throw new AppError(404, 'Record not found');
   return success(res, result.rows[0], 'Record deleted successfully');
 });
