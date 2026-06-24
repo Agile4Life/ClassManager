@@ -1,8 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Button, Checkbox, Field, MessageBar, MessageBarBody, Select } from '@fluentui/react-components';
-import {
-  CheckmarkCircle24Regular, DismissCircle24Regular, Save24Regular,
-} from '@fluentui/react-icons';
+import { Button, Field, MessageBar, MessageBarBody, Radio, Select } from '@fluentui/react-components';
+import { Save24Regular } from '@fluentui/react-icons';
 import { Navigate } from 'react-router-dom';
 import { api } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
@@ -36,7 +34,6 @@ function AttendanceWorkspace({ user }) {
   const [sessions, setSessions] = useState([]);
   const [students, setStudents] = useState([]);
   const [attendance, setAttendance] = useState({});
-  const [selectedIds, setSelectedIds] = useState(() => new Set());
   const [sessionsLoading, setSessionsLoading] = useState(false);
   const [attendanceLoading, setAttendanceLoading] = useState(false);
   const [loadError, setLoadError] = useState('');
@@ -81,7 +78,6 @@ function AttendanceWorkspace({ user }) {
     if (!classId || !sessionId) {
       setStudents([]);
       setAttendance({});
-      setSelectedIds(new Set());
       return undefined;
     }
     let active = true;
@@ -102,7 +98,6 @@ function AttendanceWorkspace({ user }) {
         setAttendance(Object.fromEntries(activeStudents.map((student) => [
           String(student.student_id), savedByStudent.get(String(student.student_id)) || 'present',
         ])));
-        setSelectedIds(new Set());
       })
       .catch((requestError) => active && setLoadError(requestError.message))
       .finally(() => active && setAttendanceLoading(false));
@@ -114,30 +109,8 @@ function AttendanceWorkspace({ user }) {
     result[status] += 1;
     return result;
   }, { present: 0, absent: 0 }), [attendance]);
-  const allSelected = students.length > 0 && selectedIds.size === students.length;
-  const selectionState = allSelected ? true : selectedIds.size ? 'mixed' : false;
-
-  function toggleStudent(studentId, checked) {
-    setSelectedIds((current) => {
-      const next = new Set(current);
-      if (checked) next.add(String(studentId));
-      else next.delete(String(studentId));
-      return next;
-    });
-  }
-
-  function toggleAll(checked) {
-    setSelectedIds(checked ? new Set(students.map((student) => String(student.student_id))) : new Set());
-  }
-
-  function applyStatus(status) {
-    if (!selectedIds.size) return;
-    setAttendance((current) => {
-      const next = { ...current };
-      selectedIds.forEach((studentId) => { next[studentId] = status; });
-      return next;
-    });
-    setSelectedIds(new Set());
+  function setStudentStatus(studentId, status) {
+    setAttendance((current) => ({ ...current, [String(studentId)]: status }));
     setSaveMessage('');
   }
 
@@ -163,7 +136,7 @@ function AttendanceWorkspace({ user }) {
 
   return (
     <div className="page-flow attendance-page">
-      <PageHeader title="Điểm danh" description="Chọn học sinh, sau đó đánh dấu có mặt hoặc vắng mặt cho buổi học." />
+      <PageHeader title="Điểm danh" description="Tất cả học sinh mặc định có mặt. Chỉ cần đánh dấu những em vắng rồi lưu." />
 
       {classesLoading && <LoadingState rows={3} />}
       {classesError && <ErrorState message={classesError} onRetry={refreshClasses} />}
@@ -200,19 +173,6 @@ function AttendanceWorkspace({ user }) {
 
       {sessionId && !attendanceLoading && !loadError && (
         <section className="attendance-surface" aria-label="Danh sách điểm danh">
-          <div className="attendance-toolbar">
-            <Checkbox
-              checked={selectionState}
-              label={allSelected ? 'Bỏ chọn tất cả' : `Chọn tất cả (${students.length})`}
-              onChange={(_, data) => toggleAll(data.checked === true)}
-            />
-            <div className="attendance-bulk-actions">
-              <span>Đã chọn {selectedIds.size} học sinh</span>
-              <Button className="attendance-present-button" icon={<CheckmarkCircle24Regular />} disabled={!selectedIds.size} onClick={() => applyStatus('present')}>Có mặt</Button>
-              <Button className="attendance-absent-button" icon={<DismissCircle24Regular />} disabled={!selectedIds.size} onClick={() => applyStatus('absent')}>Vắng mặt</Button>
-            </div>
-          </div>
-
           <div className="attendance-summary" aria-label="Tổng hợp điểm danh">
             <span><strong>{counts.present}</strong> có mặt</span>
             <span><strong>{counts.absent}</strong> vắng mặt</span>
@@ -221,15 +181,36 @@ function AttendanceWorkspace({ user }) {
           {!students.length && <EmptyState title="Lớp chưa có học sinh" description="Chỉ học sinh đang học mới xuất hiện trong danh sách điểm danh." />}
           {students.length > 0 && (
             <div className="attendance-list">
+              <div className="attendance-list-header" aria-hidden="true">
+                <span>Học sinh</span>
+                <span>Có mặt</span>
+                <span>Vắng mặt</span>
+              </div>
               {students.map((student) => {
                 const studentId = String(student.student_id);
                 const status = attendance[studentId];
                 return (
                   <div className={`attendance-row attendance-row--${status}`} key={studentId}>
-                    <Checkbox checked={selectedIds.has(studentId)} aria-label={`Chọn ${student.full_name}`} onChange={(_, data) => toggleStudent(studentId, data.checked === true)} />
-                    <span className="initial-tile">{student.full_name.slice(0, 1)}</span>
-                    <div className="attendance-student"><strong>{student.full_name}</strong><span>{student.student_code}</span></div>
-                    <span className={`attendance-status attendance-status--${status}`}>{status === 'absent' ? 'Vắng mặt' : 'Có mặt'}</span>
+                    <div className="attendance-student-cell">
+                      <span className="initial-tile">{student.full_name.slice(0, 1)}</span>
+                      <div className="attendance-student"><strong>{student.full_name}</strong><span>{student.student_code}</span></div>
+                    </div>
+                    <div className="attendance-choice attendance-choice--present">
+                      <Radio
+                        name={`attendance-${studentId}`}
+                        checked={status === 'present'}
+                        aria-label={`${student.full_name} có mặt`}
+                        onChange={() => setStudentStatus(studentId, 'present')}
+                      />
+                    </div>
+                    <div className="attendance-choice attendance-choice--absent">
+                      <Radio
+                        name={`attendance-${studentId}`}
+                        checked={status === 'absent'}
+                        aria-label={`${student.full_name} vắng mặt`}
+                        onChange={() => setStudentStatus(studentId, 'absent')}
+                      />
+                    </div>
                   </div>
                 );
               })}
