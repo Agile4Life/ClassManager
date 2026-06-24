@@ -347,13 +347,54 @@ a { color: inherit; }
   .form-grid__wide { grid-column: auto; }
   .login-story__copy { margin-top: 56px; }
   .login-story p { font-size: 15px; }
-  .notification-context { grid-template-columns: 1fr; }
-  .notification-line__grid { grid-template-columns: 1fr; }
-  .notification-line__wide { grid-column: auto; }
-  .student-picker__list { grid-template-columns: 1fr; }
-  .student-picker__toolbar { align-items: flex-start; flex-direction: column; padding: 9px 10px; }
+  .parent-notification-page { min-width: 0; gap: 16px; }
+  .parent-notification-page > * { min-width: 0; }
+  .parent-notification-page .page-header { min-height: 0; gap: 8px; }
+  .parent-notification-page .page-header h1 { max-width: 100%; font-size: 28px; line-height: 1.08; overflow-wrap: anywhere; }
+  .parent-notification-page .page-header p { max-width: 100%; margin-top: 7px; font-size: 13px; line-height: 1.5; }
+  .notification-context {
+    grid-template-columns: minmax(0, 1fr); gap: 12px; padding: 14px;
+    border-radius: 14px;
+  }
+  .notification-context .fui-Field, .notification-context .fui-Select { width: 100%; min-width: 0; }
+  .notification-context__count { min-height: 50px; padding: 8px 12px; }
+  .notification-context__count strong { font-size: 22px; }
+  .notification-workspace { min-width: 0; gap: 14px; }
+  .notification-editor, .notification-preview {
+    min-width: 0; padding: 14px; border-radius: 14px; box-shadow: 0 5px 18px rgba(38, 78, 132, 0.055);
+  }
   .notification-section-heading, .missing-homework-message { align-items: stretch; flex-direction: column; }
-  .notification-preview__actions { display: grid; }
+  .notification-section-heading { gap: 12px; }
+  .notification-section-heading > div, .missing-homework-message > span { min-width: 0; overflow-wrap: anywhere; }
+  .notification-section-heading h2 { font-size: 18px; }
+  .notification-section-heading .fui-Button, .missing-homework-message .fui-Button { width: 100%; }
+  .notification-lines { gap: 12px; margin-top: 14px; }
+  .notification-line { min-width: 0; padding: 12px; border-radius: 12px; }
+  .notification-line__heading { margin-bottom: 10px; }
+  .notification-line__heading .fui-Button { width: 44px; min-width: 44px; padding: 0; }
+  .notification-line__grid { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .notification-line__wide { grid-column: auto; }
+  .notification-line .fui-Field, .notification-line .fui-Input,
+  .notification-line .fui-Select, .notification-line .fui-Textarea { width: 100%; min-width: 0; }
+  .student-picker { min-width: 0; }
+  .student-picker__toolbar { align-items: stretch; flex-direction: column; gap: 8px; padding: 9px 10px; }
+  .student-picker__toolbar > div { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; width: 100%; }
+  .student-picker__toolbar .fui-Button { width: 100%; min-width: 0; padding-inline: 8px; white-space: nowrap; }
+  .student-picker__list {
+    max-height: min(280px, 40dvh); grid-template-columns: minmax(0, 1fr); gap: 2px;
+    padding: 7px 9px; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
+  }
+  .student-picker__list .fui-Checkbox { min-height: 44px; padding: 5px 2px; }
+  .student-picker__list .fui-Checkbox__label {
+    min-width: 0; overflow: visible; text-overflow: clip; white-space: normal; line-height: 1.35; overflow-wrap: anywhere;
+  }
+  .notification-preview__text { width: 100%; min-width: 0; margin-top: 14px; }
+  .notification-preview__text textarea { min-height: 280px; padding: 12px; font-size: 16px; line-height: 1.55; }
+  .notification-preview__actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .notification-preview__actions .fui-Button { width: 100%; min-width: 0; }
+  .parent-notification-page .fui-MessageBar { min-width: 0; }
+  .parent-notification-page button, .parent-notification-page input,
+  .parent-notification-page select, .parent-notification-page textarea { touch-action: manipulation; }
   .attendance-context { grid-template-columns: 1fr; }
   .attendance-session-summary { grid-column: auto; }
   .attendance-save-bar { align-items: stretch; flex-direction: column; }
@@ -365,11 +406,28 @@ a { color: inherit; }
   .attendance-save-bar .fui-Button { width: 100%; }
 }
 
+@media (orientation: landscape) and (max-width: 960px) and (max-height: 500px) {
+  .parent-notification-page .fui-Button { min-height: 44px; }
+  .parent-notification-page .fui-Input, .parent-notification-page .fui-Select { min-height: 44px; }
+  .parent-notification-page .fui-Input input, .parent-notification-page .fui-Select select,
+  .parent-notification-page textarea { font-size: 16px; }
+  .notification-context { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; padding: 14px; }
+  .notification-context__count { grid-column: 1 / -1; min-height: 48px; }
+  .notification-editor, .notification-preview { padding: 16px; }
+  .student-picker__list { max-height: 180px; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+  .notification-preview__text textarea { min-height: 220px; }
+}
+
 @media (max-width: 360px) {
   .stat-grid { grid-template-columns: 1fr; }
   .welcome-strip h1 { font-size: 30px; }
   .login-story h1 { font-size: 34px; }
   .page-container { padding-left: 12px; padding-right: 12px; }
+  .parent-notification-page .page-header h1 { font-size: 25px; }
+  .notification-context, .notification-editor, .notification-preview { padding: 12px; }
+  .notification-line { padding: 10px; }
+  .student-picker__toolbar > div, .notification-preview__actions { grid-template-columns: 1fr; }
+  .notification-preview__text textarea { min-height: 240px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
