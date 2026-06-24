@@ -65,7 +65,7 @@ Run this file after `schema.sql`.
 
 ### `migrations/20260624_learning_history.sql`
 
-Run this file once when upgrading an existing database to add learning-history tracking. It only adds columns, a table, and indexes; it does not delete current data. A new database created from the latest `schema.sql` does not need this migration.
+Run this file once when upgrading an existing database to add learning-history tracking. It only adds the history table and indexes; it does not delete current data. A new database created from the latest `schema.sql` does not need this migration.
 
 ---
 

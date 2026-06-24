@@ -1,19 +1,13 @@
-export const STUDENT_CSV_HEADERS = [
-  'full_name', 'date_of_birth', 'gender', 'phone', 'email',
-  'address', 'school_name', 'grade_level', 'status', 'note',
-];
+export const STUDENT_CSV_HEADERS = ['full_name', 'father_phone', 'mother_phone', 'student_phone'];
 
 const HEADER_ALIASES = {
   full_name: 'full_name', ho_va_ten: 'full_name', ten_hoc_sinh: 'full_name',
-  date_of_birth: 'date_of_birth', ngay_sinh: 'date_of_birth',
-  gender: 'gender', gioi_tinh: 'gender',
-  phone: 'phone', so_dien_thoai: 'phone', dien_thoai: 'phone',
-  email: 'email',
-  address: 'address', dia_chi: 'address',
-  school_name: 'school_name', truong_hoc: 'school_name', truong: 'school_name',
-  grade_level: 'grade_level', khoi_lop: 'grade_level', khoi: 'grade_level',
-  status: 'status', trang_thai: 'status',
-  note: 'note', ghi_chu: 'note',
+  father_phone: 'father_phone', dt_ba: 'father_phone', sdt_ba: 'father_phone',
+  dien_thoai_ba: 'father_phone', so_dien_thoai_ba: 'father_phone',
+  mother_phone: 'mother_phone', dt_me: 'mother_phone', sdt_me: 'mother_phone',
+  dien_thoai_me: 'mother_phone', so_dien_thoai_me: 'mother_phone',
+  student_phone: 'student_phone', phone: 'student_phone', dt_hoc_sinh: 'student_phone',
+  sdt_hoc_sinh: 'student_phone', dien_thoai_hoc_sinh: 'student_phone', so_dien_thoai_hoc_sinh: 'student_phone',
 };
 
 function normalizeKey(value) {
@@ -74,40 +68,16 @@ function parseMatrix(text) {
   return matrix;
 }
 
-function normalizeDate(value) {
-  const text = value.trim();
-  const match = text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-  return match ? `${match[3]}-${match[2].padStart(2, '0')}-${match[1].padStart(2, '0')}` : text;
-}
-
-function normalizeGender(value) {
-  const key = normalizeKey(value);
-  return { nam: 'male', male: 'male', nu: 'female', female: 'female', khac: 'other', other: 'other' }[key] || key;
-}
-
-function normalizeStatus(value) {
-  const key = normalizeKey(value);
-  return {
-    active: 'active', dang_hoat_dong: 'active',
-    inactive: 'inactive', ngung_hoat_dong: 'inactive',
-    paused: 'paused', tam_nghi: 'paused',
-    graduated: 'graduated', da_tot_nghiep: 'graduated',
-  }[key] || key;
+function isValidPhone(phone) {
+  return !phone || (/^[+0-9][0-9 .()-]{7,19}$/.test(phone) && phone.length <= 20);
 }
 
 function validateRow(row, rowNumber) {
   const errors = [];
   if (row.full_name.length < 2 || row.full_name.length > 100) errors.push('Họ và tên phải có 2-100 ký tự');
-  if (row.date_of_birth) {
-    const date = new Date(`${row.date_of_birth}T00:00:00.000Z`);
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(row.date_of_birth)
-        || Number.isNaN(date.getTime()) || date.toISOString().slice(0, 10) !== row.date_of_birth) {
-      errors.push('Ngày sinh phải là ngày hợp lệ theo YYYY-MM-DD');
-    }
-  }
-  if (row.gender && !['male', 'female', 'other'].includes(row.gender)) errors.push('Giới tính không hợp lệ');
-  if (row.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(row.email)) errors.push('Email không hợp lệ');
-  if (row.status && !['active', 'inactive', 'paused', 'graduated'].includes(row.status)) errors.push('Trạng thái không hợp lệ');
+  if (!isValidPhone(row.father_phone)) errors.push('Điện thoại ba không hợp lệ');
+  if (!isValidPhone(row.mother_phone)) errors.push('Điện thoại mẹ không hợp lệ');
+  if (!isValidPhone(row.student_phone)) errors.push('Điện thoại học sinh không hợp lệ');
   return errors.map((message) => `Dòng ${rowNumber}: ${message}`);
 }
 
@@ -124,9 +94,6 @@ export function parseStudentCsv(text) {
     headers.forEach((header, index) => {
       if (STUDENT_CSV_HEADERS.includes(header)) row[header] = String(values[index] || '').trim();
     });
-    row.date_of_birth = normalizeDate(row.date_of_birth);
-    row.gender = normalizeGender(row.gender);
-    row.status = row.status ? normalizeStatus(row.status) : 'active';
     return row;
   });
   const errors = rows.flatMap((row, index) => validateRow(row, index + 2));
@@ -139,10 +106,7 @@ function escapeCsv(value) {
 }
 
 export function downloadStudentCsvTemplate() {
-  const sample = [
-    'Nguyễn Văn An', '2010-05-12', 'male', '0901234567', 'an@example.com',
-    'Quận 1, TP.HCM', 'THCS Nguyễn Du', 'Khối 9', 'active', '',
-  ];
+  const sample = ['Nguyễn Văn An', '0901111111', '0902222222', '0903333333'];
   const csv = `\uFEFF${STUDENT_CSV_HEADERS.join(',')}\r\n${sample.map(escapeCsv).join(',')}\r\n`;
   const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
   const anchor = document.createElement('a');

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import {
   Badge, Button, Dialog, DialogActions, DialogBody, DialogContent, DialogSurface, DialogTitle,
   Field, Input, MessageBar, MessageBarBody, Select, Table, TableBody, TableCell, TableHeader,
@@ -15,10 +15,9 @@ import { usePageData } from '../hooks/usePageData';
 
 const roleLabels = { admin: 'Quản trị viên', staff: 'Nhân viên', teacher: 'Giáo viên', student: 'Học sinh', parent: 'Phụ huynh' };
 const statusLabels = { active: 'Hoạt động', inactive: 'Ngừng hoạt động', locked: 'Đã khóa' };
-const linkedRoles = ['teacher', 'student', 'parent'];
 const initialCreateForm = {
   role: 'student', username: '', password: '', status: 'active',
-  full_name: '', phone: '', email: '', link_id: '',
+  full_name: '', phone: '', email: '',
 };
 const dateTimeFormatter = new Intl.DateTimeFormat('vi-VN', { dateStyle: 'short', timeStyle: 'short' });
 
@@ -40,6 +39,7 @@ function AccountsWorkspace({ currentUser }) {
   const [status, setStatus] = useState('');
   const [createOpen, setCreateOpen] = useState(false);
   const [createForm, setCreateForm] = useState(initialCreateForm);
+  const [createPasswordConfirmation, setCreatePasswordConfirmation] = useState('');
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState('');
   const [actionError, setActionError] = useState('');
@@ -58,24 +58,8 @@ function AccountsWorkspace({ currentUser }) {
     () => api.get(`/admin/accounts?page=${page}&limit=15&search=${encodeURIComponent(search)}&role=${role}&status=${status}`).then((response) => response.data),
     [page, search, role, status],
   );
-  const { data: references, loading: referencesLoading, error: referencesError, refresh: refreshReferences } = usePageData(
-    () => api.get('/admin/accounts/references').then((response) => response.data),
-    [],
-  );
-
-  const selectedReferences = references?.[createForm.role] || [];
-  const selectedProfile = useMemo(
-    () => selectedReferences.find((item) => String(item.id) === String(createForm.link_id)),
-    [selectedReferences, createForm.link_id],
-  );
-
   function updateCreateForm(field, value) {
     setCreateForm((current) => ({ ...current, [field]: value }));
-    setCreateError('');
-  }
-
-  function changeCreateRole(nextRole) {
-    setCreateForm((current) => ({ ...current, role: nextRole, link_id: '', full_name: '', phone: '', email: '' }));
     setCreateError('');
   }
 
@@ -83,11 +67,16 @@ function AccountsWorkspace({ currentUser }) {
     if (creating && !force) return;
     setCreateOpen(false);
     setCreateForm(initialCreateForm);
+    setCreatePasswordConfirmation('');
     setCreateError('');
   }
 
   async function createAccount(event) {
     event.preventDefault();
+    if (createForm.password !== createPasswordConfirmation) {
+      setCreateError('Mật khẩu xác nhận chưa khớp.');
+      return;
+    }
     setCreating(true);
     setCreateError('');
     try {
@@ -96,19 +85,15 @@ function AccountsWorkspace({ currentUser }) {
         username: createForm.username.trim(),
         password: createForm.password,
         status: createForm.status,
-      };
-      if (linkedRoles.includes(createForm.role)) payload[`${createForm.role}_id`] = Number(createForm.link_id);
-      else Object.assign(payload, {
         full_name: createForm.full_name.trim(),
         phone: createForm.phone.trim() || null,
         email: createForm.email.trim() || null,
-      });
+      };
       await api.post('/admin/accounts', payload);
       closeCreateDialog(true);
       setPage(1);
       setActionMessage('Đã tạo tài khoản mới thành công.');
       refresh();
-      refreshReferences();
     } catch (requestError) {
       setCreateError(requestError.message);
     } finally {
@@ -168,7 +153,6 @@ function AccountsWorkspace({ currentUser }) {
       setActionMessage('Đã xóa tài khoản. Hồ sơ giáo viên, học sinh hoặc phụ huynh vẫn được giữ lại.');
       if (data.items.length === 1 && page > 1) setPage((current) => current - 1);
       else refresh();
-      refreshReferences();
     } catch (requestError) {
       setDeleteError(requestError.message);
     } finally {
@@ -176,15 +160,17 @@ function AccountsWorkspace({ currentUser }) {
     }
   }
 
-  const canCreate = createForm.username.trim() && createForm.password
-    && (linkedRoles.includes(createForm.role) ? createForm.link_id : createForm.full_name.trim());
+  const canCreate = createForm.username.trim() && createForm.full_name.trim()
+    && createForm.password && createPasswordConfirmation
+    && createForm.password === createPasswordConfirmation
+    && (createForm.role !== 'parent' || createForm.phone.trim());
   const summary = data?.summary || { total: 0, active: 0, locked: 0, admins: 0 };
 
   return (
     <div className="page-flow accounts-page">
       <PageHeader
         title="Quản trị tài khoản"
-        description="Cấp đúng quyền, liên kết đúng hồ sơ và kiểm soát trạng thái đăng nhập của từng tài khoản."
+        description="Tạo tài khoản theo đúng vai trò và kiểm soát trạng thái đăng nhập của từng người dùng."
         action={<Button appearance="primary" icon={<Add24Regular />} onClick={() => setCreateOpen(true)}>Tạo tài khoản</Button>}
       />
 
@@ -244,28 +230,15 @@ function AccountsWorkspace({ currentUser }) {
           <DialogTitle>Tạo tài khoản mới</DialogTitle>
           <DialogContent className="form-grid account-form">
             {createError && <MessageBar intent="error" className="form-grid__wide"><MessageBarBody>{createError}</MessageBarBody></MessageBar>}
-            {referencesError && <MessageBar intent="error" className="form-grid__wide"><MessageBarBody>{referencesError}</MessageBarBody></MessageBar>}
-            <Field label="Vai trò" required><Select value={createForm.role} onChange={(event) => changeCreateRole(event.target.value)}>{Object.entries(roleLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</Select></Field>
+            <Field label="Vai trò" required><Select value={createForm.role} onChange={(event) => updateCreateForm('role', event.target.value)}>{Object.entries(roleLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</Select></Field>
             <Field label="Trạng thái"><Select value={createForm.status} onChange={(event) => updateCreateForm('status', event.target.value)}>{Object.entries(statusLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</Select></Field>
-
-            {linkedRoles.includes(createForm.role) ? (
-              <Field className="form-grid__wide" label={`Hồ sơ ${roleLabels[createForm.role].toLowerCase()}`} hint="Chỉ hiển thị hồ sơ chưa có tài khoản" required>
-                <Select value={createForm.link_id} disabled={referencesLoading} onChange={(event) => updateCreateForm('link_id', event.target.value)}>
-                  <option value="">{referencesLoading ? 'Đang tải hồ sơ...' : 'Chọn hồ sơ để liên kết'}</option>
-                  {selectedReferences.map((item) => <option key={item.id} value={item.id}>{item.code ? `${item.code} - ` : ''}{item.full_name}{item.phone ? ` - ${item.phone}` : ''}</option>)}
-                </Select>
-              </Field>
-            ) : (
-              <>
-                <Field className="form-grid__wide" label="Họ và tên" required><Input value={createForm.full_name} onChange={(_, value) => updateCreateForm('full_name', value.value)} /></Field>
-                <Field label="Số điện thoại"><Input type="tel" value={createForm.phone} onChange={(_, value) => updateCreateForm('phone', value.value)} /></Field>
-                <Field label="Email"><Input type="email" value={createForm.email} onChange={(_, value) => updateCreateForm('email', value.value)} /></Field>
-              </>
-            )}
-
-            {selectedProfile && <div className="linked-profile-preview form-grid__wide"><span>Hồ sơ sẽ liên kết</span><strong>{selectedProfile.full_name}</strong><small>{selectedProfile.email || selectedProfile.phone || 'Chưa có thông tin liên hệ'}</small></div>}
+            <Field label="Họ và tên" required><Input autoComplete="name" value={createForm.full_name} onChange={(_, value) => updateCreateForm('full_name', value.value)} /></Field>
+            <Field label="Số điện thoại" required={createForm.role === 'parent'}><Input type="tel" autoComplete="tel" value={createForm.phone} onChange={(_, value) => updateCreateForm('phone', value.value)} /></Field>
+            <Field label="Email"><Input type="email" autoComplete="email" value={createForm.email} onChange={(_, value) => updateCreateForm('email', value.value)} /></Field>
             <Field label="Tên đăng nhập" required><Input autoComplete="off" value={createForm.username} onChange={(_, value) => updateCreateForm('username', value.value)} /></Field>
-            <Field label="Mật khẩu ban đầu" hint="8-72 ký tự, có chữ và số" required><Input type="password" autoComplete="new-password" value={createForm.password} onChange={(_, value) => updateCreateForm('password', value.value)} /></Field>
+            <Field label="Mật khẩu ban đầu" required><Input type="password" autoComplete="new-password" value={createForm.password} onChange={(_, value) => updateCreateForm('password', value.value)} /></Field>
+            <Field label="Xác nhận mật khẩu" required><Input type="password" autoComplete="new-password" value={createPasswordConfirmation} onChange={(_, value) => { setCreatePasswordConfirmation(value.value); setCreateError(''); }} /></Field>
+            <p className="account-password-hint form-grid__wide">Mật khẩu gồm 8-72 ký tự, có ít nhất một chữ và một số.</p>
           </DialogContent>
           <DialogActions><Button type="button" appearance="secondary" disabled={creating} onClick={() => closeCreateDialog()}>Hủy</Button><Button appearance="primary" type="submit" disabled={creating || !canCreate}>{creating ? 'Đang tạo...' : 'Tạo tài khoản'}</Button></DialogActions>
         </DialogBody></form></DialogSurface>

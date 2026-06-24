@@ -56,7 +56,7 @@ function LearningHistoryWorkspace({ user }) {
     return () => { active = false; };
   }, [classId]);
 
-  const summary = data?.summary || { total_events: 0, students_count: 0, flagged_categories: 0 };
+  const summary = data?.summary || { total_events: 0, students_count: 0 };
 
   return (
     <div className="page-flow learning-history-page">
@@ -82,10 +82,6 @@ function LearningHistoryWorkspace({ user }) {
             {students.map((student) => <option key={student.student_id} value={student.student_id}>{student.student_code} - {student.full_name}</option>)}
           </Select>
         </Field>
-        <div className="learning-history-rule">
-          <span>Quy tắc cảnh báo</span>
-          <strong>Lần thứ 4 cùng một mục sẽ vào báo cáo học tập</strong>
-        </div>
       </section>
 
       {classesError && <ErrorState message={classesError} onRetry={refreshClasses} />}
@@ -93,7 +89,6 @@ function LearningHistoryWorkspace({ user }) {
       <section className="learning-history-summary" aria-label="Tổng hợp quá trình học tập">
         <div><span>Lượt ghi nhận</span><strong>{summary.total_events}</strong></div>
         <div><span>Học sinh được theo dõi</span><strong>{summary.students_count}</strong></div>
-        <div className="learning-history-summary__alert"><span>Mục đã vào báo cáo</span><strong>{summary.flagged_categories}</strong></div>
       </section>
 
       {loading && <LoadingState rows={7} />}
@@ -109,25 +104,17 @@ function LearningHistoryWorkspace({ user }) {
               <TableHeaderCell>Học sinh</TableHeaderCell>
               <TableHeaderCell>Mục được đánh dấu</TableHeaderCell>
               <TableHeaderCell>Số lần</TableHeaderCell>
-              <TableHeaderCell>Báo cáo</TableHeaderCell>
               <TableHeaderCell>Người ghi nhận</TableHeaderCell>
             </TableRow></TableHeader>
-            <TableBody>{data.items.map((item) => {
-              const isFlagged = Number(item.occurrence_count) >= 4;
-              return (
+            <TableBody>{data.items.map((item) => (
                 <TableRow key={item.event_id}>
                   <TableCell><div className="stacked-cell"><span>{dateTimeFormatter.format(new Date(item.created_at))}</span><small>{item.class_code || 'Lớp đã xóa'}</small></div></TableCell>
                   <TableCell><div className="stacked-cell"><strong>{item.student_name}</strong><small>{item.student_code}</small></div></TableCell>
                   <TableCell><div className="learning-history-detail"><strong>{item.category_label}</strong><span>{item.detail}</span>{item.student_note && <small>Ghi chú: {item.student_note}</small>}</div></TableCell>
-                  <TableCell><Badge appearance="filled" color={isFlagged ? 'danger' : 'informative'}>{item.occurrence_count} lần</Badge></TableCell>
-                  <TableCell>{isFlagged
-                    ? <Badge appearance="tint" color="danger">Đã ghi báo cáo</Badge>
-                    : <span className="learning-history-pending">Còn {4 - Number(item.occurrence_count)} lần</span>}
-                  </TableCell>
+                  <TableCell><Badge appearance="filled" color="informative">{item.occurrence_count} lần</Badge></TableCell>
                   <TableCell><div className="stacked-cell"><span>{item.recorded_by_name || item.teacher_name || 'Tài khoản đã xóa'}</span><small>{item.teacher_name || 'Chưa phân công'}</small></div></TableCell>
                 </TableRow>
-              );
-            })}</TableBody>
+            ))}</TableBody>
           </Table>
           <Pagination pagination={data.pagination} onPageChange={setPage} />
         </div>

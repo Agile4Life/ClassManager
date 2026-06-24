@@ -6,14 +6,78 @@ const { success } = require('../utils/response');
 const {
   validateUsername, validateFullName, validatePhone, validateEmail, validatePassword,
 } = require('../utils/registration');
+const { generateNextCode } = require('../utils/code-generator');
 
 const ROLES = ['admin', 'staff', 'teacher', 'student', 'parent'];
 const STATUSES = ['active', 'inactive', 'locked'];
 const LINK_CONFIG = {
-  teacher: { table: 'teachers', idColumn: 'teacher_id' },
-  student: { table: 'students', idColumn: 'student_id' },
+  teacher: { table: 'teachers', idColumn: 'teacher_id', codeColumn: 'teacher_code', codePrefix: 'T' },
+  student: { table: 'students', idColumn: 'student_id', codeColumn: 'student_code', codePrefix: 'S' },
   parent: { table: 'parents', idColumn: 'parent_id' },
 };
+
+async function findOrCreateProfile(client, role, { fullName, phone, email }) {
+  const config = LINK_CONFIG[role];
+  if (!config) return { linkColumn: null, linkId: null };
+
+  const identity = email || phone || fullName.toLocaleLowerCase('vi');
+  await client.query('select pg_advisory_xact_lock(hashtext($1))', [`account-profile:${role}:${identity}`]);
+
+  const contactConditions = [];
+  const values = [fullName];
+  if (email) {
+    values.push(email);
+    contactConditions.push(`lower(profile.email) = $${values.length}`);
+  }
+  if (phone) {
+    values.push(phone);
+    contactConditions.push(`profile.phone = $${values.length}`);
+  }
+
+  if (contactConditions.length) {
+    const existing = await client.query(
+      `select profile.${config.idColumn} as id
+       from ${config.table} profile
+       left join user_accounts account on account.${config.idColumn} = profile.${config.idColumn}
+       where account.user_id is null and lower(profile.full_name) = lower($1)
+         and (${contactConditions.join(' or ')})
+       order by profile.${config.idColumn}
+       limit 1`,
+      values,
+    );
+    if (existing.rowCount) return { linkColumn: config.idColumn, linkId: existing.rows[0].id };
+  }
+
+  const sameName = await client.query(
+    `select profile.${config.idColumn} as id
+     from ${config.table} profile
+     left join user_accounts account on account.${config.idColumn} = profile.${config.idColumn}
+     where account.user_id is null and lower(profile.full_name) = lower($1)
+     order by profile.${config.idColumn}
+     limit 2`,
+    [fullName],
+  );
+  if (sameName.rowCount === 1) return { linkColumn: config.idColumn, linkId: sameName.rows[0].id };
+
+  let created;
+  if (config.codeColumn) {
+    const code = await generateNextCode(client, {
+      table: config.table, column: config.codeColumn, prefix: config.codePrefix, digits: 3,
+    });
+    created = await client.query(
+      `insert into ${config.table} (${config.codeColumn}, full_name, phone, email)
+       values ($1, $2, $3, $4) returning ${config.idColumn} as id`,
+      [code, fullName, phone, email],
+    );
+  } else {
+    created = await client.query(
+      `insert into ${config.table} (full_name, phone, email)
+       values ($1, $2, $3) returning ${config.idColumn} as id`,
+      [fullName, phone, email],
+    );
+  }
+  return { linkColumn: config.idColumn, linkId: created.rows[0].id };
+}
 
 async function lockAndAssertUnique(client, { username, email, excludeUserId = null }) {
   if (username) await client.query('select pg_advisory_xact_lock(hashtext($1))', [`account:username:${username}`]);
@@ -78,29 +142,6 @@ const listAccounts = asyncHandler(async (req, res) => {
   }, 'Accounts fetched successfully');
 });
 
-const getReferences = asyncHandler(async (req, res) => {
-  const [teachers, students, parents] = await Promise.all([
-    pool.query(
-      `select t.teacher_id as id, t.teacher_code as code, t.full_name, t.email, t.phone, t.status
-       from teachers t left join user_accounts ua on ua.teacher_id = t.teacher_id
-       where ua.user_id is null order by t.full_name limit 500`,
-    ),
-    pool.query(
-      `select s.student_id as id, s.student_code as code, s.full_name, s.email, s.phone, s.status
-       from students s left join user_accounts ua on ua.student_id = s.student_id
-       where ua.user_id is null order by s.full_name limit 500`,
-    ),
-    pool.query(
-      `select p.parent_id as id, null::text as code, p.full_name, p.email, p.phone, 'active'::text as status
-       from parents p left join user_accounts ua on ua.parent_id = p.parent_id
-       where ua.user_id is null order by p.full_name limit 500`,
-    ),
-  ]);
-  return success(res, {
-    teacher: teachers.rows, student: students.rows, parent: parents.rows,
-  }, 'Account references fetched successfully');
-});
-
 const createAccount = asyncHandler(async (req, res) => {
   const role = String(req.body.role || '');
   if (!ROLES.includes(role)) throw new AppError(400, 'Vai trò không hợp lệ');
@@ -112,33 +153,11 @@ const createAccount = asyncHandler(async (req, res) => {
   const client = await pool.connect();
   try {
     await client.query('begin');
-    let fullName;
-    let phone;
-    let email;
-    let linkColumn = null;
-    let linkId = null;
-    const link = LINK_CONFIG[role];
-    if (link) {
-      linkColumn = link.idColumn;
-      linkId = req.body[linkColumn];
-      if (!linkId || !/^\d+$/.test(String(linkId))) throw new AppError(400, `Cần chọn hồ sơ ${role}`);
-      await client.query('select pg_advisory_xact_lock(hashtext($1))', [`account-link:${role}:${linkId}`]);
-      const profile = await client.query(
-        `select ${link.idColumn} as id, full_name, phone, email from ${link.table} where ${link.idColumn} = $1`,
-        [linkId],
-      );
-      if (!profile.rowCount) throw new AppError(404, 'Không tìm thấy hồ sơ được liên kết');
-      const used = await client.query(`select 1 from user_accounts where ${linkColumn} = $1`, [linkId]);
-      if (used.rowCount) throw new AppError(409, 'Hồ sơ này đã có tài khoản');
-      fullName = profile.rows[0].full_name;
-      phone = profile.rows[0].phone || null;
-      email = validateEmail(profile.rows[0].email);
-    } else {
-      fullName = validateFullName(req.body.full_name);
-      phone = validatePhone(req.body.phone, false);
-      email = validateEmail(req.body.email);
-    }
+    const fullName = validateFullName(req.body.full_name);
+    const phone = validatePhone(req.body.phone, role === 'parent');
+    const email = validateEmail(req.body.email);
     await lockAndAssertUnique(client, { username, email });
+    const { linkColumn, linkId } = await findOrCreateProfile(client, role, { fullName, phone, email });
 
     const linkColumns = linkColumn ? `, ${linkColumn}` : '';
     const linkPlaceholder = linkColumn ? ', $9' : '';
@@ -268,5 +287,5 @@ const deleteAccount = asyncHandler(async (req, res) => {
 });
 
 module.exports = {
-  listAccounts, getReferences, createAccount, updateAccount, resetAccountPassword, deleteAccount,
+  listAccounts, createAccount, updateAccount, resetAccountPassword, deleteAccount,
 };

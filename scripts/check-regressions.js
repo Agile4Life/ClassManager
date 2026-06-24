@@ -47,8 +47,8 @@ assert.throws(
 );
 
 const importedStudents = normalizeStudentImportRows([
-  { full_name: 'Nguyễn Văn An', date_of_birth: '2010-05-12', gender: 'male', status: 'active' },
-  { full_name: '', date_of_birth: '2010-02-30', gender: 'unknown', email: 'invalid', status: 'active' },
+  { full_name: 'Nguyễn Văn An', father_phone: '0901111111', mother_phone: '0902222222', student_phone: '0903333333' },
+  { full_name: '', father_phone: 'abc', mother_phone: '123', student_phone: 'invalid' },
 ]);
 assert.deepStrictEqual(importedStudents[0].errors, []);
 assert.strictEqual(importedStudents[0].value.full_name, 'Nguyễn Văn An');

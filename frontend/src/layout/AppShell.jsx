@@ -3,7 +3,8 @@ import { Avatar, Button } from '@fluentui/react-components';
 import {
   BookOpen24Filled, CalendarLtr24Regular, DataTrending24Regular, Dismiss24Regular,
   Home24Regular, MailTemplate24Regular, Navigation24Regular, PeopleCommunity24Regular,
-  PeopleCheckmark24Regular, SignOut24Regular, WindowApps24Regular, Person24Regular
+  PeopleCheckmark24Regular, PersonCircle24Regular, SignOut24Regular,
+  WindowApps24Regular, Person24Regular
 } from '@fluentui/react-icons';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
@@ -18,7 +19,6 @@ const navItems = [
   { to: '/classes', label: 'Lớp học', icon: WindowApps24Regular, roles: ['admin', 'staff', 'teacher', 'student', 'parent'] },
   { to: '/timetable', label: 'Thời khóa biểu', icon: CalendarLtr24Regular, roles: ['admin', 'staff', 'teacher', 'student', 'parent'] },
   { to: '/attendance', label: 'Điểm danh', icon: PeopleCheckmark24Regular, roles: ['admin', 'teacher'] },
-  { to: '/reports', label: 'Báo cáo học tập', icon: DataTrending24Regular, roles: ['admin', 'staff', 'teacher', 'student', 'parent'] },
   { to: '/parent-notifications', label: 'Thông báo phụ huynh', icon: MailTemplate24Regular, roles: ['admin', 'staff', 'teacher'] },
   { to: '/learning-history', label: 'Quá trình học tập', icon: DataTrending24Regular, roles: ['admin', 'teacher'] },
 ];
@@ -54,7 +54,7 @@ export default function AppShell() {
         </div>
 
         <div className="sidebar-user">
-          <Avatar name={user.full_name} color="colorful" />
+          <Avatar aria-label={user.full_name} icon={<PersonCircle24Regular />} color="brand" />
           <div><strong>{user.full_name}</strong><span>{roleLabels[user.role] || user.role}</span></div>
           <Button
             className="sidebar-logout"
@@ -72,7 +72,7 @@ export default function AppShell() {
         <div className="mobile-topbar">
           <Button appearance="subtle" icon={<Navigation24Regular />} aria-label="Mở menu" onClick={() => setMenuOpen(true)} />
           <span><BookOpen24Filled /> ClassManager</span>
-          <Avatar size={28} name={user.full_name} color="colorful" />
+          <Avatar size={28} aria-label={user.full_name} icon={<PersonCircle24Regular />} color="brand" />
         </div>
         <div className="page-container"><Outlet /></div>
       </main>

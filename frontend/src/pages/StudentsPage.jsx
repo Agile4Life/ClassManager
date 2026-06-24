@@ -281,7 +281,7 @@ export default function StudentsPage() {
             ) : (
               <>
                 <section className="student-import-guide">
-                  <div><strong>1. Tải file mẫu</strong><span>Giữ nguyên tên cột và lưu file ở định dạng CSV UTF-8.</span></div>
+                  <div><strong>1. Tải file mẫu</strong><span>File chỉ gồm: họ tên, điện thoại ba, điện thoại mẹ và điện thoại học sinh.</span></div>
                   <Button appearance="secondary" onClick={downloadStudentCsvTemplate}>Tải file CSV mẫu</Button>
                 </section>
                 <Field label="2. Chọn file CSV" hint="Tối đa 1000 học sinh và dung lượng 1 MB">
@@ -293,7 +293,7 @@ export default function StudentsPage() {
                 {importRows.length > 0 && !importErrors.length && (
                   <section className="student-import-preview">
                     <div className="student-import-preview__heading"><div><strong>3. Kiểm tra dữ liệu</strong><span>{importRows.length} học sinh sẵn sàng được nhập</span></div><span>Hiển thị {Math.min(importRows.length, 8)} dòng đầu</span></div>
-                    <div className="table-surface"><Table aria-label="Xem trước danh sách CSV"><TableHeader><TableRow><TableHeaderCell>Họ và tên</TableHeaderCell><TableHeaderCell>Ngày sinh</TableHeaderCell><TableHeaderCell>Giới tính</TableHeaderCell><TableHeaderCell>Điện thoại</TableHeaderCell><TableHeaderCell>Trường và khối</TableHeaderCell></TableRow></TableHeader><TableBody>{importRows.slice(0, 8).map((row, index) => <TableRow key={`${row.full_name}-${index}`}><TableCell><strong>{row.full_name}</strong></TableCell><TableCell>{row.date_of_birth || 'Để trống'}</TableCell><TableCell>{({ male: 'Nam', female: 'Nữ', other: 'Khác' })[row.gender] || 'Để trống'}</TableCell><TableCell>{row.phone || 'Để trống'}</TableCell><TableCell><div className="stacked-cell"><span>{row.school_name || 'Chưa có trường'}</span><small>{row.grade_level || 'Chưa có khối'}</small></div></TableCell></TableRow>)}</TableBody></Table></div>
+                    <div className="table-surface"><Table aria-label="Xem trước danh sách CSV"><TableHeader><TableRow><TableHeaderCell>Họ và tên</TableHeaderCell><TableHeaderCell>Điện thoại ba</TableHeaderCell><TableHeaderCell>Điện thoại mẹ</TableHeaderCell><TableHeaderCell>Điện thoại học sinh</TableHeaderCell></TableRow></TableHeader><TableBody>{importRows.slice(0, 8).map((row, index) => <TableRow key={`${row.full_name}-${index}`}><TableCell><strong>{row.full_name}</strong></TableCell><TableCell>{row.father_phone || 'Để trống'}</TableCell><TableCell>{row.mother_phone || 'Để trống'}</TableCell><TableCell>{row.student_phone || 'Để trống'}</TableCell></TableRow>)}</TableBody></Table></div>
                   </section>
                 )}
               </>

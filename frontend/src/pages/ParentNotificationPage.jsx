@@ -97,7 +97,7 @@ export default function ParentNotificationPage() {
     setCopied(false);
   }, [generatedText]);
 
-  if (!allowedRoles.includes(user.role)) return <Navigate to="/reports" replace />;
+  if (!allowedRoles.includes(user.role)) return <Navigate to="/" replace />;
 
   function updateLine(id, changes) {
     setLines((current) => current.map((line) => (line.id === id ? { ...line, ...changes } : line)));
@@ -152,9 +152,9 @@ export default function ParentNotificationPage() {
 
   async function persistHistory() {
     const observations = getHistoryObservations();
-    if (!observations.length) return { reports_created: 0, skipped: true };
+    if (!observations.length) return { skipped: true };
     const signature = JSON.stringify({ classId, observations, finalText });
-    if (signature === lastSavedSignature.current) return { reports_created: 0, alreadySaved: true };
+    if (signature === lastSavedSignature.current) return { alreadySaved: true };
     const response = await api.post('/learning-history/events', {
       class_id: Number(classId),
       notification_text: finalText,
@@ -184,9 +184,7 @@ export default function ParentNotificationPage() {
       }
       setCopied(true);
       if (!saved.skipped) {
-        setHistoryMessage(saved.reports_created
-          ? `Đã lưu lịch sử và tạo ${saved.reports_created} cảnh báo trong báo cáo học tập.`
-          : 'Đã lưu các mục được đánh dấu vào quá trình học tập.');
+        setHistoryMessage('Đã lưu các mục được đánh dấu vào quá trình học tập.');
       }
     } catch (error) {
       setHistoryError(error.message || 'Không thể lưu quá trình học tập.');
