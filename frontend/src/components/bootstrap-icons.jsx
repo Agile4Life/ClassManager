@@ -5,7 +5,7 @@ function Icon({ name, className, ...props }) {
 export const Add24Regular = (props) => <Icon name="plus-lg" {...props} />;
 export const ArrowClockwise24Regular = (props) => <Icon name="arrow-clockwise" {...props} />;
 export const ArrowRight24Regular = (props) => <Icon name="arrow-right" {...props} />;
-export const BookOpen24Filled = (props) => <Icon name="book-half" {...props} />;
+export const BookOpen24Filled = (props) => <Icon name="mortarboard-fill" {...props} />;
 export const CalendarLtr24Regular = (props) => <Icon name="calendar3" {...props} />;
 export const ChevronLeft24Regular = (props) => <Icon name="chevron-left" {...props} />;
 export const ChevronRight24Regular = (props) => <Icon name="chevron-right" {...props} />;

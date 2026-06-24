@@ -40,9 +40,12 @@ a { color: inherit; }
 .btn-icon { width: 40px; min-width: 40px; padding: 0; }
 .btn__icon { display: inline-grid; place-items: center; font-size: 1rem; line-height: 1; }
 .form-control, .form-select, .input-group-text { min-height: 42px; border-color: #ccd7e4; border-radius: var(--radius-control); }
+.form-control, .form-select { color: var(--ink); background-color: var(--paper); }
+.form-control::placeholder { color: #98a4b6; opacity: 1; }
 .form-control:focus, .form-select:focus { border-color: #79a5d4; box-shadow: 0 0 0 3px rgba(37, 99, 166, 0.13); }
-.input-group > .form-control { border-radius: 0 var(--radius-control) var(--radius-control) 0; }
-.input-group-text { color: #66758b; background: #f5f8fb; border-radius: var(--radius-control) 0 0 var(--radius-control); }
+.input-group { flex-wrap: nowrap; }
+.input-group > .form-control { width: 1%; min-width: 0; flex: 1 1 auto; border-radius: 0 var(--radius-control) var(--radius-control) 0; }
+.input-group-text { width: 48px; flex: 0 0 48px; justify-content: center; color: var(--accent); background: #f6f9fc; border-radius: var(--radius-control) 0 0 var(--radius-control); }
 .form-field { min-width: 0; display: flex; flex-direction: column; align-items: stretch; }
 .form-label { margin-bottom: 6px; color: #26344b; font-size: 13px; font-weight: 650; }
 .required-mark { margin-left: 4px; color: #b42318; }
@@ -72,8 +75,8 @@ a { color: inherit; }
   display: flex; flex-direction: column; background: #fbfcfe; border-right: 1px solid var(--line); box-shadow: 8px 0 30px rgba(32, 61, 96, 0.035); z-index: 20;
 }
 .brand-lockup { display: grid; grid-template-columns: 42px 1fr auto; align-items: center; gap: 11px; padding: 0 8px 24px; }
-.brand-lockup__mark { width: 42px; height: 42px; display: grid; place-items: center; color: #fdfefe; background: var(--accent); border-radius: 13px 13px 13px 5px; box-shadow: 0 8px 20px rgba(49, 95, 159, 0.2); }
-.brand-lockup__mark i { font-size: 22px; }
+.brand-lockup__mark { width: 44px; height: 44px; display: grid; place-items: center; color: #fff; background: var(--accent-dark); border: 1px solid rgba(255, 255, 255, 0.18); border-radius: 12px; box-shadow: 0 9px 22px rgba(23, 74, 130, 0.22); }
+.brand-lockup__mark i { font-size: 23px; line-height: 1; }
 .brand-lockup strong, .brand-lockup span { display: block; }
 .brand-lockup strong { font-size: 16px; letter-spacing: -0.02em; }
 .brand-lockup span { margin-top: 2px; color: var(--muted); font-size: 12px; }
@@ -413,7 +416,11 @@ a { color: inherit; }
 .login-form .form-label { margin-bottom: 7px; font-size: 14px; font-weight: 600; }
 .login-form .form-text { min-height: 18px; margin-top: 5px; font-size: 12px; line-height: 1.35; }
 .login-form .form-control, .login-form .input-group { width: 100%; min-height: 52px; border-radius: 12px; }
+.login-form .input-group > .form-control { width: 1%; min-width: 0; flex: 1 1 auto; }
+.login-form .input-group > .form-control, .login-form .input-group > .input-group-text { min-height: 52px; }
 .login-form .form-control { font-size: 15px; }
+.login-form .form-control:focus { position: relative; z-index: 3; }
+.register-grid .form-field { align-self: start; }
 .login-form > .form-field + .form-field { margin-top: 22px; }
 .login-form > .btn { min-height: 52px; margin-top: 24px; border-radius: 12px; font-size: 15px; font-weight: 700; }
 .login-form > .alert { margin-bottom: 20px; }
