@@ -11,8 +11,20 @@ import { formatDate, formatTime } from '../utils/format';
 
 const attendanceRoles = ['admin', 'teacher'];
 
+function toLocalIsoDate(date) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
+
+function getSessionGenerationRange() {
+  const today = new Date();
+  return {
+    fromDate: toLocalIsoDate(new Date(today.getFullYear(), today.getMonth() - 1, 1)),
+    toDate: toLocalIsoDate(new Date(today.getFullYear(), today.getMonth() + 3, 0)),
+  };
+}
+
 function pickDefaultSession(sessions) {
-  const today = new Date().toISOString().slice(0, 10);
+  const today = toLocalIsoDate(new Date());
   return sessions.find((session) => String(session.session_date).slice(0, 10) === today)
     || sessions.find((session) => String(session.session_date).slice(0, 10) <= today)
     || sessions[sessions.length - 1];
@@ -57,7 +69,9 @@ function AttendanceWorkspace({ user }) {
     setSessionId('');
     setStudents([]);
     setAttendance({});
-    api.get(`/classes/${classId}/sessions`)
+    const { fromDate, toDate } = getSessionGenerationRange();
+    api.post(`/classes/${classId}/generate-sessions`, { from_date: fromDate, to_date: toDate })
+      .then(() => api.get(`/classes/${classId}/sessions?from_date=${fromDate}&to_date=${toDate}`))
       .then((response) => {
         if (!active) return;
         const sorted = [...response.data].sort((a, b) => {
@@ -168,7 +182,7 @@ function AttendanceWorkspace({ user }) {
       {(sessionsLoading || attendanceLoading) && <LoadingState rows={5} />}
       {loadError && <ErrorState message={loadError} />}
       {classId && !sessionsLoading && !sessions.length && !loadError && (
-        <EmptyState title="Lớp chưa có buổi học" description="Hãy tạo buổi học trong lịch trước khi thực hiện điểm danh." />
+        <EmptyState title="Lớp chưa có buổi học" description="Hãy xếp ít nhất một buổi trong Tuần mẫu. Hệ thống sẽ tự tạo các buổi điểm danh từ lịch đó." />
       )}
 
       {sessionId && !attendanceLoading && !loadError && (

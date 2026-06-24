@@ -3,6 +3,7 @@ const asyncHandler = require('../utils/async-handler');
 const { AppError } = require('../utils/errors');
 const { success } = require('../utils/response');
 const { timeToMinutes, isIsoDate } = require('../utils/validation');
+const { assertTeacherClassAccess } = require('../utils/access');
 
 const DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
 const DAY_ORDER = `case cs.day_of_week ${DAYS.map((day, index) => `when '${day}' then ${index + 1}`).join(' ')} end`;
@@ -188,6 +189,7 @@ const generateSessions = asyncHandler(async (req, res) => {
   const { from_date: fromDate, to_date: toDate } = req.body;
   if (!fromDate || !toDate) throw new AppError(400, 'from_date and to_date are required');
   if (!isIsoDate(fromDate) || !isIsoDate(toDate)) throw new AppError(400, 'from_date and to_date must use YYYY-MM-DD format');
+  await assertTeacherClassAccess(req.user, req.params.classId);
   const client = await pool.connect();
   try {
     await client.query('begin');

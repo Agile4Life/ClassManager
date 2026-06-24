@@ -22,7 +22,10 @@ function scopeStudents(req, values, conditions) {
 }
 
 function scopeClasses(req, values, conditions) {
-  if (req.user.role === 'student') {
+  if (req.user.role === 'teacher') {
+    values.push(req.user.teacher_id);
+    conditions.push(`teacher_id = $${values.length}`);
+  } else if (req.user.role === 'student') {
     values.push(req.user.student_id);
     conditions.push(`class_id in (select class_id from enrollments where student_id = $${values.length})`);
   } else if (req.user.role === 'parent') {

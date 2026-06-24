@@ -10,7 +10,7 @@ router.use(requireAuth);
 router.get('/:classId/students', requireRole('admin', 'staff', 'teacher'), classController.getClassStudents);
 router.post('/:classId/enroll/:studentId', requireRole('admin', 'staff'), classController.enrollStudent);
 router.post('/:classId/schedules', requireRole('admin', 'staff'), timetable.createSchedule);
-router.post('/:classId/generate-sessions', requireRole('admin', 'staff'), timetable.generateSessions);
+router.post('/:classId/generate-sessions', requireRole('admin', 'staff', 'teacher'), timetable.generateSessions);
 router.get('/:classId/sessions', requireRole('admin', 'staff', 'teacher'), sessions.listSessions);
 router.post('/:classId/sessions', requireRole('admin', 'staff', 'teacher'), sessions.createSession);
 
