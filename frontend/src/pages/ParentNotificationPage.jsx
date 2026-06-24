@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  Button, Dropdown, Field, Input, MessageBar, MessageBarBody, Option, Select, Textarea,
+  Button, Checkbox, Field, Input, MessageBar, MessageBarBody, Select, Textarea,
 } from '@fluentui/react-components';
 import { Add24Regular, Copy24Regular, Delete24Regular, Print24Regular } from '@fluentui/react-icons';
 import { Navigate } from 'react-router-dom';
@@ -124,6 +124,16 @@ export default function ParentNotificationPage() {
     }
   }
 
+  function toggleStudent(lineId, studentId, checked) {
+    setLines((current) => current.map((line) => {
+      if (line.id !== lineId) return line;
+      const selected = new Set(line.studentIds.map(String));
+      if (checked) selected.add(String(studentId));
+      else selected.delete(String(studentId));
+      return { ...line, studentIds: [...selected] };
+    }));
+  }
+
   async function copyNotification() {
     try {
       await navigator.clipboard.writeText(finalText);
@@ -198,7 +208,7 @@ export default function ParentNotificationPage() {
 
               <div className="notification-lines">
                 {lines.map((line, index) => {
-                  const selectedNames = getStudentNames(line.studentIds, context.students);
+                  const selectedStudentIds = new Set(line.studentIds.map(String));
                   return (
                     <article className="notification-line" key={line.id}>
                       <div className="notification-line__heading">
@@ -225,17 +235,43 @@ export default function ParentNotificationPage() {
                         </Field>
                         {line.audience === 'students' && (
                           <Field className="notification-line__wide" label="Học sinh" required>
-                            <Dropdown
-                              multiselect
-                              placeholder="Chọn một hoặc nhiều học sinh"
-                              selectedOptions={line.studentIds}
-                              value={selectedNames}
-                              onOptionSelect={(_, data) => updateLine(line.id, { studentIds: data.selectedOptions })}
-                            >
-                              {context.students.map((student) => (
-                                <Option key={student.student_id} value={String(student.student_id)}>{student.full_name}</Option>
-                              ))}
-                            </Dropdown>
+                            <div className="student-picker" role="group" aria-label={`Chọn học sinh cho dòng ${index + 1}`}>
+                              <div className="student-picker__toolbar">
+                                <span>Đã chọn <strong>{line.studentIds.length}</strong>/{context.students.length}</span>
+                                <div>
+                                  <Button
+                                    appearance="subtle"
+                                    size="small"
+                                    disabled={!context.students.length || line.studentIds.length === context.students.length}
+                                    onClick={() => updateLine(line.id, { studentIds: context.students.map((student) => String(student.student_id)) })}
+                                  >
+                                    Chọn tất cả
+                                  </Button>
+                                  <Button
+                                    appearance="subtle"
+                                    size="small"
+                                    disabled={!line.studentIds.length}
+                                    onClick={() => updateLine(line.id, { studentIds: [] })}
+                                  >
+                                    Bỏ chọn
+                                  </Button>
+                                </div>
+                              </div>
+                              <div className="student-picker__list">
+                                {context.students.map((student) => {
+                                  const studentId = String(student.student_id);
+                                  return (
+                                    <Checkbox
+                                      key={studentId}
+                                      checked={selectedStudentIds.has(studentId)}
+                                      label={student.full_name}
+                                      onChange={(_, data) => toggleStudent(line.id, studentId, data.checked === true)}
+                                    />
+                                  );
+                                })}
+                                {!context.students.length && <span className="student-picker__empty">Lớp chưa có học sinh đang học.</span>}
+                              </div>
+                            </div>
                           </Field>
                         )}
                         <Field label="Ghi chú sau tên" hint="Ví dụ: quên tập">

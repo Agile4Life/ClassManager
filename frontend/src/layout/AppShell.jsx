@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Avatar, Button, Tooltip } from '@fluentui/react-components';
+import { Avatar, Button } from '@fluentui/react-components';
 import {
   BookOpen24Filled, CalendarLtr24Regular, DataTrending24Regular, Dismiss24Regular,
   Home24Regular, MailTemplate24Regular, Money24Regular, Navigation24Regular, PeopleCommunity24Regular,
@@ -53,9 +53,15 @@ export default function AppShell() {
         <div className="sidebar-user">
           <Avatar name={user.full_name} color="colorful" />
           <div><strong>{user.full_name}</strong><span>{roleLabels[user.role] || user.role}</span></div>
-          <Tooltip content="Đăng xuất" relationship="label">
-            <Button appearance="subtle" icon={<SignOut24Regular />} aria-label="Đăng xuất" onClick={logout} />
-          </Tooltip>
+          <Button
+            className="sidebar-logout"
+            type="button"
+            appearance="subtle"
+            icon={<SignOut24Regular />}
+            aria-label="Đăng xuất"
+            title="Đăng xuất"
+            onClick={logout}
+          />
         </div>
       </aside>
 

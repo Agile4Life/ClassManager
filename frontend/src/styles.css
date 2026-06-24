@@ -54,6 +54,7 @@ a { color: inherit; }
 .sidebar-user strong, .sidebar-user span { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .sidebar-user strong { font-size: 13px; }
 .sidebar-user span { margin-top: 2px; color: var(--muted); font-size: 11px; }
+.sidebar-logout { width: 34px; min-width: 34px !important; height: 34px; flex: none; }
 .sidebar-scrim { display: none; }
 .main-stage { min-height: 100dvh; margin-left: 274px; }
 .page-container { width: min(100%, 1480px); margin: 0 auto; padding: 38px clamp(24px, 4vw, 62px) 64px; }
@@ -176,6 +177,20 @@ a { color: inherit; }
 .notification-line__grid { display: grid; grid-template-columns: 1fr 1fr; gap: 13px; }
 .notification-line__wide { grid-column: 1 / -1; }
 .notification-line textarea { min-height: 62px; }
+.student-picker { overflow: hidden; border: 1px solid #d8e2ee; border-radius: var(--radius-control); background: var(--paper); }
+.student-picker__toolbar {
+  min-height: 42px; display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 4px 7px 4px 12px; color: var(--muted); border-bottom: 1px solid #e4ebf3; font-size: 12px;
+}
+.student-picker__toolbar > div { display: flex; gap: 2px; }
+.student-picker__toolbar strong { color: var(--accent-dark); }
+.student-picker__list {
+  max-height: 230px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 2px 12px; overflow-y: auto; padding: 9px 11px;
+}
+.student-picker__list .fui-Checkbox { min-width: 0; padding: 4px 2px; }
+.student-picker__list .fui-Checkbox__label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.student-picker__empty { grid-column: 1 / -1; padding: 12px; color: var(--muted); text-align: center; font-size: 12px; }
 .notification-preview__text { display: block; margin-top: 18px; }
 .notification-preview__text textarea { min-height: 390px; padding: 16px; line-height: 1.65; }
 .notification-preview__print { display: none; }
@@ -274,6 +289,8 @@ a { color: inherit; }
   .notification-context { grid-template-columns: 1fr; }
   .notification-line__grid { grid-template-columns: 1fr; }
   .notification-line__wide { grid-column: auto; }
+  .student-picker__list { grid-template-columns: 1fr; }
+  .student-picker__toolbar { align-items: flex-start; flex-direction: column; padding: 9px 10px; }
   .notification-section-heading, .missing-homework-message { align-items: stretch; flex-direction: column; }
   .notification-preview__actions { display: grid; }
 }

@@ -41,13 +41,11 @@ export function AuthProvider({ children }) {
   }, []);
 
   const logout = useCallback(async () => {
-    try {
-      await api.post('/auth/logout', {});
-    } finally {
-      localStorage.removeItem('classmanager_token');
-      localStorage.removeItem('classmanager_user');
-      setUser(null);
-    }
+    const logoutRequest = api.post('/auth/logout', {}).catch(() => undefined);
+    localStorage.removeItem('classmanager_token');
+    localStorage.removeItem('classmanager_user');
+    setUser(null);
+    await logoutRequest;
   }, []);
 
   const value = useMemo(() => ({ user, login, logout, checkingSession }), [user, login, logout, checkingSession]);
