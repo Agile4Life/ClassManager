@@ -13,5 +13,6 @@ router.put('/:id', requireRole('admin', 'staff', 'teacher'), controller.update);
 router.delete('/:id', requireRole('admin', 'staff'), controller.remove);
 
 router.post('/import', requireRole('admin', 'staff', 'teacher'), controller.importStudents);
+router.post('/bulk-assign-class', requireRole('admin', 'staff', 'teacher'), controller.bulkAssignClass);
 
 module.exports = router;

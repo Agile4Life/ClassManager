@@ -2,7 +2,7 @@ import { useState } from 'react';
 import {
   Button, Dialog, DialogActions, DialogBody, DialogContent, DialogSurface, DialogTitle,
   Field, Input, MessageBar, MessageBarBody, Select, Table, TableBody, TableCell,
-  TableHeader, TableHeaderCell, TableRow, Combobox, Option
+  TableHeader, TableHeaderCell, TableRow, Combobox, Option, Checkbox, TableSelectionCell
 } from '@fluentui/react-components';
 import { Add24Regular, Delete24Regular, Edit24Regular, Search24Regular } from '@fluentui/react-icons';
 import { api } from '../api/client';
@@ -49,6 +49,11 @@ export default function StudentsPage() {
   const canCreate = ['admin', 'staff', 'teacher'].includes(user.role);
   const canEdit = ['admin', 'staff', 'teacher'].includes(user.role);
   const canDelete = ['admin', 'staff'].includes(user.role);
+
+  const [selectedStudentIds, setSelectedStudentIds] = useState(new Set());
+  const [bulkClassId, setBulkClassId] = useState('');
+  const [bulkSaving, setBulkSaving] = useState(false);
+  const [bulkError, setBulkError] = useState('');
 
   const { data, loading, error, refresh } = usePageData(
     () => api.get(`/students?page=${page}&limit=10&search=${encodeURIComponent(search)}`).then((response) => response.data),
@@ -126,6 +131,41 @@ export default function StudentsPage() {
       setDeleteError(requestError.message);
     } finally {
       setDeleting(false);
+    }
+  }
+
+  function toggleStudentSelection(studentId) {
+    const newSelected = new Set(selectedStudentIds);
+    if (newSelected.has(studentId)) newSelected.delete(studentId);
+    else newSelected.add(studentId);
+    setSelectedStudentIds(newSelected);
+  }
+
+  function toggleAllSelection() {
+    if (!data?.items.length) return;
+    if (selectedStudentIds.size === data.items.length) {
+      setSelectedStudentIds(new Set());
+    } else {
+      setSelectedStudentIds(new Set(data.items.map((s) => s.student_id)));
+    }
+  }
+
+  async function applyBulkAssignClass() {
+    if (selectedStudentIds.size === 0) return;
+    setBulkSaving(true);
+    setBulkError('');
+    try {
+      await api.post('/students/bulk-assign-class', {
+        student_ids: Array.from(selectedStudentIds),
+        class_id: bulkClassId || null
+      });
+      setSelectedStudentIds(new Set());
+      setBulkClassId('');
+      refresh();
+    } catch (err) {
+      setBulkError(err.message);
+    } finally {
+      setBulkSaving(false);
     }
   }
 
@@ -210,8 +250,22 @@ export default function StudentsPage() {
       {data && !data.items.length && <EmptyState title="Chưa tìm thấy học sinh" description={canCreate ? 'Thử từ khóa khác hoặc thêm hồ sơ học sinh mới.' : 'Thử từ khóa khác hoặc kiểm tra lại danh sách lớp được phân công.'} />}
       {data?.items.length > 0 && (
         <div className="table-surface student-table">
+          {selectedStudentIds.size > 0 && (
+            <div className="bulk-actions toolbar" style={{ background: '#f5f5f5', padding: '8px 16px', borderRadius: '4px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '16px' }}>
+              <strong>Đã chọn {selectedStudentIds.size} học sinh</strong>
+              <Select value={bulkClassId} onChange={(e) => setBulkClassId(e.target.value)} style={{ minWidth: 200 }}>
+                <option value="">Không có lớp</option>
+                {classes.map((c) => <option key={c.class_id} value={c.class_id}>{c.class_name}</option>)}
+              </Select>
+              <Button appearance="primary" disabled={bulkSaving} onClick={applyBulkAssignClass}>
+                {bulkSaving ? 'Đang áp dụng...' : 'Áp dụng'}
+              </Button>
+              {bulkError && <MessageBar intent="error"><MessageBarBody>{bulkError}</MessageBarBody></MessageBar>}
+            </div>
+          )}
           <Table aria-label="Danh sách học sinh">
             <TableHeader><TableRow>
+              <TableSelectionCell checked={selectedStudentIds.size > 0 && selectedStudentIds.size === data.items.length} onChange={toggleAllSelection} />
               <TableHeaderCell>Học sinh</TableHeaderCell>
               <TableHeaderCell>Liên hệ</TableHeaderCell>
               <TableHeaderCell>Trạng thái</TableHeaderCell>
@@ -220,6 +274,7 @@ export default function StudentsPage() {
             </TableRow></TableHeader>
             <TableBody>{data.items.map((student) => (
               <TableRow key={student.student_id}>
+                <TableSelectionCell checked={selectedStudentIds.has(student.student_id)} onChange={() => toggleStudentSelection(student.student_id)} />
                 <TableCell><div className="primary-cell"><span className="initial-tile">{student.full_name.slice(0, 1)}</span><div><strong>{student.full_name}</strong><span>{student.student_code}</span></div></div></TableCell>
                 <TableCell><div className="stacked-cell"><span>Số điện thoại ba: {student.father_phone || 'Chưa có'}</span><span>Số điện thoại mẹ: {student.mother_phone || 'Chưa có'}</span><span>Số điện thoại học sinh: {student.student_phone || 'Chưa có'}</span></div></TableCell>
                 <TableCell><StatusBadge status={student.status} /></TableCell>

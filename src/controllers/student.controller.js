@@ -262,4 +262,32 @@ const remove = asyncHandler(async (req, res) => {
   return success(res, result.rows[0], 'Record deleted successfully');
 });
 
-module.exports = { list, getById, create, update, remove, importStudents };
+const bulkAssignClass = asyncHandler(async (req, res) => {
+  const { student_ids, class_id } = req.body;
+  if (!Array.isArray(student_ids) || student_ids.length === 0) {
+    throw new AppError(400, 'student_ids must be a non-empty array');
+  }
+
+  const client = await pool.connect();
+  try {
+    await client.query('begin');
+    await client.query(`delete from enrollments where student_id = any($1::bigint[])`, [student_ids]);
+    
+    if (class_id) {
+      await client.query(
+        `insert into enrollments (student_id, class_id) select unnest($1::bigint[]), $2`,
+        [student_ids, class_id]
+      );
+    }
+    
+    await client.query('commit');
+    return success(res, { count: student_ids.length }, 'Students assigned to class successfully');
+  } catch (error) {
+    await client.query('rollback');
+    throw error;
+  } finally {
+    client.release();
+  }
+});
+
+module.exports = { list, getById, create, update, remove, importStudents, bulkAssignClass };
