@@ -448,6 +448,9 @@ a { color: inherit; }
   .class-row { grid-template-columns: auto minmax(0, 1fr); }
   .class-row > span:last-child { display: none; }
   .toolbar { align-items: stretch; }
+  .register-grid { grid-template-columns: 1fr; }
+  .login-story__copy { margin: 20px 0; }
+  .login-panel { padding: 30px max(20px, env(safe-area-inset-right)) calc(40px + env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left)); }
   .toolbar .fui-Input, .toolbar [role='combobox'] { width: 100%; min-width: 0; }
   .form-grid { grid-template-columns: 1fr; }
   .form-grid__wide { grid-column: auto; }
