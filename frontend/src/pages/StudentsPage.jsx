@@ -48,7 +48,7 @@ export default function StudentsPage() {
   const [importError, setImportError] = useState('');
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState(null);
-  const canCreate = ['admin', 'staff'].includes(user.role);
+  const canCreate = ['admin', 'staff', 'teacher'].includes(user.role);
   const canEdit = ['admin', 'staff', 'teacher'].includes(user.role);
   const canDelete = ['admin', 'staff'].includes(user.role);
 

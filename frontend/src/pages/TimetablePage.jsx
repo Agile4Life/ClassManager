@@ -15,7 +15,6 @@ const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'
 const initialForm = { class_id: '', room_id: '', day_of_week: 'monday', start_time: '18:00', end_time: '19:30' };
 
 function pathForUser(user) {
-  if (user.role === 'teacher') return `/timetable/teacher/${user.teacher_id}`;
   if (user.role === 'student') return `/timetable/student/${user.student_id}`;
   if (user.role === 'parent') return `/timetable/parent/${user.parent_id}`;
   return '/timetable';

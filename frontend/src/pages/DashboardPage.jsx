@@ -9,7 +9,6 @@ import { usePageData } from '../hooks/usePageData';
 import { dayLabels, formatTime } from '../utils/format';
 
 function timetablePath(user) {
-  if (user.role === 'teacher') return `/timetable/teacher/${user.teacher_id}`;
   if (user.role === 'student') return `/timetable/student/${user.student_id}`;
   if (user.role === 'parent') return `/timetable/parent/${user.parent_id}`;
   return '/timetable';

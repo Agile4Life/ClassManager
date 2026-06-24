@@ -4,6 +4,6 @@ const requireAuth = require('../middlewares/auth.middleware');
 const requireRole = require('../middlewares/role.middleware');
 
 const router = express.Router();
-router.post('/import', requireAuth, requireRole('admin', 'staff'), controller.importStudents);
+router.post('/import', requireAuth, requireRole('admin', 'staff', 'teacher'), controller.importStudents);
 
 module.exports = router;

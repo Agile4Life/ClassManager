@@ -29,10 +29,7 @@ function scopeStudents(req, values, conditions) {
 }
 
 function scopeClasses(req, values, conditions) {
-  if (req.user.role === 'teacher') {
-    values.push(req.user.teacher_id);
-    conditions.push(`teacher_id = $${values.length}`);
-  } else if (req.user.role === 'student') {
+  if (req.user.role === 'student') {
     values.push(req.user.student_id);
     conditions.push(`class_id in (select class_id from enrollments where student_id = $${values.length})`);
   } else if (req.user.role === 'parent') {
@@ -51,6 +48,7 @@ const resources = {
     required: ['student_code', 'full_name'], searchColumns: ['student_code', 'full_name', 'phone', 'email'], filterColumns: ['status', 'grade_level'],
     autoCode: { column: 'student_code', prefix: 'S', digits: 3 },
     readRoles: ['admin', 'staff', 'teacher'], writeRoles: managers,
+    createRoles: [...managers, 'teacher'],
     updateRoles: [...managers, 'teacher'],
     scope: scopeStudents,
   },

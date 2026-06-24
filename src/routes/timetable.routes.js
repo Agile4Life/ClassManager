@@ -5,7 +5,7 @@ const requireRole = require('../middlewares/role.middleware');
 
 const router = express.Router();
 router.use(requireAuth);
-router.get('/', requireRole('admin', 'staff'), controller.getAll);
+router.get('/', requireRole('admin', 'staff', 'teacher'), controller.getAll);
 router.get('/class/:classId', requireRole('admin', 'staff', 'teacher'), controller.getByClass);
 router.get('/teacher/:teacherId', requireRole('admin', 'staff', 'teacher'), controller.getByTeacher);
 router.get('/student/:studentId', requireRole('admin', 'staff', 'student'), controller.getByStudent);
