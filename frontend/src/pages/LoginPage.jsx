@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import {
   Button, Field, Input, MessageBar, MessageBarBody, MessageBarTitle, Tab, TabList,
-} from '@fluentui/react-components';
-import { BookOpen24Filled, Key24Regular, Person24Regular } from '@fluentui/react-icons';
+} from '../components/bootstrap-ui';
+import { BookOpen24Filled, Key24Regular, Person24Regular } from '../components/bootstrap-icons';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 

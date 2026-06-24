@@ -9,8 +9,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@fluentui/react-components": "^9.74.1",
-    "@fluentui/react-icons": "^2.0.330",
+    "bootstrap": "^5.3.8",
+    "bootstrap-icons": "^1.13.1",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "react-router-dom": "^7.18.0"

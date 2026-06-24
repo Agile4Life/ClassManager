@@ -1,5 +1,5 @@
-import { Button } from '@fluentui/react-components';
-import { ChevronLeft24Regular, ChevronRight24Regular } from '@fluentui/react-icons';
+import { Button } from './bootstrap-ui';
+import { ChevronLeft24Regular, ChevronRight24Regular } from './bootstrap-icons';
 
 export default function Pagination({ pagination, onPageChange }) {
   if (!pagination || pagination.total <= pagination.limit) return null;

@@ -2,8 +2,8 @@ import { useMemo, useState } from 'react';
 import {
   Button, Dialog, DialogActions, DialogBody, DialogContent, DialogSurface, DialogTitle,
   Field, Input, MessageBar, MessageBarBody, Select,
-} from '@fluentui/react-components';
-import { Add24Regular, CalendarLtr24Regular } from '@fluentui/react-icons';
+} from '../components/bootstrap-ui';
+import { Add24Regular, CalendarLtr24Regular } from '../components/bootstrap-icons';
 import { api } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
 import { EmptyState, ErrorState, LoadingState } from '../components/FeedbackState';

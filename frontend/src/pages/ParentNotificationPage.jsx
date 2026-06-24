@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Button, Checkbox, Field, Input, MessageBar, MessageBarBody, Select, Textarea,
-} from '@fluentui/react-components';
-import { Add24Regular, Copy24Regular, Delete24Regular, Print24Regular } from '@fluentui/react-icons';
+} from '../components/bootstrap-ui';
+import { Add24Regular, Copy24Regular, Delete24Regular, Print24Regular } from '../components/bootstrap-icons';
 import { Navigate } from 'react-router-dom';
 import { api } from '../api/client';
 import { useAuth } from '../auth/AuthContext';

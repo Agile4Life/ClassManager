@@ -1,5 +1,5 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
-import { Skeleton, SkeletonItem } from '@fluentui/react-components';
+import { Skeleton, SkeletonItem } from '../components/bootstrap-ui';
 import { useAuth } from './AuthContext';
 
 export default function ProtectedRoute() {

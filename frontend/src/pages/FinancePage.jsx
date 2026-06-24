@@ -3,8 +3,8 @@ import {
   Button, Dialog, DialogActions, DialogBody, DialogContent, DialogSurface, DialogTitle,
   Field, Input, MessageBar, MessageBarBody, Select, Tab, TabList, Table, TableBody,
   TableCell, TableHeader, TableHeaderCell, TableRow,
-} from '@fluentui/react-components';
-import { Add24Regular } from '@fluentui/react-icons';
+} from '../components/bootstrap-ui';
+import { Add24Regular } from '../components/bootstrap-icons';
 import { api } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
 import { EmptyState, ErrorState, LoadingState } from '../components/FeedbackState';

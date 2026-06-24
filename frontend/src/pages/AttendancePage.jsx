@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Button, Field, MessageBar, MessageBarBody, Radio, Select } from '@fluentui/react-components';
-import { Save24Regular } from '@fluentui/react-icons';
+import { Button, Field, MessageBar, MessageBarBody, Radio, Select } from '../components/bootstrap-ui';
+import { Save24Regular } from '../components/bootstrap-icons';
 import { Navigate } from 'react-router-dom';
 import { api } from '../api/client';
 import { useAuth } from '../auth/AuthContext';

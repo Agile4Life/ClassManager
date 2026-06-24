@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
-import { Avatar, Button } from '@fluentui/react-components';
+import { Avatar, Button } from '../components/bootstrap-ui';
 import {
   BookOpen24Filled, CalendarLtr24Regular, DataTrending24Regular, Dismiss24Regular,
   Home24Regular, MailTemplate24Regular, Navigation24Regular, PeopleCommunity24Regular,
   PeopleCheckmark24Regular, PersonCircle24Regular, SignOut24Regular,
   WindowApps24Regular, Person24Regular
-} from '@fluentui/react-icons';
+} from '../components/bootstrap-icons';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 

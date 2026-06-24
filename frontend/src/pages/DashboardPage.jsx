@@ -1,5 +1,5 @@
-import { Button } from '@fluentui/react-components';
-import { ArrowRight24Regular, BookOpen24Filled, CalendarLtr24Regular, PeopleCommunity24Regular, WindowApps24Regular } from '@fluentui/react-icons';
+import { Button } from '../components/bootstrap-ui';
+import { ArrowRight24Regular, BookOpen24Filled, CalendarLtr24Regular, PeopleCommunity24Regular, WindowApps24Regular } from '../components/bootstrap-icons';
 import { Link } from 'react-router-dom';
 import { api } from '../api/client';
 import { useAuth } from '../auth/AuthContext';

@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react';
 import {
   Badge, Field, Select, Table, TableBody, TableCell, TableHeader, TableHeaderCell, TableRow,
   Button, Dialog, DialogActions, DialogBody, DialogContent, DialogSurface, DialogTitle, MessageBar, MessageBarBody
-} from '@fluentui/react-components';
-import { Delete24Regular } from '@fluentui/react-icons';
+} from '../components/bootstrap-ui';
+import { Delete24Regular } from '../components/bootstrap-icons';
 import { Navigate } from 'react-router-dom';
 import { api } from '../api/client';
 import { useAuth } from '../auth/AuthContext';

@@ -3,8 +3,8 @@ import {
   Badge, Button, Dialog, DialogActions, DialogBody, DialogContent, DialogSurface, DialogTitle,
   Field, Input, MessageBar, MessageBarBody, Select, Table, TableBody, TableCell, TableHeader,
   TableHeaderCell, TableRow,
-} from '@fluentui/react-components';
-import { Add24Regular, Delete24Regular, Key24Regular, Search24Regular } from '@fluentui/react-icons';
+} from '../components/bootstrap-ui';
+import { Add24Regular, Delete24Regular, Key24Regular, Search24Regular } from '../components/bootstrap-icons';
 import { Navigate } from 'react-router-dom';
 import { api } from '../api/client';
 import { useAuth } from '../auth/AuthContext';

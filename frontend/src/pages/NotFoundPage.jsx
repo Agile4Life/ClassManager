@@ -1,5 +1,5 @@
-import { Button } from '@fluentui/react-components';
-import { BookOpen24Filled, Home24Regular } from '@fluentui/react-icons';
+import { Button } from '../components/bootstrap-ui';
+import { BookOpen24Filled, Home24Regular } from '../components/bootstrap-icons';
 import { Link } from 'react-router-dom';
 
 export default function NotFoundPage() {

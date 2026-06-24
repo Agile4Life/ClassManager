@@ -1,5 +1,5 @@
-import { Button, MessageBar, MessageBarBody, MessageBarTitle, Skeleton, SkeletonItem } from '@fluentui/react-components';
-import { ArrowClockwise24Regular, Search24Regular } from '@fluentui/react-icons';
+import { Button, MessageBar, MessageBarBody, MessageBarTitle, Skeleton, SkeletonItem } from './bootstrap-ui';
+import { ArrowClockwise24Regular, Search24Regular } from './bootstrap-icons';
 
 export function LoadingState({ rows = 5 }) {
   return (

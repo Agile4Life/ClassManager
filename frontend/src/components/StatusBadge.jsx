@@ -1,4 +1,4 @@
-import { Badge } from '@fluentui/react-components';
+import { Badge } from './bootstrap-ui';
 
 const labels = {
   active: 'Đang hoạt động', inactive: 'Ngừng hoạt động', paused: 'Tạm dừng', graduated: 'Đã tốt nghiệp',
