@@ -86,7 +86,7 @@ function ThemePicker({ preference, setPreference, randomizeTheme, activeTheme, t
         <h2 id="theme-panel-title">Chọn sắc màu cho ngày học</h2>
         <p>
           {preference === 'random'
-            ? `Đã chọn ngẫu nhiên màu ${activeTheme.label.toLowerCase()}. Nhấn Tự động để đổi tiếp.`
+            ? `Đã chọn ngẫu nhiên màu. Nhấn Tự động để đổi tiếp.`
             : preference === 'today'
               ? `Mặc định theo hôm nay: màu ${activeTheme.label.toLowerCase()}.`
               : `Đang cố định màu ${activeTheme.label.toLowerCase()}.`}

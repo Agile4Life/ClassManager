@@ -14,18 +14,38 @@ import { usePageData } from '../hooks/usePageData';
 import { dayLabels, formatTime } from '../utils/format';
 
 const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
-const dayIdByJsDay = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-const monthFormatter = new Intl.DateTimeFormat('vi-VN', { month: 'long', year: 'numeric' });
 const initialForm = { class_id: '', room_id: '', day_of_week: 'monday', start_time: '18:00', end_time: '19:30' };
 
-function buildMonthGrid(monthCursor) {
-  const year = monthCursor.getFullYear();
-  const month = monthCursor.getMonth();
-  const firstDate = new Date(year, month, 1);
-  const mondayOffset = (firstDate.getDay() + 6) % 7;
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const cellCount = Math.ceil((mondayOffset + daysInMonth) / 7) * 7;
-  return Array.from({ length: cellCount }, (_, index) => new Date(year, month, 1 - mondayOffset + index));
+function startOfIsoWeek(date) {
+  const result = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  result.setDate(result.getDate() - ((result.getDay() + 6) % 7));
+  return result;
+}
+
+function getIsoWeek(date) {
+  const thursday = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  thursday.setDate(thursday.getDate() + 3 - ((thursday.getDay() + 6) % 7));
+  const isoYear = thursday.getFullYear();
+  const firstThursday = new Date(isoYear, 0, 4);
+  firstThursday.setDate(firstThursday.getDate() + 3 - ((firstThursday.getDay() + 6) % 7));
+  return { year: isoYear, week: 1 + Math.round((thursday - firstThursday) / 604_800_000) };
+}
+
+function getWeeksInIsoYear(year) {
+  return getIsoWeek(new Date(year, 11, 28)).week;
+}
+
+function getWeekDates(year, week) {
+  const firstMonday = startOfIsoWeek(new Date(year, 0, 4));
+  return days.map((_, index) => {
+    const date = new Date(firstMonday);
+    date.setDate(firstMonday.getDate() + ((week - 1) * 7) + index);
+    return date;
+  });
+}
+
+function formatShortDate(date) {
+  return `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}`;
 }
 
 function dateKey(date) {
@@ -46,12 +66,11 @@ function pathForUser(user) {
 
 export default function TimetablePage() {
   const { user } = useAuth();
+  const initialIsoWeek = useMemo(() => getIsoWeek(new Date()), []);
   const [viewMode, setViewMode] = useState('week');
   const [dayFilter, setDayFilter] = useState('all');
-  const [monthCursor, setMonthCursor] = useState(() => {
-    const now = new Date();
-    return new Date(now.getFullYear(), now.getMonth(), 1);
-  });
+  const [calendarYear, setCalendarYear] = useState(initialIsoWeek.year);
+  const [calendarWeek, setCalendarWeek] = useState(initialIsoWeek.week);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingSchedule, setEditingSchedule] = useState(null);
   const [form, setForm] = useState(initialForm);
@@ -70,18 +89,28 @@ export default function TimetablePage() {
   }, [user.role, user.teacher_id, user.student_id, user.parent_id]);
 
   const grouped = useMemo(() => Object.fromEntries(days.map((day) => [day, (data?.items || []).filter((item) => item.day_of_week === day)])), [data]);
-  const monthDates = useMemo(() => buildMonthGrid(monthCursor), [monthCursor]);
-  const monthTitle = useMemo(() => monthFormatter.format(monthCursor), [monthCursor]);
+  const weekDates = useMemo(() => getWeekDates(calendarYear, calendarWeek), [calendarWeek, calendarYear]);
+  const yearOptions = useMemo(() => Array.from({ length: 7 }, (_, index) => initialIsoWeek.year - 1 + index), [initialIsoWeek.year]);
+  const weekOptions = useMemo(() => Array.from({ length: getWeeksInIsoYear(calendarYear) }, (_, index) => {
+    const week = index + 1;
+    const range = getWeekDates(calendarYear, week);
+    return { week, label: `Tuần ${week} · ${formatShortDate(range[0])} - ${formatShortDate(range[6])}` };
+  }), [calendarYear]);
   const visibleDays = dayFilter === 'all' ? days : [dayFilter];
   function updateField(field, value) { setForm((current) => ({ ...current, [field]: value })); }
 
-  function moveMonth(offset) {
-    setMonthCursor((current) => new Date(current.getFullYear(), current.getMonth() + offset, 1));
+  function changeCalendarYear(value) {
+    const year = Number(value);
+    setCalendarYear(year);
+    setCalendarWeek((current) => Math.min(current, getWeeksInIsoYear(year)));
   }
 
-  function showCurrentMonth() {
-    const now = new Date();
-    setMonthCursor(new Date(now.getFullYear(), now.getMonth(), 1));
+  function moveWeek(offset) {
+    const monday = getWeekDates(calendarYear, calendarWeek)[0];
+    monday.setDate(monday.getDate() + (offset * 7));
+    const next = getIsoWeek(monday);
+    setCalendarYear(next.year);
+    setCalendarWeek(next.week);
   }
 
   function openCreateDialog() {
@@ -133,16 +162,20 @@ export default function TimetablePage() {
         <div className="timetable-toolbar__filters">
           <Select aria-label="Chế độ xem thời khóa biểu" value={viewMode} onChange={(event) => setViewMode(event.target.value)}>
             <option value="week">Tuần mẫu</option>
-            <option value="month">Theo tháng</option>
+            <option value="calendar">Lịch lặp theo tuần</option>
           </Select>
           {viewMode === 'week' && <Select aria-label="Lọc theo ngày" value={dayFilter} onChange={(event) => setDayFilter(event.target.value)}><option value="all">Cả tuần</option>{days.map((day) => <option key={day} value={day}>{dayLabels[day]}</option>)}</Select>}
         </div>
-        {viewMode === 'month' && (
-          <div className="timetable-month-nav" aria-label="Điều hướng tháng">
-            <Button appearance="subtle" icon={<ChevronLeft24Regular />} aria-label="Tháng trước" onClick={() => moveMonth(-1)} />
-            <strong>{monthTitle}</strong>
-            <Button appearance="subtle" onClick={showCurrentMonth}>Tháng này</Button>
-            <Button appearance="subtle" icon={<ChevronRight24Regular />} aria-label="Tháng sau" onClick={() => moveMonth(1)} />
+        {viewMode === 'calendar' && (
+          <div className="recurring-week-controls" aria-label="Chọn tuần hiển thị">
+            <Button appearance="subtle" icon={<ChevronLeft24Regular />} aria-label="Tuần trước" onClick={() => moveWeek(-1)} />
+            <Select aria-label="Chọn năm" value={calendarYear} onChange={(event) => changeCalendarYear(event.target.value)}>
+              {yearOptions.map((year) => <option value={year} key={year}>{year}</option>)}
+            </Select>
+            <Select aria-label="Chọn tuần" value={calendarWeek} onChange={(event) => setCalendarWeek(Number(event.target.value))}>
+              {weekOptions.map((item) => <option value={item.week} key={item.week}>{item.label}</option>)}
+            </Select>
+            <Button appearance="subtle" icon={<ChevronRight24Regular />} aria-label="Tuần sau" onClick={() => moveWeek(1)} />
           </div>
         )}
       </div>
@@ -160,12 +193,10 @@ export default function TimetablePage() {
           <strong>{item.class_name}</strong><p>{item.subject_name}</p><div className="lesson-card__meta"><span>{item.room_name || 'Chưa xếp phòng'}</span><small>{item.teacher_name || item.student_name || ''}</small></div>
         </article>)}{!grouped[day].length && <div className="day-column__empty"><CalendarLtr24Regular /><span>Trống lịch</span></div>}</div>
       </div>)}</section>}
-      {data?.items.length > 0 && viewMode === 'month' && (
-        <MonthCalendar
-          dates={monthDates}
-          monthCursor={monthCursor}
+      {data?.items.length > 0 && viewMode === 'calendar' && (
+        <RecurringWeekTable
+          dates={weekDates}
           grouped={grouped}
-          title={monthTitle}
           canEditSchedule={canEditSchedule}
           onEdit={openEditDialog}
         />
@@ -186,57 +217,62 @@ export default function TimetablePage() {
   );
 }
 
-function MonthCalendar({ dates, monthCursor, grouped, title, canEditSchedule, onEdit }) {
+function RecurringWeekTable({ dates, grouped, canEditSchedule, onEdit }) {
   const today = new Date();
+  const weekNumber = getIsoWeek(dates[0]).week;
   return (
-    <section className="month-calendar" aria-label={`Thời khóa biểu ${title}`}>
-      <div className="month-calendar__grid" role="grid">
-        {days.map((day) => <div className="month-calendar__weekday" role="columnheader" key={day}>{dayLabels[day]}</div>)}
-        {dates.map((date) => {
-          const schedules = grouped[dayIdByJsDay[date.getDay()]] || [];
-          const outsideMonth = date.getMonth() !== monthCursor.getMonth();
-          const todayCell = isSameDate(date, today);
-          return (
-            <div
-              className={`month-calendar__day ${outsideMonth ? 'month-calendar__day--outside' : ''} ${todayCell ? 'month-calendar__day--today' : ''}`}
-              role="gridcell"
-              key={dateKey(date)}
-            >
-              <div className="month-calendar__date">
-                <time dateTime={dateKey(date)}>{date.getDate()}</time>
-                {!!schedules.length && <small>{schedules.length} buổi</small>}
-              </div>
-              <div className="month-calendar__lessons">
-                {schedules.map((schedule) => {
-                  const editable = canEditSchedule(schedule);
-                  const content = (
-                    <>
-                      <span><strong>{formatTime(schedule.start_time)}</strong>{editable && <Edit24Regular aria-hidden="true" />}</span>
-                      <b>{schedule.class_name}</b>
-                      <small>{schedule.room_name || 'Chưa xếp phòng'}</small>
-                    </>
-                  );
-                  return editable ? (
-                    <button
-                      type="button"
-                      className="month-lesson month-lesson--editable"
-                      aria-label={`Chỉnh sửa lịch ${schedule.class_name} ngày ${date.getDate()}`}
-                      title="Chỉnh sửa lịch lặp"
-                      key={`${dateKey(date)}-${schedule.schedule_id}`}
-                      onClick={() => onEdit(schedule)}
-                    >
-                      {content}
-                    </button>
-                  ) : (
-                    <div className="month-lesson" key={`${dateKey(date)}-${schedule.schedule_id || schedule.class_id}`}>
-                      {content}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          );
-        })}
+    <section className="recurring-schedule" aria-labelledby="recurring-schedule-title">
+      <div className="recurring-schedule__heading">
+        <div><span>Lịch lặp</span><h2 id="recurring-schedule-title">Tuần {weekNumber}</h2><p>{formatShortDate(dates[0])} đến {formatShortDate(dates[6])}</p></div>
+        <small>Lặp từ tuần mẫu</small>
+      </div>
+      <div className="recurring-table-wrap">
+        <table className="recurring-table">
+          <thead>
+            <tr>{days.map((day, index) => <th className={isSameDate(dates[index], today) ? 'recurring-table__today' : ''} scope="col" key={day}>{dayLabels[day]}</th>)}</tr>
+            <tr>{dates.map((date) => <th className={isSameDate(date, today) ? 'recurring-table__today' : ''} scope="col" key={dateKey(date)}><time dateTime={dateKey(date)}>{formatShortDate(date)}</time></th>)}</tr>
+          </thead>
+          <tbody>
+            <tr>{days.map((day, index) => {
+              const date = dates[index];
+              const schedules = grouped[day] || [];
+              return (
+                <td className={isSameDate(date, today) ? 'recurring-table__today-cell' : ''} key={dateKey(date)}>
+                  <div className="recurring-table__lessons">
+                    {schedules.map((schedule) => {
+                      const editable = canEditSchedule(schedule);
+                      const content = (
+                        <>
+                          <span><strong>{formatTime(schedule.start_time)} - {formatTime(schedule.end_time)}</strong>{editable && <Edit24Regular aria-hidden="true" />}</span>
+                          <b>{schedule.class_name}</b>
+                          <small>{schedule.subject_name}</small>
+                          <em>{schedule.room_name || 'Chưa xếp phòng'}</em>
+                        </>
+                      );
+                      return editable ? (
+                        <button
+                          type="button"
+                          className="recurring-lesson recurring-lesson--editable"
+                          aria-label={`Chỉnh sửa lịch ${schedule.class_name} ngày ${formatShortDate(date)}`}
+                          title="Chỉnh sửa lịch lặp"
+                          key={`${dateKey(date)}-${schedule.schedule_id}`}
+                          onClick={() => onEdit(schedule)}
+                        >
+                          {content}
+                        </button>
+                      ) : (
+                        <div className="recurring-lesson" key={`${dateKey(date)}-${schedule.schedule_id || schedule.class_id}`}>
+                          {content}
+                        </div>
+                      );
+                    })}
+                    {!schedules.length && <span className="recurring-table__empty">Không có lịch</span>}
+                  </div>
+                </td>
+              );
+            })}</tr>
+          </tbody>
+        </table>
       </div>
     </section>
   );
