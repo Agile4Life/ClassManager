@@ -669,16 +669,24 @@ create index idx_classes_teacher_id on classes(teacher_id);
 
 create index idx_enrollments_student_id on enrollments(student_id);
 create index idx_enrollments_class_id on enrollments(class_id);
+create index idx_enrollments_class_attendance on enrollments(class_id, student_id)
+    where status in ('studying', 'completed');
 
 create index idx_attendance_session_id on attendance(session_id);
+create index idx_class_sessions_class_date on class_sessions(class_id, session_date desc);
 
 create index idx_user_accounts_username on user_accounts(username);
 create index idx_user_accounts_role on user_accounts(role);
 create index idx_user_sessions_user_id on user_sessions(user_id);
 create index idx_login_logs_user_id on login_logs(user_id);
+create index idx_login_logs_user_created_at on login_logs(user_id, created_at desc);
 
 create index idx_invoices_student_id on invoices(student_id);
 create index idx_payments_student_id on payments(student_id);
+create index idx_payments_invoice_id on payments(invoice_id);
+
+create index idx_class_schedules_room_day on class_schedules(room_id, day_of_week);
+create index idx_class_schedules_class_id on class_schedules(class_id);
 
 create index idx_learning_topics_subject_id on learning_topics(subject_id);
 create index idx_assignments_class_id on assignments(class_id);

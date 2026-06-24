@@ -19,6 +19,10 @@ if (useSsl) {
 const pool = new Pool({
   connectionString,
   ssl: useSsl ? { rejectUnauthorized: false } : false,
+  max: Math.max(Number(process.env.DATABASE_POOL_MAX) || 10, 1),
+  idleTimeoutMillis: Math.max(Number(process.env.DATABASE_IDLE_TIMEOUT_MS) || 30_000, 1_000),
+  connectionTimeoutMillis: Math.max(Number(process.env.DATABASE_CONNECTION_TIMEOUT_MS) || 5_000, 1_000),
+  statement_timeout: Math.max(Number(process.env.DATABASE_STATEMENT_TIMEOUT_MS) || 15_000, 1_000),
 });
 
 pool.on('error', (error) => {

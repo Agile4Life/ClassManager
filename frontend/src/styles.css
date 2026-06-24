@@ -286,6 +286,12 @@ a { color: inherit; }
 .not-found > span { margin-top: 18px; color: var(--accent); font-size: 12px; font-weight: 800; }
 .not-found h1 { margin: 7px 0; font-size: 38px; letter-spacing: -0.04em; }
 .not-found p { margin: 0 0 20px; color: var(--muted); }
+.fatal-error { min-height: 100dvh; display: grid; place-items: center; padding: 24px; background: var(--canvas); }
+.fatal-error > div { width: min(100%, 540px); padding: 32px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--paper); box-shadow: var(--shadow); }
+.fatal-error span { color: #9b3d3d; font-size: 12px; font-weight: 800; }
+.fatal-error h1 { margin: 8px 0; font-size: 28px; letter-spacing: -0.035em; }
+.fatal-error p { margin: 0 0 20px; color: var(--muted); line-height: 1.6; }
+.fatal-error button { min-height: 42px; padding: 0 17px; color: #fff; border: 0; border-radius: var(--radius-control); background: var(--accent); cursor: pointer; font-weight: 700; }
 .session-loader { min-height: 100dvh; display: grid; place-items: center; padding: 30px; }
 .session-loader__bar { width: min(380px, 70vw) !important; height: 18px !important; border-radius: 9px !important; }
 .route-loader { max-width: 1100px; margin: 0 auto; padding: 80px 24px; }

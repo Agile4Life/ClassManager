@@ -18,13 +18,14 @@ function timetablePath(user) {
 export default function DashboardPage() {
   const { user } = useAuth();
   const { data, loading, error, refresh } = usePageData(async () => {
-    const requests = [api.get('/classes?limit=100'), api.get(timetablePath(user))];
-    if (['admin', 'staff', 'teacher'].includes(user.role)) requests.push(api.get('/students?limit=100'));
+    const requests = [api.get('/classes?limit=4'), api.get(timetablePath(user))];
+    if (['admin', 'staff', 'teacher'].includes(user.role)) requests.push(api.get('/students?limit=1'));
     const [classes, timetable, students] = await Promise.all(requests);
     return {
       classes: classes.data.items,
+      classCount: classes.data.pagination.total,
       timetable: timetable.data,
-      students: students?.data?.items || [],
+      studentCount: students?.data?.pagination?.total ?? null,
     };
   }, [user.role]);
 
@@ -42,8 +43,8 @@ export default function DashboardPage() {
       {data && (
         <>
           <section className="stat-grid stat-grid--three" aria-label="Số liệu tổng quan">
-            <Stat icon={WindowApps24Regular} value={data.classes.length} label="Lớp đang theo dõi" tone="blue" />
-            <Stat icon={PeopleCommunity24Regular} value={data.students.length || 'Theo lớp'} label="Học sinh" tone="yellow" />
+            <Stat icon={WindowApps24Regular} value={data.classCount} label="Lớp đang theo dõi" tone="blue" />
+            <Stat icon={PeopleCommunity24Regular} value={data.studentCount ?? 'Theo lớp'} label="Học sinh" tone="yellow" />
             <Stat icon={CalendarLtr24Regular} value={data.timetable.length} label="Lịch học mỗi tuần" tone="blue" />
           </section>
 

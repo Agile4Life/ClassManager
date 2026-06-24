@@ -103,25 +103,45 @@ const saveAttendance = asyncHandler(async (req, res) => {
   const client = await pool.connect();
   try {
     await client.query('begin');
-    const saved = [];
-    for (const entry of entries) {
-      const enrolled = await client.query(
-        `select 1 from enrollments where class_id = $1 and student_id = $2 and status in ('studying', 'completed')`,
-        [session.class_id, entry.student_id],
-      );
-      if (!enrolled.rowCount) throw new AppError(400, `Student ${entry.student_id} is not enrolled in this class`);
-      const result = await client.query(
-        `insert into attendance (session_id, student_id, status, check_in_time, note)
-         values ($1, $2, $3, $4, $5)
-         on conflict (session_id, student_id) do update
-         set status = excluded.status, check_in_time = excluded.check_in_time, note = excluded.note
-         returning *`,
-        [req.params.sessionId, entry.student_id, entry.status, entry.check_in_time || null, entry.note || null],
-      );
-      saved.push(result.rows[0]);
+    const studentIds = entries.map((entry) => String(entry.student_id));
+    if (new Set(studentIds).size !== studentIds.length) {
+      throw new AppError(400, 'Attendance contains duplicate students');
     }
+    const enrolled = await client.query(
+      `select student_id from enrollments
+       where class_id = $1 and student_id = any($2::bigint[])
+         and status in ('studying', 'completed')`,
+      [session.class_id, studentIds],
+    );
+    const enrolledIds = new Set(enrolled.rows.map((row) => String(row.student_id)));
+    const notEnrolled = studentIds.filter((studentId) => !enrolledIds.has(studentId));
+    if (notEnrolled.length) {
+      throw new AppError(400, `Students are not enrolled in this class: ${notEnrolled.join(', ')}`);
+    }
+
+    const placeholders = entries.map((entry, index) => {
+      const offset = index * 5;
+      return `($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4}, $${offset + 5})`;
+    });
+    const params = entries.flatMap((entry) => [
+      req.params.sessionId,
+      entry.student_id,
+      entry.status,
+      entry.check_in_time || null,
+      entry.note || null,
+    ]);
+    const result = await client.query(
+      `insert into attendance (session_id, student_id, status, check_in_time, note)
+       values ${placeholders.join(', ')}
+       on conflict (session_id, student_id) do update
+       set status = excluded.status,
+           check_in_time = excluded.check_in_time,
+           note = excluded.note
+       returning *`,
+      params,
+    );
     await client.query('commit');
-    return success(res, saved, 'Attendance saved successfully', 201);
+    return success(res, result.rows, 'Attendance saved successfully', 201);
   } catch (error) {
     await client.query('rollback'); throw error;
   } finally { client.release(); }

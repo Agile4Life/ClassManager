@@ -3,9 +3,10 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import ProtectedRoute from './auth/ProtectedRoute';
 import AppShell from './layout/AppShell';
 import { LoadingState } from './components/FeedbackState';
-import LoginPage from './pages/LoginPage';
-import NotFoundPage from './pages/NotFoundPage';
+import ErrorBoundary from './components/ErrorBoundary';
 
+const LoginPage = lazy(() => import('./pages/LoginPage'));
+const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 const DashboardPage = lazy(() => import('./pages/DashboardPage'));
 const StudentsPage = lazy(() => import('./pages/StudentsPage'));
 const ClassesPage = lazy(() => import('./pages/ClassesPage'));
@@ -16,7 +17,7 @@ const AttendancePage = lazy(() => import('./pages/AttendancePage'));
 
 export default function App() {
   return (
-    <Suspense fallback={<div className="route-loader"><LoadingState rows={5} /></div>}><Routes>
+    <ErrorBoundary><Suspense fallback={<div className="route-loader"><LoadingState rows={5} /></div>}><Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route element={<ProtectedRoute />}>
         <Route element={<AppShell />}>
@@ -32,6 +33,6 @@ export default function App() {
       </Route>
       <Route path="/home" element={<Navigate to="/" replace />} />
       <Route path="*" element={<NotFoundPage />} />
-    </Routes></Suspense>
+    </Routes></Suspense></ErrorBoundary>
   );
 }
