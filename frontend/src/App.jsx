@@ -12,6 +12,7 @@ const ClassesPage = lazy(() => import('./pages/ClassesPage'));
 const TimetablePage = lazy(() => import('./pages/TimetablePage'));
 const ReportsPage = lazy(() => import('./pages/ReportsPage'));
 const ParentNotificationPage = lazy(() => import('./pages/ParentNotificationPage'));
+const AttendancePage = lazy(() => import('./pages/AttendancePage'));
 
 export default function App() {
   return (
@@ -26,6 +27,7 @@ export default function App() {
           <Route path="finance" element={<Navigate to="/" replace />} />
           <Route path="reports" element={<ReportsPage />} />
           <Route path="parent-notifications" element={<ParentNotificationPage />} />
+          <Route path="attendance" element={<AttendancePage />} />
         </Route>
       </Route>
       <Route path="/home" element={<Navigate to="/" replace />} />
