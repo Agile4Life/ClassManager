@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import {
   Badge, Field, Select, Table, TableBody, TableCell, TableHeader, TableHeaderCell, TableRow,
+  Button, Dialog, DialogActions, DialogBody, DialogContent, DialogSurface, DialogTitle, MessageBar, MessageBarBody
 } from '@fluentui/react-components';
+import { Delete24Regular } from '@fluentui/react-icons';
 import { Navigate } from 'react-router-dom';
 import { api } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
@@ -28,6 +30,9 @@ function LearningHistoryWorkspace({ user }) {
   const [students, setStudents] = useState([]);
   const [studentsLoading, setStudentsLoading] = useState(false);
   const [studentsError, setStudentsError] = useState('');
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
 
   const { data: classes, loading: classesLoading, error: classesError, refresh: refreshClasses } = usePageData(
     () => api.get('/classes?limit=100').then((response) => response.data.items),
@@ -57,6 +62,21 @@ function LearningHistoryWorkspace({ user }) {
   }, [classId]);
 
   const summary = data?.summary || { total_events: 0, students_count: 0 };
+
+  async function deleteEvent() {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    setDeleteError('');
+    try {
+      await api.delete(`/learning-history/${deleteTarget.event_id}`);
+      setDeleteTarget(null);
+      refresh();
+    } catch (err) {
+      setDeleteError(err.message);
+    } finally {
+      setDeleting(false);
+    }
+  }
 
   return (
     <div className="page-flow learning-history-page">
@@ -105,6 +125,7 @@ function LearningHistoryWorkspace({ user }) {
               <TableHeaderCell>Mục được đánh dấu</TableHeaderCell>
               <TableHeaderCell>Số lần</TableHeaderCell>
               <TableHeaderCell>Người ghi nhận</TableHeaderCell>
+              {user.role === 'admin' && <TableHeaderCell>Thao tác</TableHeaderCell>}
             </TableRow></TableHeader>
             <TableBody>{data.items.map((item) => (
                 <TableRow key={item.event_id}>
@@ -113,12 +134,31 @@ function LearningHistoryWorkspace({ user }) {
                   <TableCell><div className="learning-history-detail"><strong>{item.category_label}</strong><span>{item.detail}</span>{item.student_note && <small>Ghi chú: {item.student_note}</small>}</div></TableCell>
                   <TableCell><Badge appearance="filled" color="informative">{item.occurrence_count} lần</Badge></TableCell>
                   <TableCell><div className="stacked-cell"><span>{item.recorded_by_name || item.teacher_name || 'Tài khoản đã xóa'}</span><small>{item.teacher_name || 'Chưa phân công'}</small></div></TableCell>
+                  {user.role === 'admin' && (
+                    <TableCell>
+                      <Button appearance="subtle" size="small" icon={<Delete24Regular />} aria-label="Xóa" title="Xóa ghi nhận" onClick={() => { setDeleteTarget(item); setDeleteError(''); }} />
+                    </TableCell>
+                  )}
                 </TableRow>
             ))}</TableBody>
           </Table>
           <Pagination pagination={data.pagination} onPageChange={setPage} />
         </div>
       )}
+
+      <Dialog open={Boolean(deleteTarget)} onOpenChange={(_, details) => { if (!details.open && !deleting) setDeleteTarget(null); }}>
+        <DialogSurface><DialogBody>
+          <DialogTitle>Xóa lịch sử ghi nhận?</DialogTitle>
+          <DialogContent>
+            {deleteError && <MessageBar intent="error"><MessageBarBody>{deleteError}</MessageBarBody></MessageBar>}
+            <p>Hành động này sẽ xóa ghi nhận <strong>{deleteTarget?.category_label}</strong> của học sinh <strong>{deleteTarget?.student_name}</strong> và không thể hoàn tác.</p>
+          </DialogContent>
+          <DialogActions>
+            <Button appearance="secondary" disabled={deleting} onClick={() => setDeleteTarget(null)}>Hủy</Button>
+            <Button className="danger-button" appearance="primary" disabled={deleting} onClick={deleteEvent}>{deleting ? 'Đang xóa...' : 'Xóa ghi nhận'}</Button>
+          </DialogActions>
+        </DialogBody></DialogSurface>
+      </Dialog>
     </div>
   );
 }

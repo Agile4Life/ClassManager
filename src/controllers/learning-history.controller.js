@@ -190,4 +190,11 @@ const listEvents = asyncHandler(async (req, res) => {
   }, 'Learning history fetched successfully');
 });
 
-module.exports = { createEvents, listEvents, ensureLearningHistorySchema };
+const removeEvent = asyncHandler(async (req, res) => {
+  await ensureLearningHistorySchema();
+  const result = await pool.query('delete from student_learning_events where event_id = $1 returning event_id', [req.params.id]);
+  if (!result.rowCount) throw new AppError(404, 'Learning event not found');
+  return success(res, result.rows[0], 'Learning event deleted successfully');
+});
+
+module.exports = { createEvents, listEvents, removeEvent, ensureLearningHistorySchema };

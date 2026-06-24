@@ -7,5 +7,6 @@ const router = express.Router();
 router.use(requireAuth);
 router.post('/learning-history/events', requireRole('admin', 'staff', 'teacher'), controller.createEvents);
 router.get('/learning-history', requireRole('admin', 'teacher'), controller.listEvents);
+router.delete('/learning-history/:id', requireRole('admin'), controller.removeEvent);
 
 module.exports = router;
