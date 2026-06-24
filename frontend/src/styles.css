@@ -235,6 +235,11 @@ a { color: inherit; }
 
 .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding-top: 8px; }
 .form-grid__wide { grid-column: 1 / -1; }
+.timetable-toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.timetable-toolbar__filters { display: flex; flex-wrap: wrap; gap: 10px; }
+.timetable-toolbar__filters .form-select { width: auto; min-width: 190px; }
+.timetable-month-nav { display: flex; align-items: center; gap: 6px; }
+.timetable-month-nav strong { min-width: 150px; color: var(--accent-dark); text-align: center; text-transform: capitalize; font-size: 14px; }
 .timetable-board { display: grid; grid-template-columns: repeat(7, minmax(170px, 1fr)); gap: 12px; overflow-x: auto; padding-bottom: 8px; }
 .timetable-board--single { grid-template-columns: minmax(260px, 500px); overflow: visible; }
 .day-column { min-height: 390px; border: 1px solid var(--line); border-radius: var(--radius); background: rgba(253, 254, 254, 0.72); }
@@ -242,13 +247,59 @@ a { color: inherit; }
 .day-column__heading small { color: var(--muted); font-size: 10px; font-weight: 600; }
 .day-column__body { display: grid; align-content: start; gap: 9px; padding: 10px; }
 .lesson-card { padding: 13px; border-left: 4px solid var(--accent); border-radius: 11px; background: var(--paper); box-shadow: 0 7px 18px rgba(38, 78, 132, 0.07); }
+.lesson-card__top { min-height: 32px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .lesson-card__time { display: block; color: var(--accent-dark); font-size: 11px; font-weight: 800; }
+.lesson-card__edit { width: 32px; min-width: 32px; min-height: 32px; padding: 0; }
 .lesson-card > strong { display: block; margin-top: 7px; font-size: 13px; line-height: 1.35; }
 .lesson-card p { margin: 4px 0 10px; color: var(--muted); font-size: 11px; }
-.lesson-card > div { padding-top: 8px; border-top: 1px solid #ebeff5; }
-.lesson-card > div span, .lesson-card > div small { display: block; font-size: 10px; }
-.lesson-card > div small { margin-top: 3px; color: var(--muted); }
+.lesson-card__meta { padding-top: 8px; border-top: 1px solid #ebeff5; }
+.lesson-card__meta span, .lesson-card__meta small { display: block; font-size: 10px; }
+.lesson-card__meta small { margin-top: 3px; color: var(--muted); }
+.schedule-edit-context {
+  display: grid; gap: 3px; padding: 12px 14px; border: 1px solid var(--accent-soft);
+  border-radius: var(--radius-control); background: var(--paper-blue);
+}
+.schedule-edit-context span { color: var(--muted); font-size: 11px; font-weight: 650; }
+.schedule-edit-context strong { color: var(--accent-dark); font-size: 14px; }
+.schedule-edit-context small { color: var(--muted); font-size: 11px; }
 .day-column__empty { min-height: 100px; display: grid; place-content: center; justify-items: center; gap: 7px; color: #9aa6b9; font-size: 11px; }
+
+.month-calendar {
+  overflow-x: auto; border: 1px solid var(--line); border-radius: var(--radius); background: var(--paper);
+  box-shadow: 0 10px 34px rgba(var(--accent-rgb), 0.06);
+}
+.month-calendar__grid { min-width: 1050px; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); }
+.month-calendar__weekday {
+  padding: 12px 10px; color: var(--accent-dark); border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line); background: var(--paper-blue); text-align: center; font-size: 12px; font-weight: 800;
+}
+.month-calendar__weekday:nth-child(7) { border-right: 0; }
+.month-calendar__day {
+  min-height: 164px; padding: 8px; overflow: hidden; border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line); background: var(--paper);
+}
+.month-calendar__day:nth-child(7n) { border-right: 0; }
+.month-calendar__day--outside { background: #f7f9fc; }
+.month-calendar__day--outside > * { opacity: 0.58; }
+.month-calendar__day--today { background: color-mix(in srgb, var(--accent-soft) 42%, var(--paper)); box-shadow: inset 0 0 0 2px var(--accent); }
+.month-calendar__date { min-height: 25px; display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-bottom: 6px; }
+.month-calendar__date time { width: 25px; height: 25px; display: grid; place-items: center; color: #45536a; border-radius: 50%; font-size: 12px; font-weight: 800; }
+.month-calendar__day--today .month-calendar__date time { color: #fff; background: var(--accent); }
+.month-calendar__date small { color: var(--muted); font-size: 9px; }
+.month-calendar__lessons { display: grid; gap: 5px; }
+.month-lesson {
+  width: 100%; min-width: 0; display: grid; gap: 2px; padding: 7px 8px; color: var(--ink);
+  border: 1px solid var(--accent-soft); border-left: 3px solid var(--accent); border-radius: 7px;
+  background: var(--paper-blue); text-align: left;
+}
+.month-lesson > span { display: flex; align-items: center; justify-content: space-between; gap: 5px; color: var(--accent-dark); font-size: 9px; }
+.month-lesson > span i { font-size: 11px; }
+.month-lesson b, .month-lesson small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.month-lesson b { font-size: 10px; }
+.month-lesson small { color: var(--muted); font-size: 9px; }
+button.month-lesson { cursor: pointer; transition: transform 130ms ease, border-color 130ms ease, box-shadow 130ms ease; }
+button.month-lesson:hover { transform: translateY(-1px); border-color: var(--accent); box-shadow: 0 5px 12px rgba(var(--accent-rgb), 0.12); }
+button.month-lesson:active { transform: translateY(0) scale(0.99); }
 
 .notification-context {
   display: grid; grid-template-columns: repeat(2, minmax(240px, 1fr)) minmax(150px, 0.22fr);
@@ -570,6 +621,12 @@ a { color: inherit; }
   .page-header__action, .page-header__action > button { width: 100%; }
   .welcome-strip { grid-template-columns: 1fr; min-height: auto; padding: 28px 24px 62px; }
   .welcome-strip__stamp { display: none; }
+  .timetable-toolbar { align-items: stretch; }
+  .timetable-toolbar__filters { width: 100%; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .timetable-toolbar__filters .form-select { width: 100%; min-width: 0; }
+  .timetable-month-nav { width: 100%; justify-content: space-between; }
+  .timetable-month-nav strong { min-width: 0; flex: 1; }
+  .month-calendar__grid { min-width: 910px; }
   .theme-panel { padding: 16px; }
   .theme-choices { display: flex; gap: 8px; overflow-x: auto; padding: 2px 2px 8px; scroll-snap-type: x proximity; }
   .theme-choice { min-width: 88px; flex: 0 0 88px; scroll-snap-align: start; }
@@ -689,6 +746,7 @@ a { color: inherit; }
   .parent-notification-page .page-header h1 { font-size: 25px; }
   .notification-context, .notification-editor, .notification-preview { padding: 12px; }
   .notification-line { padding: 10px; }
+  .timetable-toolbar__filters { grid-template-columns: 1fr; }
   .student-picker__actions, .notification-preview__actions { grid-template-columns: 1fr; }
   .notification-preview__text { min-height: 160px; }
 }

@@ -141,6 +141,13 @@ const updateSchedule = asyncHandler(async (req, res) => {
     const currentResult = await client.query('select * from class_schedules where schedule_id = $1 for update', [req.params.scheduleId]);
     if (!currentResult.rowCount) throw new AppError(404, 'Schedule not found');
     const current = currentResult.rows[0];
+    if (req.user.role === 'teacher') {
+      const allowed = await client.query(
+        'select 1 from classes where class_id = $1 and teacher_id = $2',
+        [current.class_id, req.user.teacher_id],
+      );
+      if (!allowed.rowCount) throw new AppError(403, 'You can only update schedules for your assigned classes');
+    }
     const input = {
       classId: current.class_id,
       roomId: req.body.room_id !== undefined ? req.body.room_id : current.room_id,
@@ -163,6 +170,15 @@ const updateSchedule = asyncHandler(async (req, res) => {
 });
 
 const deleteSchedule = asyncHandler(async (req, res) => {
+  if (req.user.role === 'teacher') {
+    const allowed = await pool.query(
+      `select 1 from class_schedules cs
+       join classes c on c.class_id = cs.class_id
+       where cs.schedule_id = $1 and c.teacher_id = $2`,
+      [req.params.scheduleId, req.user.teacher_id],
+    );
+    if (!allowed.rowCount) throw new AppError(403, 'You can only delete schedules for your assigned classes');
+  }
   const result = await pool.query('delete from class_schedules where schedule_id = $1 returning schedule_id', [req.params.scheduleId]);
   if (!result.rowCount) throw new AppError(404, 'Schedule not found');
   return success(res, result.rows[0], 'Schedule deleted successfully');
