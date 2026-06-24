@@ -299,8 +299,9 @@ a { color: inherit; }
   grid-column: 1 / -1; min-height: 96px; display: grid; place-items: center; padding: 18px;
   color: var(--muted); text-align: center; font-size: 12px;
 }
-.notification-preview__text { display: block; margin-top: 18px; }
-.notification-preview__text textarea { min-height: 390px; padding: 16px; line-height: 1.65; }
+.notification-preview__text {
+  display: block; min-height: 150px; margin-top: 18px; padding: 14px 16px; line-height: 1.65;
+}
 .notification-preview__print { display: none; }
 .notification-preview__actions { display: flex; gap: 9px; margin-top: 13px; }
 .notification-history-hint { margin: 12px 0 0; color: var(--muted); font-size: 11px; line-height: 1.5; }
@@ -607,7 +608,7 @@ a { color: inherit; }
     min-width: 0; overflow: visible; text-overflow: clip; white-space: normal; line-height: 1.35; overflow-wrap: anywhere;
   }
   .notification-preview__text { width: 100%; min-width: 0; margin-top: 14px; }
-  .notification-preview__text textarea { min-height: 280px; padding: 12px; font-size: 16px; line-height: 1.55; }
+  .notification-preview__text { min-height: 170px; padding: 12px; font-size: 16px; line-height: 1.55; }
   .notification-preview__actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
   .notification-preview__actions .btn { width: 100%; min-width: 0; }
   .parent-notification-page .alert { min-width: 0; }
@@ -644,7 +645,7 @@ a { color: inherit; }
   .notification-context__count { grid-column: 1 / -1; min-height: 48px; }
   .notification-editor, .notification-preview { padding: 16px; }
   .student-picker__list { max-height: 180px; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
-  .notification-preview__text textarea { min-height: 220px; }
+  .notification-preview__text { min-height: 150px; }
 }
 
 @media (max-width: 360px) {
@@ -656,7 +657,7 @@ a { color: inherit; }
   .notification-context, .notification-editor, .notification-preview { padding: 12px; }
   .notification-line { padding: 10px; }
   .student-picker__actions, .notification-preview__actions { grid-template-columns: 1fr; }
-  .notification-preview__text textarea { min-height: 240px; }
+  .notification-preview__text { min-height: 160px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
