@@ -214,7 +214,7 @@ export default function StudentsPage() {
             <TableBody>{data.items.map((student) => (
               <TableRow key={student.student_id}>
                 <TableCell><div className="primary-cell"><span className="initial-tile">{student.full_name.slice(0, 1)}</span><div><strong>{student.full_name}</strong><span>{student.student_code}</span></div></div></TableCell>
-                <TableCell><div className="stacked-cell"><span>Ba: {student.father_phone || 'Chưa có'}</span><span>Mẹ: {student.mother_phone || 'Chưa có'}</span><span>Học sinh: {student.student_phone || 'Chưa có'}</span></div></TableCell>
+                <TableCell><div className="stacked-cell"><span>Số điện thoại ba: {student.father_phone || 'Chưa có'}</span><span>Số điện thoại mẹ: {student.mother_phone || 'Chưa có'}</span><span>Số điện thoại học sinh: {student.student_phone || 'Chưa có'}</span></div></TableCell>
                 <TableCell><StatusBadge status={student.status} /></TableCell>
                 {(canEdit || canDelete) && (
                   <TableCell>
