@@ -389,7 +389,6 @@ export default function ParentNotificationPage() {
               <p className="notification-history-hint">Khi sao chép hoặc in, các học sinh được chọn sẽ tự động được ghi vào Quá trình học tập.</p>
               <div className="notification-preview__actions">
                 <Button appearance="primary" icon={<Copy24Regular />} disabled={savingHistory || !finalText.trim()} onClick={copyNotification}>{savingHistory ? 'Đang lưu...' : 'Lưu và sao chép'}</Button>
-                <Button icon={<Print24Regular />} disabled={savingHistory || !finalText.trim()} onClick={printNotification}>Lưu và in</Button>
               </div>
             </aside>
           </div>
