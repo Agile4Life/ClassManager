@@ -55,23 +55,6 @@ function compactStudentName(fullName) {
   return parts.slice(-2).join(' ');
 }
 
-
-function normalizeSearchText(value) {
-  return value
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/đ/g, 'd')
-    .replace(/Đ/g, 'D')
-    .toLowerCase()
-    .trim();
-}
-
-function compactStudentName(fullName) {
-  const parts = String(fullName || '').trim().split(/\s+/).filter(Boolean);
-  if (parts.length <= 2) return parts.join(' ');
-  return parts.slice(-2).join(' ');
-}
-
 function duplicateStudentName(fullName) {
   const parts = String(fullName || '').trim().split(/\s+/).filter(Boolean);
   if (parts.length <= 2) return parts.join(' ');
