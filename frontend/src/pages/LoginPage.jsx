@@ -10,7 +10,8 @@ const initialRegistration = {
   full_name: '', phone: '', email: '', username: '', password: '', confirm_password: '',
 };
 
-const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID
+  || '421816854411-inu5br34qvca3170usuobn30hchgvmov.apps.googleusercontent.com';
 const googleScriptSrc = 'https://accounts.google.com/gsi/client';
 let googleScriptPromise;
 
@@ -47,6 +48,7 @@ export default function LoginPage() {
   const [registration, setRegistration] = useState(initialRegistration);
   const [submitting, setSubmitting] = useState(false);
   const [googleSubmitting, setGoogleSubmitting] = useState(false);
+  const [googleButtonReady, setGoogleButtonReady] = useState(false);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const redirectTo = location.state?.from?.pathname || '/';
@@ -71,6 +73,7 @@ export default function LoginPage() {
 
     let cancelled = false;
     const buttonHost = googleButtonRef.current;
+    setGoogleButtonReady(false);
     buttonHost.innerHTML = '';
     loadGoogleScript()
       .then(() => {
@@ -87,6 +90,7 @@ export default function LoginPage() {
           text: 'signin_with',
           width: Math.min(400, buttonHost.offsetWidth || 360),
         });
+        setGoogleButtonReady(true);
       })
       .catch(() => {
         if (!cancelled) setError('Khong the tai nut dang nhap Google. Vui long kiem tra ket noi mang.');
@@ -97,6 +101,21 @@ export default function LoginPage() {
       buttonHost.innerHTML = '';
     };
   }, [handleGoogleCredential, mode]);
+
+  const handleGoogleFallback = useCallback(async () => {
+    setError('');
+    try {
+      await loadGoogleScript();
+      if (!window.google?.accounts?.id) throw new Error('Google login is not available');
+      window.google.accounts.id.initialize({
+        client_id: googleClientId,
+        callback: handleGoogleCredential,
+      });
+      window.google.accounts.id.prompt();
+    } catch {
+      setError('Khong the mo dang nhap Google. Hay tai lai trang va thu lai.');
+    }
+  }, [handleGoogleCredential]);
 
   if (user) return <Navigate to="/" replace />;
 
@@ -199,9 +218,14 @@ export default function LoginPage() {
               </Field>
               {googleClientId && (
                 <div className="google-login">
-                  <div className="google-login__divider"><span>hoac</span></div>
+                  <div className="google-login__divider"><span>hoặc</span></div>
                   <div className="google-login__button" ref={googleButtonRef} />
-                  {googleSubmitting && <p className="google-login__status">Dang dang nhap voi Google...</p>}
+                  {!googleButtonReady && (
+                    <button className="google-login__fallback" type="button" onClick={handleGoogleFallback}>
+                      Đăng nhập bằng Google
+                    </button>
+                  )}
+                  {googleSubmitting && <p className="google-login__status">Đang đăng nhập với Google...</p>}
                 </div>
               )}
             </>
