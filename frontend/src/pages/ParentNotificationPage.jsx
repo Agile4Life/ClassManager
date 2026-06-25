@@ -183,7 +183,6 @@ export default function ParentNotificationPage() {
     const customTemplate = NOTIFICATION_TEMPLATES.find((item) => item.id === 'custom');
     const savedById = new Map([...createdTemplates, ...(savedTemplates || [])].map((template) => [template.id, template]));
     return [
-      ...NOTIFICATION_TEMPLATES.filter((item) => item.id !== 'custom'),
       ...savedById.values(),
       customTemplate,
     ].filter(Boolean);
@@ -229,9 +228,10 @@ export default function ParentNotificationPage() {
     setLines((current) => current.map((line) => (line.id === id ? { ...line, ...changes } : line)));
   }
 
-  function createLineFromTemplate(templateId = 'homework_incomplete') {
+  function createLineFromTemplate(templateId = 'custom') {
     const template = notificationTemplates.find((item) => item.id === templateId)
       || NOTIFICATION_TEMPLATES.find((item) => item.id === templateId)
+      || NOTIFICATION_TEMPLATES.find((item) => item.id === 'custom')
       || NOTIFICATION_TEMPLATES[0];
     return {
       templateId: template.id,

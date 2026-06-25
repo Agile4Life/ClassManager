@@ -44,7 +44,7 @@ export const NOTIFICATION_TEMPLATES = [
   { id: 'custom', label: 'Nhận xét khác', content: '' },
 ];
 
-export function createNotificationLine(templateId = 'homework_incomplete') {
+export function createNotificationLine(templateId = 'custom') {
   const template = NOTIFICATION_TEMPLATES.find((item) => item.id === templateId) || NOTIFICATION_TEMPLATES[0];
   return {
     templateId: template.id,
