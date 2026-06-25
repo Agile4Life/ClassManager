@@ -222,6 +222,7 @@ const update = asyncHandler(async (req, res) => {
       `update students set full_name = $1, status = $2, phone = $3 where student_id = $4 returning student_id, student_code, full_name, status, phone as student_phone`,
       [full_name, status || 'active', student_phone || null, req.params.id]
     );
+    await client.query('update user_accounts set full_name = $1, phone = $2 where student_id = $3', [full_name, student_phone || null, req.params.id]);
     if (!result.rowCount) throw new AppError(404, 'Record not found');
     const student = result.rows[0];
 

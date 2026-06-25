@@ -50,6 +50,9 @@ const resources = {
     columns: ['full_name', 'phone', 'email', 'address', 'occupation'],
     required: ['full_name', 'phone'], searchColumns: ['full_name', 'phone', 'email'],
     readRoles: managers, writeRoles: managers,
+    afterUpdate: async (client, row) => {
+      await client.query('update user_accounts set full_name = $1, phone = $2, email = $3 where parent_id = $4', [row.full_name, row.phone, row.email, row.parent_id]);
+    },
   },
   teachers: {
     table: 'teachers', primaryKey: 'teacher_id',
@@ -57,6 +60,9 @@ const resources = {
     required: ['teacher_code', 'full_name'], searchColumns: ['teacher_code', 'full_name', 'email'], filterColumns: ['status'],
     autoCode: { column: 'teacher_code', prefix: 'T', digits: 3 },
     readRoles: ['admin', 'staff', 'teacher', 'student', 'parent'], writeRoles: managers,
+    afterUpdate: async (client, row) => {
+      await client.query('update user_accounts set full_name = $1, phone = $2, email = $3 where teacher_id = $4', [row.full_name, row.phone, row.email, row.teacher_id]);
+    },
   },
   subjects: {
     table: 'subjects', primaryKey: 'subject_id',
