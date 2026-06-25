@@ -54,13 +54,21 @@ const login = asyncHandler(async (req, res) => {
   const normalizedUsername = String(username).trim().toLowerCase();
 
   const { ip, userAgent } = requestMeta(req);
-  const userResult = await pool.query(
-    `select user_id, username, full_name, email, phone, role, status,
-            teacher_id, student_id, parent_id
+  let userResult;
+  const loginQuery = `select user_id, username, full_name, email, phone, role, status,
+            teacher_id, student_id, parent_id, avatar_url
      from user_accounts
-     where lower(username) = $1 and password_hash = crypt($2, password_hash) and status = 'active'`,
-    [normalizedUsername, password],
-  );
+     where lower(username) = $1 and password_hash = crypt($2, password_hash) and status = 'active'`;
+  try {
+    userResult = await pool.query(loginQuery, [normalizedUsername, password]);
+  } catch (error) {
+    if (error.code === '42703') {
+      await pool.query('ALTER TABLE user_accounts ADD COLUMN IF NOT EXISTS avatar_url TEXT');
+      userResult = await pool.query(loginQuery, [normalizedUsername, password]);
+    } else {
+      throw error;
+    }
+  }
 
   if (!userResult.rowCount) {
     const account = await pool.query('select user_id from user_accounts where lower(username) = $1', [normalizedUsername]);
@@ -120,6 +128,7 @@ const updateMe = asyncHandler(async (req, res) => {
   if (req.body.full_name !== undefined) changes.full_name = validateFullName(req.body.full_name);
   if (req.body.phone !== undefined) changes.phone = validatePhone(req.body.phone, false);
   if (req.body.email !== undefined) changes.email = validateEmail(req.body.email);
+  if (req.body.avatar_url !== undefined) changes.avatar_url = req.body.avatar_url;
   const fields = Object.keys(changes);
   if (!fields.length) throw new AppError(400, 'Không có thay đổi hợp lệ');
 
@@ -139,13 +148,21 @@ const updateMe = asyncHandler(async (req, res) => {
     const assignments = fields.map((field, index) => `${field} = $${index + 1}`);
     const values = fields.map((field) => changes[field]);
     values.push(req.user.user_id);
-    const result = await client.query(
-      `update user_accounts set ${assignments.join(', ')}, updated_at = now()
+    let result;
+    const updateQuery = `update user_accounts set ${assignments.join(', ')}, updated_at = now()
        where user_id = $${values.length}
        returning user_id, username, full_name, email, phone, role,
-                 teacher_id, student_id, parent_id`,
-      values,
-    );
+                 teacher_id, student_id, parent_id, avatar_url`;
+    try {
+      result = await client.query(updateQuery, values);
+    } catch (error) {
+      if (error.code === '42703') {
+        await client.query('ALTER TABLE user_accounts ADD COLUMN IF NOT EXISTS avatar_url TEXT');
+        result = await client.query(updateQuery, values);
+      } else {
+        throw error;
+      }
+    }
     const updated = result.rows[0];
     const profileMap = {
       teacher: { table: 'teachers', idColumn: 'teacher_id', id: updated.teacher_id },
@@ -154,7 +171,7 @@ const updateMe = asyncHandler(async (req, res) => {
     };
     const profile = profileMap[updated.role];
     if (profile?.id) {
-      const profileFields = fields.filter((field) => field !== 'email' || updated.role !== 'student');
+      const profileFields = fields.filter((field) => field !== 'email' && field !== 'avatar_url' || (field === 'email' && updated.role !== 'student'));
       if (profileFields.length) {
         const profileAssignments = profileFields.map((field, index) => `${field} = $${index + 1}`);
         await client.query(

@@ -56,7 +56,7 @@ export default function AppShell() {
         </div>
 
         <div className="sidebar-user">
-          <Avatar aria-label={user.full_name} icon={<PersonCircle24Regular />} color="brand" />
+          <Avatar aria-label={user.full_name} icon={<PersonCircle24Regular />} imageUrl={user.avatar_url} color="brand" />
           <NavLink className="sidebar-user__profile" to="/profile"><strong>{user.full_name}</strong><span>{roleLabels[user.role] || user.role}</span></NavLink>
           <Button
             className="sidebar-logout"
@@ -74,7 +74,7 @@ export default function AppShell() {
         <div className="mobile-topbar">
           <Button appearance="subtle" icon={<Navigation24Regular />} aria-label="Mở menu" onClick={() => setMenuOpen(true)} />
           <span><BookOpen24Filled /> ClassManager</span>
-          <Avatar size={28} aria-label={user.full_name} icon={<PersonCircle24Regular />} color="brand" />
+          <Avatar size={28} aria-label={user.full_name} icon={<PersonCircle24Regular />} imageUrl={user.avatar_url} color="brand" />
         </div>
         <div className="page-container"><Outlet /></div>
       </main>

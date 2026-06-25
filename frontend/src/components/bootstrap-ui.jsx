@@ -131,8 +131,15 @@ export function Tab({ value, children }) {
 export function Skeleton({ children }) { return <div className="placeholder-glow">{children}</div>; }
 export function SkeletonItem({ className }) { return <span className={join('placeholder', className)} />; }
 
-export function Avatar({ className, size, icon, 'aria-label': ariaLabel }) {
-  return <span className={join('app-avatar', className)} style={size ? { width: size, height: size } : undefined} aria-label={ariaLabel}>{icon}</span>;
+export function Avatar({ className, size, icon, imageUrl, 'aria-label': ariaLabel }) {
+  const style = size ? { width: size, height: size } : {};
+  if (imageUrl) {
+    style.backgroundImage = `url(${imageUrl})`;
+    style.backgroundSize = 'cover';
+    style.backgroundPosition = 'center';
+    style.color = 'transparent';
+  }
+  return <span className={join('app-avatar', className)} style={style} aria-label={ariaLabel}>{!imageUrl && icon}</span>;
 }
 
 // Kept as lightweight aliases while old page markup is migrated.
