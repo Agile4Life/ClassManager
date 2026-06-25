@@ -49,6 +49,10 @@ export default function ClassesPage() {
     teachers: Object.fromEntries((referenceData?.teachers || []).map((item) => [item.teacher_id, item.full_name])),
     rooms: Object.fromEntries((referenceData?.rooms || []).map((item) => [item.room_id, item.room_name])),
   }), [referenceData]);
+  const visibleClasses = useMemo(
+    () => (classData?.items || []).filter((item) => item.status !== 'cancelled'),
+    [classData],
+  );
 
   function updateField(field, value) { setForm((current) => ({ ...current, [field]: value })); }
   function toggleTeacher(teacherId, checked) {
@@ -124,8 +128,8 @@ export default function ClassesPage() {
       {(classesLoading || referencesLoading) && <LoadingState rows={7} />}
       {classesError && <ErrorState message={classesError} onRetry={refreshClasses} />}
       {referencesError && <ErrorState message={referencesError} onRetry={refreshReferences} />}
-      {classData && referenceData && !classData.items.length && <EmptyState title="Chưa có lớp học" description="Tạo lớp đầu tiên để bắt đầu xếp lịch." />}
-      {classData?.items.length > 0 && referenceData && <div className="table-surface"><Table aria-label="Danh sách lớp học"><TableHeader><TableRow><TableHeaderCell>Lớp</TableHeaderCell><TableHeaderCell>Môn học</TableHeaderCell><TableHeaderCell>Giáo viên</TableHeaderCell><TableHeaderCell>Thời gian</TableHeaderCell><TableHeaderCell>Trạng thái</TableHeaderCell>{canManage && <TableHeaderCell>Thao tác</TableHeaderCell>}</TableRow></TableHeader><TableBody>{classData.items.map((item) => <TableRow key={item.class_id}>
+      {classData && referenceData && !visibleClasses.length && <EmptyState title="Chưa có lớp học" description="Tạo lớp đầu tiên để bắt đầu xếp lịch." />}
+      {visibleClasses.length > 0 && referenceData && <div className="table-surface"><Table aria-label="Danh sách lớp học"><TableHeader><TableRow><TableHeaderCell>Lớp</TableHeaderCell><TableHeaderCell>Môn học</TableHeaderCell><TableHeaderCell>Giáo viên</TableHeaderCell><TableHeaderCell>Thời gian</TableHeaderCell><TableHeaderCell>Trạng thái</TableHeaderCell>{canManage && <TableHeaderCell>Thao tác</TableHeaderCell>}</TableRow></TableHeader><TableBody>{visibleClasses.map((item) => <TableRow key={item.class_id}>
         <TableCell><div className="primary-cell"><span className="class-code">{item.class_code}</span><div><strong>{item.class_name}</strong><span>{maps.rooms[item.room_id] || 'Chưa xếp phòng'}</span></div></div></TableCell>
         <TableCell>{maps.subjects[item.subject_id] || `Môn #${item.subject_id}`}</TableCell><TableCell>{item.teachers?.length ? item.teachers.map((teacher) => teacher.full_name).join(', ') : 'Chưa phân công'}</TableCell>
         <TableCell><div className="stacked-cell"><span>{formatDate(item.start_date)}</span><small>đến {formatDate(item.end_date)}</small></div></TableCell><TableCell><StatusBadge status={item.status} /></TableCell>{canManage && <TableCell><div className="student-actions"><Button appearance="subtle" size="small" icon={<Edit24Regular />} aria-label={`Sửa ${item.class_name}`} title="Chỉnh sửa lớp" onClick={() => openEditDialog(item)} />{canDelete && item.status !== 'cancelled' && <Button appearance="subtle" size="small" icon={<Delete24Regular />} aria-label={`Ngừng ${item.class_name}`} title="Ngừng lớp học" onClick={() => askToDelete(item)} />}</div></TableCell>}
