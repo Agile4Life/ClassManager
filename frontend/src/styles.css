@@ -120,6 +120,83 @@ select option, .form-select option {
     box-shadow: 0 8px 20px rgba(var(--accent-rgb), 0.2) !important;
   }
 }
+
+/* Container của Custom Select Floating Card */
+.custom-select-container {
+  position: relative;
+  width: 100%;
+}
+
+/* Ẩn select gốc nhưng giữ lại trong cây DOM để hỗ trợ chuẩn Form submission & Ref */
+.custom-select-native-hidden {
+  position: absolute;
+  width: 0;
+  height: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Menu Dropdown nổi mở ra */
+.custom-select__menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  width: 100%;
+  min-width: 240px;
+  max-height: 290px;
+  overflow-y: auto;
+  background: var(--paper);
+  border: 1.5px solid color-mix(in srgb, var(--accent) 40%, var(--line));
+  border-radius: 20px;
+  padding: 8px;
+  box-shadow: 0 20px 50px rgba(16, 34, 58, 0.2), 0 0 0 1px rgba(var(--accent-rgb), 0.1);
+  z-index: 99999;
+  animation: customSelectMenuSpring 220ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes customSelectMenuSpring {
+  from { opacity: 0; transform: translateY(-10px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Từng Option trong Menu */
+.custom-select__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 11px 16px;
+  border-radius: 14px;
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--ink);
+  cursor: pointer;
+  transition: all 200ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.custom-select__item:hover:not(.custom-select__item--disabled) {
+  background-color: color-mix(in srgb, var(--accent-soft) 75%, var(--paper));
+  color: var(--accent-dark);
+  transform: translateX(4px);
+}
+
+.custom-select__item--selected {
+  background-color: var(--accent-soft);
+  color: var(--accent-dark);
+  font-weight: 750;
+}
+
+.custom-select__item-check {
+  color: var(--accent);
+  font-weight: 850;
+  font-size: 16px;
+}
+
+.custom-select__item--disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 .input-group { flex-wrap: nowrap; }
 .input-group > .form-control { width: 1%; min-width: 0; flex: 1 1 auto; border-radius: 0 var(--radius-control) var(--radius-control) 0; }
 .input-group-text { width: 48px; flex: 0 0 48px; justify-content: center; color: var(--accent); background: #f6f9fc; border-radius: var(--radius-control) 0 0 var(--radius-control); }

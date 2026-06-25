@@ -1,4 +1,4 @@
-import { createContext, forwardRef, useContext, useEffect } from 'react';
+import React, { Children, createContext, forwardRef, isValidElement, useContext, useEffect, useRef, useState } from 'react';
 
 function join(...values) {
   return values.filter(Boolean).join(' ');
@@ -43,8 +43,111 @@ export const Textarea = forwardRef(function Textarea({ onChange, className, resi
   return <textarea ref={ref} className={join('form-control', className)} onChange={(event) => onChange?.(event, { value: event.target.value })} {...props} />;
 });
 
-export const Select = forwardRef(function Select({ className, children, ...props }, ref) {
-  return <select ref={ref} className={join('form-select', className)} {...props}>{children}</select>;
+export const Select = forwardRef(function Select({ className, children, style, value, onChange, disabled, name, ...props }, ref) {
+  const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleOutside = (e) => {
+      if (containerRef.current && !containerRef.current.contains(e.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleOutside);
+    return () => document.removeEventListener('mousedown', handleOutside);
+  }, [isOpen]);
+
+  const parseOpts = (kids) => {
+    const opts = [];
+    Children.forEach(kids, (child) => {
+      if (!isValidElement(child)) return;
+      if (child.type === React.Fragment) {
+        opts.push(...parseOpts(child.props.children));
+      } else if (child.type === 'option' || child.props?.value !== undefined || child.props?.children !== undefined) {
+        opts.push({
+          value: child.props.value ?? child.props.children ?? '',
+          label: child.props.children ?? '',
+          disabled: child.props.disabled
+        });
+      }
+    });
+    return opts;
+  };
+
+  const options = parseOpts(children);
+  const selectedOption = options.find(o => String(o.value) === String(value ?? ''));
+  const displayLabel = selectedOption ? selectedOption.label : (options[0]?.label || 'Chọn...');
+
+  return (
+    <div className="custom-select-container" ref={containerRef} style={style}>
+      <select
+        ref={ref}
+        value={value}
+        onChange={onChange}
+        disabled={disabled}
+        name={name}
+        className="custom-select-native-hidden"
+        tabIndex={-1}
+        aria-hidden="true"
+        {...props}
+      >
+        {children}
+      </select>
+
+      <div
+        className={join('form-select', isOpen && 'form-select--open', disabled && 'disabled', className)}
+        onClick={() => {
+          if (disabled) return;
+          setIsOpen(!isOpen);
+        }}
+        role="combobox"
+        aria-expanded={isOpen}
+      >
+        <span style={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {displayLabel}
+        </span>
+      </div>
+
+      {isOpen && !disabled && (
+        <div className="custom-select__menu" role="listbox">
+          {options.map((opt, idx) => {
+            const isSel = String(opt.value) === String(value ?? '');
+            return (
+              <div
+                key={idx}
+                role="option"
+                aria-selected={isSel}
+                className={join(
+                  'custom-select__item',
+                  isSel && 'custom-select__item--selected',
+                  opt.disabled && 'custom-select__item--disabled'
+                )}
+                onClick={() => {
+                  if (opt.disabled) return;
+                  if (onChange) {
+                    const syntheticEvt = {
+                      target: { value: opt.value, name },
+                      currentTarget: { value: opt.value, name },
+                      preventDefault: () => {},
+                      stopPropagation: () => {}
+                    };
+                    onChange(syntheticEvt);
+                  }
+                  setIsOpen(false);
+                }}
+              >
+                <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {opt.label}
+                </span>
+                {isSel && <span className="custom-select__item-check">✓</span>}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
 });
 
 export function Field({ label, hint, required, className, children }) {
