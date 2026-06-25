@@ -8,6 +8,7 @@ import StatusBadge from '../components/StatusBadge';
 import { usePageData } from '../hooks/usePageData';
 import { dayLabels, formatTime } from '../utils/format';
 import { THEME_OPTIONS, useTheme } from '../theme/ThemeContext';
+import { navItems } from '../layout/navigation';
 
 function timetablePath(user) {
   if (user.role === 'student') return `/timetable/student/${user.student_id}`;
@@ -39,6 +40,7 @@ export default function DashboardPage() {
 
   const displayName = user.full_name || user.username || 'bạn';
   const studentsPath = ['admin', 'staff', 'teacher'].includes(user.role) ? '/students' : '/classes';
+  const shortcutItems = navItems.filter((item) => item.roles.includes(user.role));
 
   return (
     <div className="page-flow">
@@ -48,6 +50,8 @@ export default function DashboardPage() {
       </section>
 
       <ThemePicker {...theme} />
+
+      <DashboardShortcuts items={shortcutItems} />
 
       {loading && <LoadingState rows={5} />}
       {error && <ErrorState message={error} onRetry={refresh} />}
@@ -82,6 +86,25 @@ export default function DashboardPage() {
         </>
       )}
     </div>
+  );
+}
+
+function DashboardShortcuts({ items }) {
+  return (
+    <section className="surface dashboard-shortcuts" aria-labelledby="dashboard-shortcuts-title">
+      <div className="surface-heading">
+        <div><span>Truy cập nhanh</span><h2 id="dashboard-shortcuts-title">Menu chính</h2></div>
+      </div>
+      <div className="dashboard-shortcuts__grid">
+        {items.map(({ to, label, icon: Icon }) => (
+          <Link className="dashboard-shortcut" to={to} key={to}>
+            <span className="dashboard-shortcut__icon"><Icon aria-hidden="true" /></span>
+            <span className="dashboard-shortcut__label">{label}</span>
+            <ArrowRight24Regular aria-hidden="true" />
+          </Link>
+        ))}
+      </div>
+    </section>
   );
 }
 

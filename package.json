@@ -11,7 +11,8 @@
     "test": "node scripts/check-regressions.js",
     "dev:frontend": "npm --prefix frontend run dev -- --configLoader runner",
     "build:frontend": "npm --prefix frontend run build",
-    "build": "npm --prefix frontend install --include=dev && npm --prefix frontend run build"
+    "build": "npm --prefix frontend install --include=dev && npm --prefix frontend run build",
+    "deploy": "npx vercel --prod"
   },
   "engines": {
     "node": ">=18"

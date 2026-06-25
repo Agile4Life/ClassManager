@@ -77,7 +77,9 @@ export default function AppShell() {
       <main className="main-stage">
         <div className="mobile-topbar">
           <Button appearance="subtle" icon={<Navigation24Regular />} aria-label="Mở menu" onClick={() => setMenuOpen(true)} />
-          <span><TeacherIcon /> ClassManager</span>
+          <NavLink className="mobile-topbar__brand" to="/" aria-label="Về trang Tổng quan">
+            <TeacherIcon /> ClassManager
+          </NavLink>
           <Avatar size={28} aria-label={user.full_name} icon={<PersonCircle24Regular />} imageUrl={user.avatar_url} color="brand" />
         </div>
         <div className="page-container"><Outlet /></div>
