@@ -4,7 +4,7 @@ import {
   Field, Input, MessageBar, MessageBarBody, Select, Table, TableBody, TableCell,
   TableHeader, TableHeaderCell, TableRow,
 } from '../components/bootstrap-ui';
-import { Add24Regular, Delete24Regular, Edit24Regular } from '../components/bootstrap-icons';
+import { Add24Regular, Delete24Regular, Edit24Regular, Search24Regular } from '../components/bootstrap-icons';
 import { api } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
 import { EmptyState, ErrorState, LoadingState } from '../components/FeedbackState';
@@ -52,13 +52,13 @@ export default function RoomsPage() {
 
   if (!canManage) {
     return (
-      <main className="page">
+      <div className="page-flow">
         <PageHeader title="Quản lý Phòng học" description="Khu vực dành riêng cho Quản trị viên." />
         <ErrorState
           title="Không có quyền truy cập"
           message="Chức năng thêm, sửa và xóa phòng học trên hệ thống chỉ dành cho Quản trị viên (Admin)."
         />
-      </main>
+      </div>
     );
   }
 
@@ -138,17 +138,11 @@ export default function RoomsPage() {
     }
   }
 
-  function handleSearchSubmit(e) {
-    e.preventDefault();
-    setPage(1);
-    setSearch(searchInput.trim());
-  }
-
   const items = data?.items || [];
   const total = data?.pagination?.total || 0;
 
   return (
-    <main className="page">
+    <div className="page-flow">
       <PageHeader
         title="Quản lý Phòng học"
         description="Thiết lập danh sách phòng học, cơ sở và sức chứa tối đa của trung tâm."
@@ -159,16 +153,16 @@ export default function RoomsPage() {
         )}
       />
 
-      <section className="table-toolbar">
-        <form className="search-box" onSubmit={handleSearchSubmit}>
-          <Input
-            placeholder="Tìm theo tên phòng hoặc vị trí..."
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-          />
-          <Button type="submit" appearance="secondary">Tìm kiếm</Button>
-        </form>
-      </section>
+      <form className="toolbar" onSubmit={(event) => { event.preventDefault(); setPage(1); setSearch(searchInput.trim()); }}>
+        <Input
+          aria-label="Tìm phòng học"
+          contentBefore={<Search24Regular />}
+          placeholder="Tìm theo tên phòng hoặc vị trí..."
+          value={searchInput}
+          onChange={(_, dataValue) => setSearchInput(dataValue ? dataValue.value : _)}
+        />
+        <Button type="submit" appearance="secondary">Tìm kiếm</Button>
+      </form>
 
       {loading && <LoadingState rows={6} />}
       {error && <ErrorState message={error} onRetry={refresh} />}
@@ -176,26 +170,21 @@ export default function RoomsPage() {
       {!loading && !error && items.length === 0 && (
         <EmptyState
           title="Chưa có phòng học nào"
-          description="Bấm nút Thêm phòng học ở góc trên để tạo phòng học đầu tiên cho trung tâm."
-          action={(
-            <Button appearance="primary" icon={<Add24Regular />} onClick={openCreateDialog}>
-              Thêm phòng học
-            </Button>
-          )}
+          description="Thử tìm kiếm từ khóa khác hoặc bấm nút Thêm phòng học ở góc trên để tạo phòng đầu tiên."
         />
       )}
 
       {!loading && !error && items.length > 0 && (
         <>
-          <div className="table-wrapper">
-            <Table>
+          <div className="table-surface student-table">
+            <Table aria-label="Danh sách phòng học">
               <TableHeader>
                 <TableRow>
                   <TableHeaderCell>Tên phòng</TableHeaderCell>
                   <TableHeaderCell>Sức chứa</TableHeaderCell>
                   <TableHeaderCell>Khu vực / Vị trí</TableHeaderCell>
                   <TableHeaderCell>Trạng thái</TableHeaderCell>
-                  <TableHeaderCell align="right">Thao tác</TableHeaderCell>
+                  <TableHeaderCell>Thao tác</TableHeaderCell>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -209,8 +198,8 @@ export default function RoomsPage() {
                     <TableCell>
                       <StatusBadge status={room.status} />
                     </TableCell>
-                    <TableCell align="right">
-                      <div className="action-group" style={{ justifyContent: 'flex-end', display: 'flex', gap: '6px' }}>
+                    <TableCell>
+                      <div className="table-actions">
                         <Button
                           appearance="subtle"
                           icon={<Edit24Regular />}
@@ -328,6 +317,6 @@ export default function RoomsPage() {
           </DialogSurface>
         </Dialog>
       )}
-    </main>
+    </div>
   );
 }
