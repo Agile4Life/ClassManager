@@ -53,7 +53,7 @@ async function ensureClassTeacherSchema(client = pool) {
 async function replaceClassTeachers(client, classId, teacherIds) {
   await client.query('delete from class_teachers where class_id = $1', [classId]);
   if (!teacherIds.length) return [];
-  const placeholders = teacherIds.map((_, index) => `($1, $${index + 2})`).join(', ');
+  const placeholders = teacherIds.map((_, index) => `($1::bigint, $${index + 2}::bigint)`).join(', ');
   const result = await client.query(
     `insert into class_teachers (class_id, teacher_id)
      select input.class_id, input.teacher_id
