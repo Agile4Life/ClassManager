@@ -19,6 +19,8 @@ const learningHistoryRoutes = require('./routes/learning-history.routes');
 const accountRoutes = require('./routes/account.routes');
 const studentRoutes = require('./routes/student.routes');
 const { notFound, errorHandler } = require('./middlewares/error.middleware');
+const requireAuth = require('./middlewares/auth.middleware');
+const requireRole = require('./middlewares/role.middleware');
 const { parseOrigins, isOriginAllowed } = require('./utils/cors');
 
 const app = express();
@@ -44,6 +46,35 @@ app.use(express.urlencoded({ extended: false }));
 app.get('/api/health', asyncHandler(async (req, res) => {
   const result = await pool.query('select now() as database_time');
   return success(res, { status: 'ok', database_time: result.rows[0].database_time }, 'API is healthy');
+}));
+
+app.get('/api/admin/debug/class-schema', requireAuth, requireRole('admin'), asyncHandler(async (req, res) => {
+  const tables = await pool.query(
+    `select table_name
+     from information_schema.tables
+     where table_schema = 'public'
+       and table_name in ('classes', 'class_teachers', 'class_schedule_teachers', 'teachers', 'subjects', 'rooms')
+     order by table_name`,
+  );
+  const columns = await pool.query(
+    `select table_name, column_name, is_nullable, data_type, column_default
+     from information_schema.columns
+     where table_schema = 'public'
+       and table_name in ('classes', 'class_teachers', 'class_schedule_teachers', 'teachers', 'subjects', 'rooms')
+     order by table_name, ordinal_position`,
+  );
+  const constraints = await pool.query(
+    `select table_name, constraint_name, constraint_type
+     from information_schema.table_constraints
+     where table_schema = 'public'
+       and table_name in ('classes', 'class_teachers', 'class_schedule_teachers', 'teachers', 'subjects', 'rooms')
+     order by table_name, constraint_type, constraint_name`,
+  );
+  return success(res, {
+    tables: tables.rows,
+    columns: columns.rows,
+    constraints: constraints.rows,
+  }, 'Class schema debug fetched successfully');
 }));
 
 app.use('/api/auth', authRoutes);

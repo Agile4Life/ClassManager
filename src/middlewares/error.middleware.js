@@ -37,6 +37,22 @@ function errorHandler(error, req, res, next) {
     return failure(res, message, status, error.detail);
   }
 
+  if (error.code) {
+    console.error(error);
+    return failure(
+      res,
+      `Database error (${error.code}): ${error.message}`,
+      500,
+      {
+        detail: error.detail,
+        hint: error.hint,
+        constraint: error.constraint,
+        table: error.table,
+        column: error.column,
+      },
+    );
+  }
+
   console.error(error);
   return failure(res, 'Internal server error', 500, error.message);
 }
