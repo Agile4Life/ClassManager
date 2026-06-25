@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   Button, Field, Input, MessageBar, MessageBarBody, MessageBarTitle, Tab, TabList,
 } from '../components/bootstrap-ui';
@@ -14,6 +14,13 @@ const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID
   || '421816854411-inu5br34qvca3170usuobn30hchgvmov.apps.googleusercontent.com';
 const googleScriptSrc = 'https://accounts.google.com/gsi/client';
 let googleScriptPromise;
+const roleLabels = {
+  admin: 'quản trị viên',
+  staff: 'nhân viên',
+  teacher: 'giáo viên',
+  student: 'học sinh',
+  parent: 'phụ huynh',
+};
 
 function loadGoogleScript() {
   if (window.google?.accounts?.id) return Promise.resolve();
@@ -43,7 +50,6 @@ export default function LoginPage() {
   } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const googleButtonRef = useRef(null);
   const [mode, setMode] = useState('login');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -86,12 +92,10 @@ export default function LoginPage() {
   }, [googleLogin, navigate, redirectTo]);
 
   useEffect(() => {
-    if (mode !== 'login' || !googleClientId || !googleButtonRef.current) return undefined;
+    if (mode !== 'login' || !googleClientId) return undefined;
 
     let cancelled = false;
-    const buttonHost = googleButtonRef.current;
     setGoogleButtonReady(false);
-    buttonHost.innerHTML = '';
     loadGoogleScript()
       .then(() => {
         if (cancelled || !window.google?.accounts?.id) return;
@@ -99,23 +103,14 @@ export default function LoginPage() {
           client_id: googleClientId,
           callback: handleGoogleCredential,
         });
-        window.google.accounts.id.renderButton(buttonHost, {
-          theme: 'outline',
-          size: 'large',
-          type: 'standard',
-          shape: 'rectangular',
-          text: 'signin_with',
-          width: Math.min(400, buttonHost.offsetWidth || 360),
-        });
         setGoogleButtonReady(true);
       })
       .catch(() => {
-        if (!cancelled) setError('Khong the tai nut dang nhap Google. Vui long kiem tra ket noi mang.');
+        if (!cancelled) setError('Không thể tải nút đăng nhập Google. Vui lòng kiểm tra kết nối mạng.');
       });
 
     return () => {
       cancelled = true;
-      buttonHost.innerHTML = '';
     };
   }, [handleGoogleCredential, mode]);
 
@@ -130,7 +125,7 @@ export default function LoginPage() {
       });
       window.google.accounts.id.prompt();
     } catch {
-      setError('Khong the mo dang nhap Google. Hay tai lai trang va thu lai.');
+      setError('Không thể mở đăng nhập Google. Hãy tải lại trang và thử lại.');
     }
   }, [handleGoogleCredential]);
 
@@ -232,12 +227,12 @@ export default function LoginPage() {
           {googleSetup ? (
             <>
               <div className="login-form__heading">
-                <span>Google da duoc cap quyen</span>
-                <h2>Bo sung ho so</h2>
-                <p>{googleSetup.email} se duoc tao voi vai tro {googleSetup.role}.</p>
+                <span>Google đã được cấp quyền</span>
+                <h2>Bổ sung hồ sơ</h2>
+                <p>{googleSetup.email} sẽ được tạo với vai trò {roleLabels[googleSetup.role] || googleSetup.role}.</p>
               </div>
 
-              {error && <MessageBar intent="error"><MessageBarBody><MessageBarTitle>Chua tao duoc tai khoan</MessageBarTitle>{error}</MessageBarBody></MessageBar>}
+              {error && <MessageBar intent="error"><MessageBarBody><MessageBarTitle>Chưa tạo được tài khoản</MessageBarTitle>{error}</MessageBarBody></MessageBar>}
 
               <div className="register-grid google-setup-grid">
                 {(googleSetup.fields || []).map((field) => (
@@ -263,10 +258,10 @@ export default function LoginPage() {
                 type="submit"
                 disabled={submitting || (googleSetup.fields || []).some((field) => field.required && !String(googleProfile[field.name] || '').trim())}
               >
-                {submitting ? 'Dang tao tai khoan...' : 'Hoan tat va vao ClassManager'}
+                {submitting ? 'Đang tạo tài khoản...' : 'Hoàn tất và vào ClassManager'}
               </Button>
               <button className="google-setup-back" type="button" onClick={() => setGoogleSetup(null)}>
-                Quay lai dang nhap
+                Quay lại đăng nhập
               </button>
             </>
           ) : (
@@ -303,12 +298,18 @@ export default function LoginPage() {
               {googleClientId && (
                 <div className="google-login">
                   <div className="google-login__divider"><span>hoặc</span></div>
-                  <div className="google-login__button" ref={googleButtonRef} />
-                  {!googleButtonReady && (
-                    <button className="google-login__fallback" type="button" onClick={handleGoogleFallback}>
-                      Đăng nhập bằng Google
-                    </button>
-                  )}
+                  <button
+                    className="google-login__action"
+                    type="button"
+                    onClick={handleGoogleFallback}
+                    disabled={googleSubmitting || !googleButtonReady}
+                  >
+                    <span className="google-login__mark" aria-hidden="true"><span>G</span></span>
+                    <span className="google-login__copy">
+                      <strong>{googleSubmitting ? 'Đang mở Google...' : 'Tiếp tục với Google'}</strong>
+                      <small>Gmail đã được cấp quyền sẽ vào hệ thống ngay</small>
+                    </span>
+                  </button>
                   {googleSubmitting && <p className="google-login__status">Đang đăng nhập với Google...</p>}
                 </div>
               )}

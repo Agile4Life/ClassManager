@@ -43,7 +43,7 @@ function signGoogleSetupToken(profile, role) {
 }
 
 function verifyGoogleSetupToken(token) {
-  if (!token) throw new AppError(400, 'Google setup token is required');
+  if (!token) throw new AppError(400, 'Thiếu mã xác nhận thiết lập Google');
   try {
     const payload = jwt.verify(token, getJwtSecret());
     if (payload.typ !== 'google_setup' || !payload.sub || !payload.email || !payload.role) {
@@ -51,40 +51,40 @@ function verifyGoogleSetupToken(token) {
     }
     return payload;
   } catch (error) {
-    throw new AppError(401, 'Google setup token is invalid or expired');
+    throw new AppError(401, 'Mã thiết lập Google không hợp lệ hoặc đã hết hạn');
   }
 }
 
 function setupFieldsForRole(role) {
   const common = [
-    { name: 'full_name', label: 'Ho va ten', required: true },
+    { name: 'full_name', label: 'Họ và tên', required: true },
   ];
   if (role === 'parent') {
     return [
       ...common,
-      { name: 'phone', label: 'So dien thoai', required: true },
-      { name: 'address', label: 'Dia chi', required: false },
-      { name: 'occupation', label: 'Nghe nghiep', required: false },
+      { name: 'phone', label: 'Số điện thoại', required: true },
+      { name: 'address', label: 'Địa chỉ', required: false },
+      { name: 'occupation', label: 'Nghề nghiệp', required: false },
     ];
   }
   if (role === 'teacher') {
     return [
       ...common,
-      { name: 'phone', label: 'So dien thoai', required: false },
-      { name: 'specialization', label: 'Chuyen mon', required: false },
+      { name: 'phone', label: 'Số điện thoại', required: false },
+      { name: 'specialization', label: 'Chuyên môn', required: false },
     ];
   }
   if (role === 'student') {
     return [
       ...common,
-      { name: 'phone', label: 'So dien thoai', required: false },
-      { name: 'grade_level', label: 'Khoi lop', required: false },
-      { name: 'school_name', label: 'Truong hoc', required: false },
+      { name: 'phone', label: 'Số điện thoại', required: false },
+      { name: 'grade_level', label: 'Khối lớp', required: false },
+      { name: 'school_name', label: 'Trường học', required: false },
     ];
   }
   return [
     ...common,
-    { name: 'phone', label: 'So dien thoai', required: false },
+    { name: 'phone', label: 'Số điện thoại', required: false },
   ];
 }
 
@@ -118,8 +118,8 @@ async function createLoginSession(client, user, usernameInput, req) {
 }
 
 async function verifyGoogleCredential(credential) {
-  if (!credential) throw new AppError(400, 'Google credential is required');
-  if (!process.env.GOOGLE_CLIENT_ID) throw new AppError(500, 'GOOGLE_CLIENT_ID is not configured');
+  if (!credential) throw new AppError(400, 'Thiếu thông tin đăng nhập Google');
+  if (!process.env.GOOGLE_CLIENT_ID) throw new AppError(500, 'Chưa cấu hình GOOGLE_CLIENT_ID');
 
   const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
   let ticket;
@@ -129,11 +129,11 @@ async function verifyGoogleCredential(credential) {
       audience: process.env.GOOGLE_CLIENT_ID,
     });
   } catch (error) {
-    throw new AppError(401, 'Google credential is invalid or expired');
+    throw new AppError(401, 'Thông tin đăng nhập Google không hợp lệ hoặc đã hết hạn');
   }
   const payload = ticket.getPayload();
-  if (!payload?.sub || !payload?.email) throw new AppError(401, 'Google account information is incomplete');
-  if (payload.email_verified !== true) throw new AppError(401, 'Google email is not verified');
+  if (!payload?.sub || !payload?.email) throw new AppError(401, 'Thông tin tài khoản Google chưa đầy đủ');
+  if (payload.email_verified !== true) throw new AppError(401, 'Email Google chưa được xác minh');
 
   return {
     sub: payload.sub,
@@ -168,7 +168,7 @@ async function generateAvailableUsername(client, email) {
 async function assertProfileNotLinked(client, column, value) {
   if (!value) return;
   const linked = await client.query(`select 1 from user_accounts where ${column} = $1 limit 1`, [value]);
-  if (linked.rowCount) throw new AppError(409, 'Ho so nay da duoc lien ket voi tai khoan khac');
+  if (linked.rowCount) throw new AppError(409, 'Hồ sơ này đã được liên kết với tài khoản khác');
 }
 
 async function createLinkedProfile(client, role, profile, details) {
@@ -273,7 +273,7 @@ async function createLinkedProfile(client, role, profile, details) {
     return { fullName, phone, student_id: result.rows[0].student_id };
   }
 
-  throw new AppError(400, 'Vai tro Google khong hop le');
+  throw new AppError(400, 'Vai trò Google không hợp lệ');
 }
 
 const register = asyncHandler(async (req, res) => {
@@ -403,7 +403,7 @@ const googleLogin = asyncHandler(async (req, res) => {
       );
       await client.query('commit');
       transactionFinished = true;
-      throw new AppError(404, 'Email Google nay chua duoc cap quyen dang nhap ClassManager.');
+      throw new AppError(404, 'Email Google này chưa được cấp quyền đăng nhập ClassManager.');
     }
 
     const account = accountResult.rows[0];
@@ -443,7 +443,7 @@ const completeGoogleProfile = asyncHandler(async (req, res) => {
   const setup = verifyGoogleSetupToken(req.body.setup_token);
   const configuredUser = getGoogleLoginUser(setup.email);
   if (!configuredUser || configuredUser.role !== setup.role) {
-    throw new AppError(403, 'Email Google nay khong con duoc cap quyen voi vai tro nay');
+    throw new AppError(403, 'Email Google này không còn được cấp quyền với vai trò này');
   }
 
   const { ip, userAgent } = requestMeta(req);
@@ -460,7 +460,7 @@ const completeGoogleProfile = asyncHandler(async (req, res) => {
        limit 1`,
       [setup.sub, setup.email],
     );
-    if (duplicate.rowCount) throw new AppError(409, 'Tai khoan Google nay da duoc tao. Hay dang nhap lai.');
+    if (duplicate.rowCount) throw new AppError(409, 'Tài khoản Google này đã được tạo. Hãy đăng nhập lại.');
 
     const profile = {
       sub: setup.sub,
