@@ -102,7 +102,9 @@ const resources = {
     table: 'rooms', primaryKey: 'room_id',
     columns: ['room_name', 'capacity', 'location', 'status'],
     required: ['room_name', 'capacity'], searchColumns: ['room_name', 'location'], filterColumns: ['status'],
-    readRoles: ['admin', 'staff', 'teacher'], writeRoles: managers,
+    readRoles: ['admin', 'staff', 'teacher'], writeRoles: ['admin'], updateRoles: ['admin', 'teacher'],
+    defaultScope: hideDeletedTeachers,
+    softDelete: { column: 'is_deleted', value: true },
   },
   classes: {
     table: 'classes', primaryKey: 'class_id',
@@ -148,11 +150,29 @@ const resources = {
   },
 };
 
+let roomsSchemaPromise;
+function ensureRoomsSchema() {
+  if (!roomsSchemaPromise) {
+    const pool = require('../config/db');
+    roomsSchemaPromise = pool.query('alter table rooms add column if not exists is_deleted boolean not null default false;').catch((err) => {
+      roomsSchemaPromise = null;
+      console.error('Supabase rooms auto-migration error:', err);
+    });
+  }
+  return roomsSchemaPromise;
+}
+
 function createResourceRouter(name) {
   const config = resources[name];
   const controller = createCrudController(config);
   const router = express.Router();
   router.use(requireAuth);
+  if (name === 'rooms') {
+    router.use(async (req, res, next) => {
+      await ensureRoomsSchema();
+      next();
+    });
+  }
   router.get('/', requireRole(...config.readRoles), controller.list);
   router.get('/:id', requireRole(...config.readRoles), controller.getById);
   router.post('/', requireRole(...(config.createRoles || config.writeRoles)), controller.create);
