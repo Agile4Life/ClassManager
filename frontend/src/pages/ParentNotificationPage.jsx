@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  Button, Checkbox, Field, Input, MessageBar, MessageBarBody, Select, Textarea,
+  Button, Checkbox, Dialog, DialogActions, DialogBody, DialogContent, DialogSurface, DialogTitle,
+  Field, Input, MessageBar, MessageBarBody, Select, Textarea,
 } from '../components/bootstrap-ui';
 import {
   Add24Regular, Copy24Regular, Delete24Regular, Print24Regular, Search24Regular,
@@ -17,6 +18,19 @@ import {
 } from '../utils/parent-notification';
 
 const allowedRoles = ['admin', 'staff', 'teacher'];
+const CREATE_TEMPLATE_OPTION = '__create_notification_template__';
+const initialTemplateForm = { label: '', content: '', audience: 'students' };
+
+function normalizeSavedTemplate(template) {
+  return {
+    id: `saved_template_${template.template_id}`,
+    classId: template.class_id ? String(template.class_id) : '',
+    label: template.label,
+    content: template.content,
+    audience: template.audience || 'students',
+    savedTemplateId: template.template_id,
+  };
+}
 
 function normalizeSearchText(value) {
   return value
@@ -133,14 +147,43 @@ export default function ParentNotificationPage() {
   const [savingHistory, setSavingHistory] = useState(false);
   const [historyMessage, setHistoryMessage] = useState('');
   const [historyError, setHistoryError] = useState('');
+  const [templateDialogOpen, setTemplateDialogOpen] = useState(false);
+  const [templateTargetLineId, setTemplateTargetLineId] = useState(null);
+  const [templateForm, setTemplateForm] = useState(initialTemplateForm);
+  const [templateSaving, setTemplateSaving] = useState(false);
+  const [templateError, setTemplateError] = useState('');
+  const [createdTemplates, setCreatedTemplates] = useState([]);
   const lastSavedSignature = useRef('');
 
   const { data: classes, loading: classesLoading, error: classesError, refresh } = usePageData(
     () => api.get('/classes?limit=100').then((response) => response.data.items),
     [user.role],
   );
+  const {
+    data: savedTemplates,
+    loading: templatesLoading,
+    error: templatesError,
+    refresh: refreshTemplates,
+  } = usePageData(
+    () => {
+      if (!classId) return Promise.resolve([]);
+      return api.get(`/learning-history/notification-templates?class_id=${classId}`).then((response) => response.data.map(normalizeSavedTemplate));
+    },
+    [user.role, classId],
+  );
+
+  const notificationTemplates = useMemo(() => {
+    const customTemplate = NOTIFICATION_TEMPLATES.find((item) => item.id === 'custom');
+    const savedById = new Map([...createdTemplates, ...(savedTemplates || [])].map((template) => [template.id, template]));
+    return [
+      ...NOTIFICATION_TEMPLATES.filter((item) => item.id !== 'custom'),
+      ...savedById.values(),
+      customTemplate,
+    ].filter(Boolean);
+  }, [createdTemplates, savedTemplates]);
 
   useEffect(() => {
+    setCreatedTemplates([]);
     if (!classId) {
       setContext({ students: [] });
       setContextError('');
@@ -179,8 +222,41 @@ export default function ParentNotificationPage() {
     setLines((current) => current.map((line) => (line.id === id ? { ...line, ...changes } : line)));
   }
 
+  function createLineFromTemplate(templateId = 'homework_incomplete') {
+    const template = notificationTemplates.find((item) => item.id === templateId)
+      || NOTIFICATION_TEMPLATES.find((item) => item.id === templateId)
+      || NOTIFICATION_TEMPLATES[0];
+    return {
+      templateId: template.id,
+      audience: template.audience || 'students',
+      studentIds: [],
+      studentNote: '',
+      content: template.content,
+    };
+  }
+
+  function openTemplateDialog(lineId = null) {
+    setTemplateTargetLineId(lineId);
+    setTemplateForm(initialTemplateForm);
+    setTemplateError('');
+    setTemplateDialogOpen(true);
+  }
+
+  function closeTemplateDialog() {
+    if (templateSaving) return;
+    setTemplateDialogOpen(false);
+    setTemplateTargetLineId(null);
+    setTemplateForm(initialTemplateForm);
+    setTemplateError('');
+  }
+
   function changeTemplate(line, templateId) {
-    const template = NOTIFICATION_TEMPLATES.find((item) => item.id === templateId);
+    if (templateId === CREATE_TEMPLATE_OPTION) {
+      openTemplateDialog(line.id);
+      return;
+    }
+    const template = notificationTemplates.find((item) => item.id === templateId);
+    if (!template) return;
     updateLine(line.id, {
       templateId,
       content: template.content,
@@ -191,8 +267,50 @@ export default function ParentNotificationPage() {
   function addLine(templateId = 'custom', studentIds = []) {
     setLines((current) => [
       ...current,
-      { id: nextLineId.current++, ...createNotificationLine(templateId), studentIds },
+      { id: nextLineId.current++, ...createLineFromTemplate(templateId), studentIds },
     ]);
+  }
+
+  async function saveTemplate(event) {
+    event.preventDefault();
+    const label = templateForm.label.trim();
+    const content = templateForm.content.trim();
+    if (!classId) {
+      setTemplateError('Vui lòng chọn lớp trước khi tạo mẫu nhận xét.');
+      return;
+    }
+    if (!label || !content) {
+      setTemplateError('Vui lòng nhập tên mẫu và nội dung mẫu.');
+      return;
+    }
+    setTemplateSaving(true);
+    setTemplateError('');
+    try {
+      const response = await api.post('/learning-history/notification-templates', {
+        class_id: Number(classId),
+        label,
+        content,
+        audience: templateForm.audience,
+      });
+      const savedTemplate = normalizeSavedTemplate(response.data);
+      setCreatedTemplates((current) => [savedTemplate, ...current.filter((item) => item.id !== savedTemplate.id)]);
+      if (templateTargetLineId) {
+        updateLine(templateTargetLineId, {
+          templateId: savedTemplate.id,
+          content: savedTemplate.content,
+          audience: savedTemplate.audience,
+        });
+      }
+      refreshTemplates();
+      setTemplateDialogOpen(false);
+      setTemplateTargetLineId(null);
+      setTemplateForm(initialTemplateForm);
+      setTemplateError('');
+    } catch (error) {
+      setTemplateError(error.message || 'Không thể lưu mẫu nhận xét.');
+    } finally {
+      setTemplateSaving(false);
+    }
   }
 
 
@@ -212,7 +330,7 @@ export default function ParentNotificationPage() {
       .filter((line) => line.audience === 'students' && line.studentIds.length && line.content.trim())
       .map((line) => ({
         template_id: line.templateId,
-        category_label: NOTIFICATION_TEMPLATES.find((item) => item.id === line.templateId)?.label || 'Nhận xét khác',
+        category_label: notificationTemplates.find((item) => item.id === line.templateId)?.label || 'Nhận xét khác',
         detail: line.content.trim(),
         student_note: line.studentNote.trim() || null,
         student_ids: line.studentIds,
@@ -286,6 +404,7 @@ export default function ParentNotificationPage() {
 
       {classesLoading && <LoadingState rows={3} />}
       {classesError && <ErrorState message={classesError} onRetry={refresh} />}
+      {templatesError && <ErrorState message={templatesError} onRetry={refreshTemplates} />}
       {classes && (
         <section className="notification-context" aria-label="Chọn dữ liệu lớp học">
           <Field label="Lớp học" required>
@@ -333,8 +452,9 @@ export default function ParentNotificationPage() {
                       </div>
                       <div className="notification-line__grid">
                         <Field label="Mẫu nhận xét">
-                          <Select value={line.templateId} onChange={(event) => changeTemplate(line, event.target.value)}>
-                            {NOTIFICATION_TEMPLATES.map((template) => <option key={template.id} value={template.id}>{template.label}</option>)}
+                          <Select value={line.templateId} disabled={templatesLoading} onChange={(event) => changeTemplate(line, event.target.value)}>
+                            {notificationTemplates.map((template) => <option key={template.id} value={template.id}>{template.label}</option>)}
+                            <option value={CREATE_TEMPLATE_OPTION}>+ Tạo nhận xét mẫu mới...</option>
                           </Select>
                         </Field>
                         <Field label="Đối tượng">
@@ -394,6 +514,46 @@ export default function ParentNotificationPage() {
           </div>
         </>
       )}
+
+      <Dialog open={templateDialogOpen} onOpenChange={(_, details) => { if (!details.open) closeTemplateDialog(); }}>
+        <DialogSurface>
+          <form onSubmit={saveTemplate}>
+            <DialogBody>
+              <DialogTitle>Tạo nhận xét mẫu mới</DialogTitle>
+              <DialogContent className="form-grid notification-template-form">
+                {templateError && <MessageBar intent="error" className="form-grid__wide"><MessageBarBody>{templateError}</MessageBarBody></MessageBar>}
+                <Field label="Tên mẫu" required>
+                  <Input
+                    value={templateForm.label}
+                    placeholder="Ví dụ: Cần ôn lại phương trình tích"
+                    onChange={(_, data) => setTemplateForm((current) => ({ ...current, label: data.value }))}
+                  />
+                </Field>
+                <Field label="Đối tượng mặc định">
+                  <Select value={templateForm.audience} onChange={(event) => setTemplateForm((current) => ({ ...current, audience: event.target.value }))}>
+                    <option value="students">Học sinh được chọn</option>
+                    <option value="class">Cả lớp</option>
+                  </Select>
+                </Field>
+                <Field className="form-grid__wide" label="Nội dung mẫu" required>
+                  <Textarea
+                    resize="vertical"
+                    value={templateForm.content}
+                    placeholder="Nhập phần nội dung sẽ đứng sau tên học sinh"
+                    onChange={(_, data) => setTemplateForm((current) => ({ ...current, content: data.value }))}
+                  />
+                </Field>
+              </DialogContent>
+              <DialogActions>
+                <Button appearance="secondary" disabled={templateSaving} onClick={closeTemplateDialog}>Hủy</Button>
+                <Button appearance="primary" type="submit" disabled={templateSaving || !templateForm.label.trim() || !templateForm.content.trim()}>
+                  {templateSaving ? 'Đang lưu...' : 'Lưu mẫu'}
+                </Button>
+              </DialogActions>
+            </DialogBody>
+          </form>
+        </DialogSurface>
+      </Dialog>
     </div>
   );
 }

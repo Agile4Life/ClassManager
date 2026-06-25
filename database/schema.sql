@@ -690,6 +690,20 @@ create table student_learning_events (
     created_at timestamptz not null default now()
 );
 
+create table notification_templates (
+    template_id bigint generated always as identity primary key,
+    class_id bigint references classes(class_id) on delete cascade,
+    label varchar(160) not null,
+    content text not null,
+    audience varchar(20) not null default 'students',
+    created_by_user_id bigint references user_accounts(user_id) on delete set null,
+    is_deleted boolean not null default false,
+    created_at timestamptz not null default now(),
+
+    constraint chk_notification_template_audience
+        check (audience in ('students', 'class'))
+);
+
 -- =========================================================
 -- 21. INDEXES
 -- =========================================================
@@ -699,6 +713,12 @@ create index idx_students_phone on students(phone);
 
 create index idx_parents_phone on parents(phone);
 create index idx_teachers_full_name on teachers(full_name);
+create index idx_notification_templates_active
+    on notification_templates(created_at desc)
+    where is_deleted = false;
+create index idx_notification_templates_class_active
+    on notification_templates(class_id, created_at desc)
+    where is_deleted = false;
 
 create index idx_classes_subject_id on classes(subject_id);
 create index idx_classes_teacher_id on classes(teacher_id);

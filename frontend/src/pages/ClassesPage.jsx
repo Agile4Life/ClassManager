@@ -273,7 +273,7 @@ export default function ClassesPage() {
       {canViewClassStudents && selectedClass && (
         <section className="surface class-students-panel" aria-labelledby="class-students-title">
           <div className="surface-heading">
-            <div><span>{selectedClass.class_code}</span><h2 id="class-students-title">Học sinh của {selectedClass.class_name}</h2></div>
+            <div><span>{selectedClass.class_code}</span><h2 id="class-students-title">Học sinh của lớp {selectedClass.class_name}</h2></div>
           </div>
           {classStudentsLoading && <LoadingState rows={4} />}
           {classStudentsError && <ErrorState message={classStudentsError} />}

@@ -416,6 +416,7 @@ a { color: inherit; }
 .notification-line__grid { display: grid; grid-template-columns: 1fr 1fr; gap: 13px; }
 .notification-line__wide { grid-column: 1 / -1; }
 .notification-line textarea { min-height: 62px; }
+.notification-template-form textarea { min-height: 120px; }
 .student-picker {
   overflow: hidden; border: 1px solid #ccd9e8; border-radius: var(--radius-control);
   background: var(--paper); box-shadow: 0 4px 14px rgba(38, 78, 132, 0.04);

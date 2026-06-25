@@ -49,6 +49,34 @@ function ensureLearningHistorySchema() {
           `create index if not exists idx_learning_events_class_created
            on student_learning_events(class_id, created_at desc)`,
         );
+        await client.query(
+          `create table if not exists notification_templates (
+             template_id bigint generated always as identity primary key,
+             class_id bigint references classes(class_id) on delete cascade,
+             label varchar(160) not null,
+             content text not null,
+             audience varchar(20) not null default 'students',
+             created_by_user_id bigint references user_accounts(user_id) on delete set null,
+             is_deleted boolean not null default false,
+             created_at timestamptz not null default now(),
+             constraint chk_notification_template_audience
+               check (audience in ('students', 'class'))
+           )`,
+        );
+        await client.query(
+          `alter table notification_templates
+           add column if not exists class_id bigint references classes(class_id) on delete cascade`,
+        );
+        await client.query(
+          `create index if not exists idx_notification_templates_active
+           on notification_templates(created_at desc)
+           where is_deleted = false`,
+        );
+        await client.query(
+          `create index if not exists idx_notification_templates_class_active
+           on notification_templates(class_id, created_at desc)
+           where is_deleted = false`,
+        );
         await client.query('commit');
       } catch (error) {
         await client.query('rollback');
@@ -147,6 +175,42 @@ const createEvents = asyncHandler(async (req, res) => {
   }
 });
 
+const listTemplates = asyncHandler(async (req, res) => {
+  await ensureLearningHistorySchema();
+  const classId = req.query.class_id;
+  if (!classId) return success(res, [], 'Notification templates fetched successfully');
+  if (!/^\d+$/.test(String(classId))) throw new AppError(400, 'class_id is invalid');
+  await assertTeacherClassAccess(req.user, classId);
+  const result = await pool.query(
+    `select nt.template_id, nt.class_id, nt.label, nt.content, nt.audience,
+            nt.created_by_user_id, ua.full_name as created_by_name, nt.created_at
+     from notification_templates nt
+     left join user_accounts ua on ua.user_id = nt.created_by_user_id
+     where nt.is_deleted = false and nt.class_id = $1
+     order by nt.created_at desc, nt.template_id desc`,
+    [classId],
+  );
+  return success(res, result.rows, 'Notification templates fetched successfully');
+});
+
+const createTemplate = asyncHandler(async (req, res) => {
+  await ensureLearningHistorySchema();
+  const classId = req.body.class_id;
+  const label = cleanText(req.body.label, 160);
+  const content = cleanText(req.body.content, 2000);
+  const audience = req.body.audience === 'class' ? 'class' : 'students';
+  if (!classId || !/^\d+$/.test(String(classId))) throw new AppError(400, 'class_id is required');
+  if (!label || !content) throw new AppError(400, 'label and content are required');
+  await assertTeacherClassAccess(req.user, classId);
+  const result = await pool.query(
+    `insert into notification_templates (class_id, label, content, audience, created_by_user_id)
+     values ($1, $2, $3, $4, $5)
+     returning template_id, class_id, label, content, audience, created_by_user_id, created_at`,
+    [classId, label, content, audience, req.user.user_id],
+  );
+  return success(res, result.rows[0], 'Notification template created successfully', 201);
+});
+
 const listEvents = asyncHandler(async (req, res) => {
   await ensureLearningHistorySchema();
   const { page, limit, offset } = getPagination(req.query);
@@ -200,4 +264,7 @@ const removeEvent = asyncHandler(async (req, res) => {
   return success(res, result.rows[0], 'Learning event deleted successfully');
 });
 
-module.exports = { createEvents, listEvents, removeEvent, ensureLearningHistorySchema };
+module.exports = {
+  createEvents, listEvents, removeEvent, ensureLearningHistorySchema,
+  listTemplates, createTemplate,
+};
