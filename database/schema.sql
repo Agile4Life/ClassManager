@@ -331,6 +331,8 @@ create table user_accounts (
     full_name varchar(100) not null,
     email varchar(100) unique,
     phone varchar(20),
+    google_sub varchar(255) unique,
+    avatar_url text,
 
     role varchar(20) not null,
     status varchar(20) not null default 'active',

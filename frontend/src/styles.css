@@ -822,6 +822,11 @@ select.custom-select-native-hidden, .custom-select-native-hidden {
 .login-form > .form-field + .form-field { margin-top: 22px; }
 .login-form > .btn { min-height: 52px; margin-top: 24px; border-radius: 12px; font-size: 15px; font-weight: 700; }
 .login-form > .alert { margin-bottom: 20px; }
+.google-login { display: grid; justify-items: center; gap: 12px; margin-top: 22px; }
+.google-login__divider { width: 100%; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 12px; color: var(--muted); font-size: 12px; font-weight: 700; }
+.google-login__divider::before, .google-login__divider::after { content: ''; height: 1px; background: var(--line); }
+.google-login__button { width: 100%; min-height: 44px; display: grid; place-items: center; overflow: hidden; }
+.google-login__status { margin: 0; color: var(--muted); font-size: 12px; }
 .register-security-note { margin: 18px 0 0; color: var(--muted); text-align: center; font-size: 12px; line-height: 1.5; }
 .login-form__heading { margin-bottom: 28px; }
 .login-form__heading > span { color: var(--accent); font-size: 13px; font-weight: 800; }

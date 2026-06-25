@@ -1,4 +1,5 @@
 const crypto = require('crypto');
+const { OAuth2Client } = require('google-auth-library');
 const pool = require('../config/db');
 const asyncHandler = require('../utils/async-handler');
 const { AppError } = require('../utils/errors');
@@ -9,6 +10,66 @@ const { validateFullName, validatePhone, validateEmail } = require('../utils/reg
 
 function requestMeta(req) {
   return { ip: req.ip || null, userAgent: req.get('user-agent') || null };
+}
+
+function userSelectColumns() {
+  return `user_id, username, full_name, email, phone, role, status,
+          teacher_id, student_id, parent_id, avatar_url`;
+}
+
+async function ensureGoogleLoginColumns(client = pool) {
+  await client.query('ALTER TABLE user_accounts ADD COLUMN IF NOT EXISTS avatar_url TEXT');
+  await client.query('ALTER TABLE user_accounts ADD COLUMN IF NOT EXISTS google_sub TEXT');
+  await client.query('CREATE UNIQUE INDEX IF NOT EXISTS idx_user_accounts_google_sub ON user_accounts(google_sub) WHERE google_sub IS NOT NULL');
+}
+
+async function createLoginSession(client, user, usernameInput, req) {
+  const { ip, userAgent } = requestMeta(req);
+  const days = Math.max(Number(process.env.REFRESH_TOKEN_EXPIRES_DAYS) || 7, 1);
+  const sessionResult = await client.query(
+    `insert into user_sessions (user_id, ip_address, user_agent, expires_at)
+     values ($1, $2, $3, now() + ($4 * interval '1 day')) returning session_id`,
+    [user.user_id, ip, userAgent, days],
+  );
+  const sessionId = sessionResult.rows[0].session_id;
+  const token = signAccessToken(user, sessionId);
+  await client.query(
+    `update user_sessions set refresh_token_hash = encode(digest($1, 'sha256'), 'hex') where session_id = $2`,
+    [token, sessionId],
+  );
+  await client.query('update user_accounts set last_login_at = now(), updated_at = now() where user_id = $1', [user.user_id]);
+  await client.query(
+    `insert into login_logs (user_id, username_input, success, ip_address, user_agent)
+     values ($1, $2, true, $3, $4)`,
+    [user.user_id, usernameInput, ip, userAgent],
+  );
+  return { token, user };
+}
+
+async function verifyGoogleCredential(credential) {
+  if (!credential) throw new AppError(400, 'Google credential is required');
+  if (!process.env.GOOGLE_CLIENT_ID) throw new AppError(500, 'GOOGLE_CLIENT_ID is not configured');
+
+  const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+  let ticket;
+  try {
+    ticket = await client.verifyIdToken({
+      idToken: credential,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+  } catch (error) {
+    throw new AppError(401, 'Google credential is invalid or expired');
+  }
+  const payload = ticket.getPayload();
+  if (!payload?.sub || !payload?.email) throw new AppError(401, 'Google account information is incomplete');
+  if (payload.email_verified !== true) throw new AppError(401, 'Google email is not verified');
+
+  return {
+    sub: payload.sub,
+    email: String(payload.email).trim().toLowerCase(),
+    name: payload.name || payload.email,
+    picture: payload.picture || null,
+  };
 }
 
 const register = asyncHandler(async (req, res) => {
@@ -55,8 +116,7 @@ const login = asyncHandler(async (req, res) => {
 
   const { ip, userAgent } = requestMeta(req);
   let userResult;
-  const loginQuery = `select user_id, username, full_name, email, phone, role, status,
-            teacher_id, student_id, parent_id, avatar_url
+  const loginQuery = `select ${userSelectColumns()}
      from user_accounts
      where lower(username) = $1 and password_hash = crypt($2, password_hash) and status = 'active'`;
   try {
@@ -81,31 +141,79 @@ const login = asyncHandler(async (req, res) => {
   }
 
   const user = userResult.rows[0];
-  const days = Math.max(Number(process.env.REFRESH_TOKEN_EXPIRES_DAYS) || 7, 1);
   const client = await pool.connect();
   try {
     await client.query('begin');
-    const sessionResult = await client.query(
-      `insert into user_sessions (user_id, ip_address, user_agent, expires_at)
-       values ($1, $2, $3, now() + ($4 * interval '1 day')) returning session_id`,
-      [user.user_id, ip, userAgent, days],
-    );
-    const sessionId = sessionResult.rows[0].session_id;
-    const token = signAccessToken(user, sessionId);
-    await client.query(
-      `update user_sessions set refresh_token_hash = encode(digest($1, 'sha256'), 'hex') where session_id = $2`,
-      [token, sessionId],
-    );
-    await client.query('update user_accounts set last_login_at = now(), updated_at = now() where user_id = $1', [user.user_id]);
-    await client.query(
-      `insert into login_logs (user_id, username_input, success, ip_address, user_agent)
-       values ($1, $2, true, $3, $4)`,
-      [user.user_id, username, ip, userAgent],
-    );
+    const data = await createLoginSession(client, user, username, req);
     await client.query('commit');
-    return success(res, { token, user }, 'Login successful');
+    return success(res, data, 'Login successful');
   } catch (error) {
     await client.query('rollback');
+    throw error;
+  } finally {
+    client.release();
+  }
+});
+
+const googleLogin = asyncHandler(async (req, res) => {
+  const profile = await verifyGoogleCredential(req.body.credential);
+  const { ip, userAgent } = requestMeta(req);
+  const client = await pool.connect();
+  let transactionFinished = false;
+  try {
+    await client.query('begin');
+    await ensureGoogleLoginColumns(client);
+    await client.query('select pg_advisory_xact_lock(hashtext($1))', [`google:sub:${profile.sub}`]);
+    await client.query('select pg_advisory_xact_lock(hashtext($1))', [`google:email:${profile.email}`]);
+
+    const accountResult = await client.query(
+      `select ${userSelectColumns()}, google_sub
+       from user_accounts
+       where status = 'active'
+         and (google_sub = $1 or lower(email) = $2)
+       order by case when google_sub = $1 then 0 else 1 end
+       limit 1`,
+      [profile.sub, profile.email],
+    );
+
+    if (!accountResult.rowCount) {
+      await client.query(
+        `insert into login_logs (user_id, username_input, success, failure_reason, ip_address, user_agent)
+         values (null, $1, false, $2, $3, $4)`,
+        [profile.email, 'Google email is not linked to an active account', ip, userAgent],
+      );
+      await client.query('commit');
+      transactionFinished = true;
+      throw new AppError(404, 'Email Google này chưa được liên kết với tài khoản ClassManager. Hãy đăng ký bằng email này hoặc liên hệ trung tâm để được cấp tài khoản.');
+    }
+
+    const account = accountResult.rows[0];
+    if (account.google_sub && account.google_sub !== profile.sub) {
+      await client.query(
+        `insert into login_logs (user_id, username_input, success, failure_reason, ip_address, user_agent)
+         values ($1, $2, false, $3, $4, $5)`,
+        [account.user_id, profile.email, 'Google account mismatch for this email', ip, userAgent],
+      );
+      await client.query('commit');
+      transactionFinished = true;
+      throw new AppError(409, 'Email này đã được liên kết với một tài khoản Google khác.');
+    }
+
+    const linkedResult = await client.query(
+      `update user_accounts
+       set google_sub = coalesce(google_sub, $1),
+           avatar_url = coalesce($2, avatar_url),
+           updated_at = now()
+       where user_id = $3
+       returning ${userSelectColumns()}`,
+      [profile.sub, profile.picture, account.user_id],
+    );
+    const data = await createLoginSession(client, linkedResult.rows[0], profile.email, req);
+    await client.query('commit');
+    transactionFinished = true;
+    return success(res, data, 'Google login successful');
+  } catch (error) {
+    if (!transactionFinished) await client.query('rollback');
     throw error;
   } finally {
     client.release();
@@ -248,4 +356,4 @@ const resetPassword = asyncHandler(async (req, res) => {
   }
 });
 
-module.exports = { register, login, logout, me, updateMe, forgotPassword, resetPassword };
+module.exports = { register, login, googleLogin, logout, me, updateMe, forgotPassword, resetPassword };

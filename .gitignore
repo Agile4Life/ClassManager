@@ -1,6 +1,7 @@
 # Logs
 logs
 *.log
+.runlogs/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -140,4 +141,3 @@ dist
 
 # Build output
 /public
-

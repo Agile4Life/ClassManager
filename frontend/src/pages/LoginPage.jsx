@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Button, Field, Input, MessageBar, MessageBarBody, MessageBarTitle, Tab, TabList,
 } from '../components/bootstrap-ui';
@@ -10,17 +10,93 @@ const initialRegistration = {
   full_name: '', phone: '', email: '', username: '', password: '', confirm_password: '',
 };
 
+const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+const googleScriptSrc = 'https://accounts.google.com/gsi/client';
+let googleScriptPromise;
+
+function loadGoogleScript() {
+  if (window.google?.accounts?.id) return Promise.resolve();
+  if (!googleScriptPromise) {
+    googleScriptPromise = new Promise((resolve, reject) => {
+      const existing = document.querySelector(`script[src="${googleScriptSrc}"]`);
+      if (existing) {
+        existing.addEventListener('load', resolve, { once: true });
+        existing.addEventListener('error', reject, { once: true });
+        return;
+      }
+      const script = document.createElement('script');
+      script.src = googleScriptSrc;
+      script.async = true;
+      script.defer = true;
+      script.onload = resolve;
+      script.onerror = reject;
+      document.head.appendChild(script);
+    });
+  }
+  return googleScriptPromise;
+}
+
 export default function LoginPage() {
-  const { user, login, register } = useAuth();
+  const { user, login, googleLogin, register } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const googleButtonRef = useRef(null);
   const [mode, setMode] = useState('login');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [registration, setRegistration] = useState(initialRegistration);
   const [submitting, setSubmitting] = useState(false);
+  const [googleSubmitting, setGoogleSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const redirectTo = location.state?.from?.pathname || '/';
+
+  const handleGoogleCredential = useCallback(async (response) => {
+    if (!response?.credential) return;
+    setError('');
+    setSuccessMessage('');
+    setGoogleSubmitting(true);
+    try {
+      await googleLogin(response.credential);
+      navigate(redirectTo, { replace: true });
+    } catch (requestError) {
+      setError(requestError.message);
+    } finally {
+      setGoogleSubmitting(false);
+    }
+  }, [googleLogin, navigate, redirectTo]);
+
+  useEffect(() => {
+    if (mode !== 'login' || !googleClientId || !googleButtonRef.current) return undefined;
+
+    let cancelled = false;
+    const buttonHost = googleButtonRef.current;
+    buttonHost.innerHTML = '';
+    loadGoogleScript()
+      .then(() => {
+        if (cancelled || !window.google?.accounts?.id) return;
+        window.google.accounts.id.initialize({
+          client_id: googleClientId,
+          callback: handleGoogleCredential,
+        });
+        window.google.accounts.id.renderButton(buttonHost, {
+          theme: 'outline',
+          size: 'large',
+          type: 'standard',
+          shape: 'rectangular',
+          text: 'signin_with',
+          width: Math.min(400, buttonHost.offsetWidth || 360),
+        });
+      })
+      .catch(() => {
+        if (!cancelled) setError('Khong the tai nut dang nhap Google. Vui long kiem tra ket noi mang.');
+      });
+
+    return () => {
+      cancelled = true;
+      buttonHost.innerHTML = '';
+    };
+  }, [handleGoogleCredential, mode]);
 
   if (user) return <Navigate to="/" replace />;
 
@@ -43,7 +119,7 @@ export default function LoginPage() {
     try {
       if (mode === 'login') {
         await login(username.trim(), password);
-        navigate(location.state?.from?.pathname || '/', { replace: true });
+        navigate(redirectTo, { replace: true });
       } else {
         if (registration.password !== registration.confirm_password) {
           throw new Error('Mật khẩu xác nhận chưa khớp');
@@ -121,6 +197,13 @@ export default function LoginPage() {
               <Field label="Mật khẩu" required>
                 <Input size="large" type="password" contentBefore={<Key24Regular />} value={password} onChange={(_, data) => setPassword(data.value)} autoComplete="current-password" />
               </Field>
+              {googleClientId && (
+                <div className="google-login">
+                  <div className="google-login__divider"><span>hoac</span></div>
+                  <div className="google-login__button" ref={googleButtonRef} />
+                  {googleSubmitting && <p className="google-login__status">Dang dang nhap voi Google...</p>}
+                </div>
+              )}
             </>
           ) : (
             <div className="register-grid">
@@ -149,7 +232,7 @@ export default function LoginPage() {
             appearance="primary"
             size="large"
             type="submit"
-            disabled={submitting || (mode === 'login' ? !username || !password : !canRegister)}
+            disabled={submitting || googleSubmitting || (mode === 'login' ? !username || !password : !canRegister)}
           >
             {submitting ? (mode === 'login' ? 'Đang đăng nhập...' : 'Đang tạo tài khoản...') : (mode === 'login' ? 'Vào ClassManager' : 'Tạo tài khoản phụ huynh')}
           </Button>
