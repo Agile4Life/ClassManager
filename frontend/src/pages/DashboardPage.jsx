@@ -129,7 +129,8 @@ function Stat({ icon: Icon, value, label, tone, to }) {
 }
 
 function BookStamp() {
-  return <div className="book-stamp"><BookOpen24FilledFallback /><span>Hôm nay</span></div>;
+  const today = new Intl.DateTimeFormat('vi-VN').format(new Date());
+  return <div className="book-stamp"><BookOpen24FilledFallback /><span>{today}</span></div>;
 }
 
 function BookOpen24FilledFallback() { return <BookOpen24Filled />; }
