@@ -9,6 +9,7 @@ export const BookOpen24Filled = (props) => <Icon name="mortarboard-fill" {...pro
 export const CalendarLtr24Regular = (props) => <Icon name="calendar3" {...props} />;
 export const ChevronLeft24Regular = (props) => <Icon name="chevron-left" {...props} />;
 export const ChevronRight24Regular = (props) => <Icon name="chevron-right" {...props} />;
+export const Camera24Regular = (props) => <Icon name="camera" {...props} />;
 export const Copy24Regular = (props) => <Icon name="copy" {...props} />;
 export const DataTrending24Regular = (props) => <Icon name="graph-up-arrow" {...props} />;
 export const Delete24Regular = (props) => <Icon name="trash3" {...props} />;
