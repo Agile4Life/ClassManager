@@ -5,7 +5,6 @@ const requireRole = require('../middlewares/role.middleware');
 const { AppError } = require('../utils/errors');
 const {
   decorateClassesWithTeachers,
-  ensureClassTeacherSchema,
   normalizeTeacherIds,
   replaceClassTeachers,
 } = require('../utils/class-teachers');
@@ -115,8 +114,6 @@ const resources = {
     softDelete: { column: 'status', value: 'cancelled' },
     scope: scopeClasses,
     validate: validateClass,
-    beforeCreate: ensureClassTeacherSchema,
-    beforeUpdate: ensureClassTeacherSchema,
     decorateList: decorateClassesWithTeachers,
     decorateItem: async (row) => (await decorateClassesWithTeachers([row]))[0],
     afterCreate: async (client, row, req) => {

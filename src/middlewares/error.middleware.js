@@ -29,6 +29,7 @@ function errorHandler(error, req, res, next) {
     '22008': [400, 'Date or time value is out of range'],
     '42P01': [500, 'A required database table is missing. Please restart the backend or run the latest migrations'],
     '42703': [500, 'A required database column is missing. Please restart the backend or run the latest migrations'],
+    '42501': [500, 'Database permission denied. Please run the latest migrations with a database owner account'],
   };
   if (postgresErrors[error.code]) {
     const [status, message] = postgresErrors[error.code];

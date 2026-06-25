@@ -51,7 +51,6 @@ async function ensureClassTeacherSchema(client = pool) {
 }
 
 async function replaceClassTeachers(client, classId, teacherIds) {
-  await ensureClassTeacherSchema(client);
   await client.query('delete from class_teachers where class_id = $1', [classId]);
   if (!teacherIds.length) return [];
   const placeholders = teacherIds.map((_, index) => `($1, $${index + 2})`).join(', ');
@@ -68,7 +67,6 @@ async function replaceClassTeachers(client, classId, teacherIds) {
 }
 
 async function getClassTeacherIds(client, classId) {
-  await ensureClassTeacherSchema(client);
   const result = await client.query(
     `select distinct teacher_id
      from (
@@ -91,7 +89,6 @@ async function getClassTeacherIds(client, classId) {
 async function decorateClassesWithTeachers(rows) {
   if (!rows.length) return rows;
   const classIds = rows.map((row) => row.class_id);
-  await ensureClassTeacherSchema();
   const result = await pool.query(
     `select ct.class_id,
             array_agg(t.teacher_id order by t.full_name) as teacher_ids,

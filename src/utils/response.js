@@ -4,7 +4,12 @@ function success(res, data = null, message = 'Request completed successfully', s
 
 function failure(res, message = 'Something went wrong', status = 500, details) {
   const body = { success: false, message };
-  if (details !== undefined && process.env.NODE_ENV !== 'production') body.details = details;
+  if (
+    details !== undefined
+    && (process.env.NODE_ENV !== 'production' || process.env.SHOW_ERROR_DETAILS === 'true')
+  ) {
+    body.details = details;
+  }
   return res.status(status).json(body);
 }
 
