@@ -22,9 +22,10 @@ export default function DashboardPage() {
     const requests = [api.get('/classes?limit=4'), api.get(timetablePath(user))];
     if (['admin', 'staff', 'teacher'].includes(user.role)) requests.push(api.get('/students?limit=1'));
     const [classes, timetable, students] = await Promise.all(requests);
+    const activeClasses = classes.data.items.filter((item) => item.status !== 'cancelled');
     return {
-      classes: classes.data.items,
-      classCount: classes.data.pagination.total,
+      classes: activeClasses,
+      classCount: activeClasses.length,
       timetable: timetable.data,
       studentCount: students?.data?.pagination?.total ?? null,
     };
