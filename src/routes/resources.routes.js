@@ -109,6 +109,7 @@ const resources = {
     columns: ['class_code', 'class_name', 'subject_id', 'teacher_id', 'room_id', 'grade_level', 'max_students', 'tuition_fee', 'start_date', 'end_date', 'status', 'note'],
     required: ['class_code', 'class_name', 'subject_id'], searchColumns: ['class_code', 'class_name'], filterColumns: ['status', 'subject_id', 'teacher_id', 'grade_level'],
     autoCode: { column: 'class_code', prefix: 'C', digits: 3 },
+    assignPrimaryKey: true,
     readRoles: ['admin', 'staff', 'teacher', 'student', 'parent'], writeRoles: managers,
     defaultScope: hideCancelledClasses,
     softDelete: { column: 'status', value: 'cancelled' },

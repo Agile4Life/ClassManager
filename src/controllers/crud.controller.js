@@ -1,7 +1,9 @@
 const pool = require('../config/db');
 const asyncHandler = require('../utils/async-handler');
 const { AppError } = require('../utils/errors');
-const { pick, buildInsert, buildUpdate, assertIdentifier } = require('../utils/query');
+const {
+  pick, buildInsert, buildUpdate, assertIdentifier, quoteIdentifier,
+} = require('../utils/query');
 const { generateNextCode } = require('../utils/code-generator');
 const { getPagination } = require('../utils/validation');
 const { success } = require('../utils/response');
@@ -21,6 +23,26 @@ function createCrudController(config) {
   [table, primaryKey, orderBy, ...columns, ...searchColumns, ...filterColumns]
     .forEach((identifier) => assertIdentifier(identifier, 'CRUD configuration identifier'));
   if (config.softDelete) assertIdentifier(config.softDelete.column, 'CRUD soft delete column');
+
+  async function ensurePrimaryKeyValue(client, values) {
+    if (!config.assignPrimaryKey || Object.prototype.hasOwnProperty.call(values, primaryKey)) return;
+    const metadata = await client.query(
+      `select column_default, is_identity
+       from information_schema.columns
+       where table_schema = current_schema()
+         and table_name = $1
+         and column_name = $2`,
+      [table, primaryKey],
+    );
+    const column = metadata.rows[0];
+    if (!column || column.column_default || column.is_identity === 'YES') return;
+
+    await client.query('select pg_advisory_xact_lock(hashtext($1))', [`manual-pk:${table}:${primaryKey}`]);
+    const safeTable = quoteIdentifier(table, 'Manual primary-key table');
+    const safePrimaryKey = quoteIdentifier(primaryKey, 'Manual primary-key column');
+    const next = await client.query(`select coalesce(max(${safePrimaryKey}), 0) + 1 as next_id from ${safeTable}`);
+    values[primaryKey] = next.rows[0].next_id;
+  }
 
   async function assertRecordScope(req, id) {
     const values = [id];
@@ -99,6 +121,7 @@ function createCrudController(config) {
       await client.query('begin');
       delete values[autoCode.column];
       values[autoCode.column] = await generateNextCode(client, { ...autoCode, table });
+      await ensurePrimaryKeyValue(client, values);
       const result = await client.query(buildInsert(table, values));
       if (config.afterCreate) await config.afterCreate(client, result.rows[0], req);
       await client.query('commit');
