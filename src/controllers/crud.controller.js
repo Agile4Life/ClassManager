@@ -85,6 +85,7 @@ function createCrudController(config) {
       }
     }
     if (config.validate) config.validate(req.body, 'create');
+    if (config.beforeCreate) await config.beforeCreate(req);
     const values = pick(req.body, columns);
     if (!autoCode) {
       const result = await pool.query(buildInsert(table, values));
@@ -114,6 +115,7 @@ function createCrudController(config) {
   const update = asyncHandler(async (req, res) => {
     await assertRecordScope(req, req.params.id);
     if (config.validate) config.validate(req.body, 'update');
+    if (config.beforeUpdate) await config.beforeUpdate(req);
     const client = await pool.connect();
     try {
       await client.query('begin');

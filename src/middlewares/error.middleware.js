@@ -32,6 +32,7 @@ function errorHandler(error, req, res, next) {
   };
   if (postgresErrors[error.code]) {
     const [status, message] = postgresErrors[error.code];
+    if (status >= 500) console.error(error);
     return failure(res, message, status, error.detail);
   }
 
