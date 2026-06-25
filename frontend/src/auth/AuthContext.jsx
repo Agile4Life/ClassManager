@@ -42,6 +42,18 @@ export function AuthProvider({ children }) {
 
   const googleLogin = useCallback(async (credential) => {
     const response = await api.post('/auth/google', { credential });
+    if (response.data?.needs_profile) return response.data;
+    localStorage.setItem('classmanager_token', response.data.token);
+    localStorage.setItem('classmanager_user', JSON.stringify(response.data.user));
+    setUser(response.data.user);
+    return response.data.user;
+  }, []);
+
+  const completeGoogleProfile = useCallback(async (setupToken, profile) => {
+    const response = await api.post('/auth/google/complete-profile', {
+      setup_token: setupToken,
+      profile,
+    });
     localStorage.setItem('classmanager_token', response.data.token);
     localStorage.setItem('classmanager_user', JSON.stringify(response.data.user));
     setUser(response.data.user);
@@ -69,8 +81,17 @@ export function AuthProvider({ children }) {
   }, []);
 
   const value = useMemo(
-    () => ({ user, login, googleLogin, register, updateProfile, logout, checkingSession }),
-    [user, login, googleLogin, register, updateProfile, logout, checkingSession],
+    () => ({
+      user,
+      login,
+      googleLogin,
+      completeGoogleProfile,
+      register,
+      updateProfile,
+      logout,
+      checkingSession,
+    }),
+    [user, login, googleLogin, completeGoogleProfile, register, updateProfile, logout, checkingSession],
   );
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

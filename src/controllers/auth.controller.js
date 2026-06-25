@@ -1,4 +1,5 @@
 const crypto = require('crypto');
+const jwt = require('jsonwebtoken');
 const { OAuth2Client } = require('google-auth-library');
 const pool = require('../config/db');
 const asyncHandler = require('../utils/async-handler');
@@ -6,7 +7,11 @@ const { AppError } = require('../utils/errors');
 const { signAccessToken } = require('../utils/jwt');
 const { success } = require('../utils/response');
 const { validateRegistration } = require('../utils/registration');
-const { validateFullName, validatePhone, validateEmail } = require('../utils/registration');
+const {
+  validateFullName, validatePhone, validateEmail, validateUsername,
+} = require('../utils/registration');
+const { generateNextCode } = require('../utils/code-generator');
+const { getGoogleLoginUser } = require('../config/google-login-users');
 
 function requestMeta(req) {
   return { ip: req.ip || null, userAgent: req.get('user-agent') || null };
@@ -15,6 +20,72 @@ function requestMeta(req) {
 function userSelectColumns() {
   return `user_id, username, full_name, email, phone, role, status,
           teacher_id, student_id, parent_id, avatar_url`;
+}
+
+function getJwtSecret() {
+  if (!process.env.JWT_SECRET) throw new AppError(500, 'JWT_SECRET is required');
+  return process.env.JWT_SECRET;
+}
+
+function signGoogleSetupToken(profile, role) {
+  return jwt.sign(
+    {
+      typ: 'google_setup',
+      sub: profile.sub,
+      email: profile.email,
+      name: profile.name,
+      picture: profile.picture,
+      role,
+    },
+    getJwtSecret(),
+    { expiresIn: '15m' },
+  );
+}
+
+function verifyGoogleSetupToken(token) {
+  if (!token) throw new AppError(400, 'Google setup token is required');
+  try {
+    const payload = jwt.verify(token, getJwtSecret());
+    if (payload.typ !== 'google_setup' || !payload.sub || !payload.email || !payload.role) {
+      throw new Error('Invalid setup token');
+    }
+    return payload;
+  } catch (error) {
+    throw new AppError(401, 'Google setup token is invalid or expired');
+  }
+}
+
+function setupFieldsForRole(role) {
+  const common = [
+    { name: 'full_name', label: 'Ho va ten', required: true },
+  ];
+  if (role === 'parent') {
+    return [
+      ...common,
+      { name: 'phone', label: 'So dien thoai', required: true },
+      { name: 'address', label: 'Dia chi', required: false },
+      { name: 'occupation', label: 'Nghe nghiep', required: false },
+    ];
+  }
+  if (role === 'teacher') {
+    return [
+      ...common,
+      { name: 'phone', label: 'So dien thoai', required: false },
+      { name: 'specialization', label: 'Chuyen mon', required: false },
+    ];
+  }
+  if (role === 'student') {
+    return [
+      ...common,
+      { name: 'phone', label: 'So dien thoai', required: false },
+      { name: 'grade_level', label: 'Khoi lop', required: false },
+      { name: 'school_name', label: 'Truong hoc', required: false },
+    ];
+  }
+  return [
+    ...common,
+    { name: 'phone', label: 'So dien thoai', required: false },
+  ];
 }
 
 async function ensureGoogleLoginColumns(client = pool) {
@@ -70,6 +141,139 @@ async function verifyGoogleCredential(credential) {
     name: payload.name || payload.email,
     picture: payload.picture || null,
   };
+}
+
+function normalizeOptionalText(value, maxLength = 150) {
+  const text = String(value || '').trim();
+  return text ? text.slice(0, maxLength) : null;
+}
+
+function buildUsernameFromEmail(email) {
+  const localPart = String(email).split('@')[0].toLowerCase().replace(/[^a-z0-9._-]+/g, '.');
+  const trimmed = localPart.replace(/^[._-]+|[._-]+$/g, '').slice(0, 42);
+  return trimmed || 'google.user';
+}
+
+async function generateAvailableUsername(client, email) {
+  const base = validateUsername(buildUsernameFromEmail(email).padEnd(3, '0'));
+  for (let index = 0; index < 100; index += 1) {
+    const suffix = index ? String(index) : '';
+    const username = `${base.slice(0, 50 - suffix.length)}${suffix}`;
+    const duplicate = await client.query('select 1 from user_accounts where lower(username) = $1 limit 1', [username]);
+    if (!duplicate.rowCount) return username;
+  }
+  return `google.${Date.now()}`.slice(0, 50);
+}
+
+async function assertProfileNotLinked(client, column, value) {
+  if (!value) return;
+  const linked = await client.query(`select 1 from user_accounts where ${column} = $1 limit 1`, [value]);
+  if (linked.rowCount) throw new AppError(409, 'Ho so nay da duoc lien ket voi tai khoan khac');
+}
+
+async function createLinkedProfile(client, role, profile, details) {
+  const fullName = validateFullName(details.full_name || profile.name);
+  const phone = role === 'parent'
+    ? validatePhone(details.phone, true)
+    : validatePhone(details.phone, false);
+  if (role === 'admin' || role === 'staff') return { fullName, phone };
+
+  if (role === 'parent') {
+    let existing = await client.query(
+      `select parent_id from parents
+       where lower(coalesce(email, '')) = $1 or phone = $2
+       order by parent_id limit 1`,
+      [profile.email, phone],
+    );
+    let parentId;
+    if (existing.rowCount) {
+      parentId = existing.rows[0].parent_id;
+      await client.query(
+        `update parents
+         set full_name = coalesce(nullif($1, ''), full_name),
+             email = coalesce(email, $2),
+             address = coalesce($3, address),
+             occupation = coalesce($4, occupation)
+         where parent_id = $5`,
+        [
+          fullName,
+          profile.email,
+          normalizeOptionalText(details.address, 300),
+          normalizeOptionalText(details.occupation, 100),
+          parentId,
+        ],
+      );
+    } else {
+      existing = await client.query(
+        `insert into parents (full_name, phone, email, address, occupation)
+         values ($1, $2, $3, $4, $5) returning parent_id`,
+        [
+          fullName,
+          phone,
+          profile.email,
+          normalizeOptionalText(details.address, 300),
+          normalizeOptionalText(details.occupation, 100),
+        ],
+      );
+      parentId = existing.rows[0].parent_id;
+    }
+    await assertProfileNotLinked(client, 'parent_id', parentId);
+    return { fullName, phone, parent_id: parentId };
+  }
+
+  if (role === 'teacher') {
+    let existing = await client.query(
+      `select teacher_id from teachers where lower(email) = $1 order by teacher_id limit 1`,
+      [profile.email],
+    );
+    let teacherId;
+    if (existing.rowCount) {
+      teacherId = existing.rows[0].teacher_id;
+      await client.query(
+        `update teachers
+         set full_name = $1,
+             phone = coalesce($2, phone),
+             specialization = coalesce($3, specialization),
+             is_deleted = false,
+             status = 'active'
+         where teacher_id = $4`,
+        [fullName, phone, normalizeOptionalText(details.specialization, 100), teacherId],
+      );
+    } else {
+      const teacherCode = await generateNextCode(client, {
+        table: 'teachers', column: 'teacher_code', prefix: 'T', digits: 3,
+      });
+      existing = await client.query(
+        `insert into teachers (teacher_code, full_name, phone, email, specialization, status)
+         values ($1, $2, $3, $4, $5, 'active') returning teacher_id`,
+        [teacherCode, fullName, phone, profile.email, normalizeOptionalText(details.specialization, 100)],
+      );
+      teacherId = existing.rows[0].teacher_id;
+    }
+    await assertProfileNotLinked(client, 'teacher_id', teacherId);
+    return { fullName, phone, teacher_id: teacherId };
+  }
+
+  if (role === 'student') {
+    const studentCode = await generateNextCode(client, {
+      table: 'students', column: 'student_code', prefix: 'S', digits: 3,
+    });
+    const result = await client.query(
+      `insert into students (student_code, full_name, phone, email, grade_level, school_name, status)
+       values ($1, $2, $3, $4, $5, $6, 'active') returning student_id`,
+      [
+        studentCode,
+        fullName,
+        phone,
+        profile.email,
+        normalizeOptionalText(details.grade_level, 30),
+        normalizeOptionalText(details.school_name, 150),
+      ],
+    );
+    return { fullName, phone, student_id: result.rows[0].student_id };
+  }
+
+  throw new AppError(400, 'Vai tro Google khong hop le');
 }
 
 const register = asyncHandler(async (req, res) => {
@@ -177,14 +381,29 @@ const googleLogin = asyncHandler(async (req, res) => {
     );
 
     if (!accountResult.rowCount) {
+      const configuredUser = getGoogleLoginUser(profile.email);
+      if (configuredUser) {
+        await client.query('commit');
+        transactionFinished = true;
+        return success(res, {
+          needs_profile: true,
+          setup_token: signGoogleSetupToken(profile, configuredUser.role),
+          role: configuredUser.role,
+          email: profile.email,
+          full_name: profile.name,
+          avatar_url: profile.picture,
+          fields: setupFieldsForRole(configuredUser.role),
+        }, 'Google profile setup required', 202);
+      }
+
       await client.query(
         `insert into login_logs (user_id, username_input, success, failure_reason, ip_address, user_agent)
          values (null, $1, false, $2, $3, $4)`,
-        [profile.email, 'Google email is not linked to an active account', ip, userAgent],
+        [profile.email, 'Google email is not allowed or linked to an active account', ip, userAgent],
       );
       await client.query('commit');
       transactionFinished = true;
-      throw new AppError(404, 'Email Google này chưa được liên kết với tài khoản ClassManager. Hãy đăng ký bằng email này hoặc liên hệ trung tâm để được cấp tài khoản.');
+      throw new AppError(404, 'Email Google nay chua duoc cap quyen dang nhap ClassManager.');
     }
 
     const account = accountResult.rows[0];
@@ -214,6 +433,80 @@ const googleLogin = asyncHandler(async (req, res) => {
     return success(res, data, 'Google login successful');
   } catch (error) {
     if (!transactionFinished) await client.query('rollback');
+    throw error;
+  } finally {
+    client.release();
+  }
+});
+
+const completeGoogleProfile = asyncHandler(async (req, res) => {
+  const setup = verifyGoogleSetupToken(req.body.setup_token);
+  const configuredUser = getGoogleLoginUser(setup.email);
+  if (!configuredUser || configuredUser.role !== setup.role) {
+    throw new AppError(403, 'Email Google nay khong con duoc cap quyen voi vai tro nay');
+  }
+
+  const { ip, userAgent } = requestMeta(req);
+  const client = await pool.connect();
+  try {
+    await client.query('begin');
+    await ensureGoogleLoginColumns(client);
+    await client.query('select pg_advisory_xact_lock(hashtext($1))', [`google:sub:${setup.sub}`]);
+    await client.query('select pg_advisory_xact_lock(hashtext($1))', [`google:email:${setup.email}`]);
+
+    const duplicate = await client.query(
+      `select 1 from user_accounts
+       where google_sub = $1 or lower(email) = $2
+       limit 1`,
+      [setup.sub, setup.email],
+    );
+    if (duplicate.rowCount) throw new AppError(409, 'Tai khoan Google nay da duoc tao. Hay dang nhap lai.');
+
+    const profile = {
+      sub: setup.sub,
+      email: setup.email,
+      name: setup.name || setup.email,
+      picture: setup.picture || null,
+    };
+    const details = req.body.profile || {};
+    const linked = await createLinkedProfile(client, setup.role, profile, details);
+    const username = await generateAvailableUsername(client, setup.email);
+    const password = crypto.randomBytes(32).toString('base64url');
+
+    const accountResult = await client.query(
+      `insert into user_accounts
+         (username, password_hash, full_name, email, phone, role, status,
+          teacher_id, student_id, parent_id, google_sub, avatar_url)
+       values ($1, crypt($2, gen_salt('bf')), $3, $4, $5, $6, 'active',
+          $7, $8, $9, $10, $11)
+       returning ${userSelectColumns()}`,
+      [
+        username,
+        password,
+        linked.fullName,
+        setup.email,
+        linked.phone || null,
+        setup.role,
+        linked.teacher_id || null,
+        linked.student_id || null,
+        linked.parent_id || null,
+        setup.sub,
+        setup.picture || null,
+      ],
+    );
+
+    const data = await createLoginSession(client, accountResult.rows[0], setup.email, req);
+    await client.query('commit');
+    return success(res, data, 'Google profile created successfully', 201);
+  } catch (error) {
+    await client.query('rollback');
+    if (!(error instanceof AppError)) {
+      await pool.query(
+        `insert into login_logs (user_id, username_input, success, failure_reason, ip_address, user_agent)
+         values (null, $1, false, $2, $3, $4)`,
+        [setup.email, error.message || 'Google profile setup failed', ip, userAgent],
+      ).catch(() => {});
+    }
     throw error;
   } finally {
     client.release();
@@ -356,4 +649,14 @@ const resetPassword = asyncHandler(async (req, res) => {
   }
 });
 
-module.exports = { register, login, googleLogin, logout, me, updateMe, forgotPassword, resetPassword };
+module.exports = {
+  register,
+  login,
+  googleLogin,
+  completeGoogleProfile,
+  logout,
+  me,
+  updateMe,
+  forgotPassword,
+  resetPassword,
+};

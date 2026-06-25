@@ -38,7 +38,9 @@ function loadGoogleScript() {
 }
 
 export default function LoginPage() {
-  const { user, login, googleLogin, register } = useAuth();
+  const {
+    user, login, googleLogin, completeGoogleProfile, register,
+  } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const googleButtonRef = useRef(null);
@@ -49,6 +51,8 @@ export default function LoginPage() {
   const [submitting, setSubmitting] = useState(false);
   const [googleSubmitting, setGoogleSubmitting] = useState(false);
   const [googleButtonReady, setGoogleButtonReady] = useState(false);
+  const [googleSetup, setGoogleSetup] = useState(null);
+  const [googleProfile, setGoogleProfile] = useState({});
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const redirectTo = location.state?.from?.pathname || '/';
@@ -59,7 +63,20 @@ export default function LoginPage() {
     setSuccessMessage('');
     setGoogleSubmitting(true);
     try {
-      await googleLogin(response.credential);
+      const result = await googleLogin(response.credential);
+      if (result?.needs_profile) {
+        setGoogleSetup(result);
+        setGoogleProfile({
+          full_name: result.full_name || '',
+          phone: '',
+          address: '',
+          occupation: '',
+          specialization: '',
+          grade_level: '',
+          school_name: '',
+        });
+        return;
+      }
       navigate(redirectTo, { replace: true });
     } catch (requestError) {
       setError(requestError.message);
@@ -121,6 +138,8 @@ export default function LoginPage() {
 
   function changeMode(nextMode) {
     setMode(nextMode);
+    setGoogleSetup(null);
+    setGoogleProfile({});
     setError('');
     setSuccessMessage('');
   }
@@ -128,6 +147,26 @@ export default function LoginPage() {
   function updateRegistration(field, value) {
     setRegistration((current) => ({ ...current, [field]: value }));
     setError('');
+  }
+
+  function updateGoogleProfile(field, value) {
+    setGoogleProfile((current) => ({ ...current, [field]: value }));
+    setError('');
+  }
+
+  async function handleGoogleProfileSubmit(event) {
+    event.preventDefault();
+    setError('');
+    setSuccessMessage('');
+    setSubmitting(true);
+    try {
+      await completeGoogleProfile(googleSetup.setup_token, googleProfile);
+      navigate(redirectTo, { replace: true });
+    } catch (requestError) {
+      setError(requestError.message);
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   async function handleSubmit(event) {
@@ -186,7 +225,52 @@ export default function LoginPage() {
       </section>
 
       <section className="login-panel">
-        <form className={`login-form ${mode === 'register' ? 'login-form--register' : ''}`} onSubmit={handleSubmit}>
+        <form
+          className={`login-form ${mode === 'register' ? 'login-form--register' : ''}`}
+          onSubmit={googleSetup ? handleGoogleProfileSubmit : handleSubmit}
+        >
+          {googleSetup ? (
+            <>
+              <div className="login-form__heading">
+                <span>Google da duoc cap quyen</span>
+                <h2>Bo sung ho so</h2>
+                <p>{googleSetup.email} se duoc tao voi vai tro {googleSetup.role}.</p>
+              </div>
+
+              {error && <MessageBar intent="error"><MessageBarBody><MessageBarTitle>Chua tao duoc tai khoan</MessageBarTitle>{error}</MessageBarBody></MessageBar>}
+
+              <div className="register-grid google-setup-grid">
+                {(googleSetup.fields || []).map((field) => (
+                  <Field
+                    key={field.name}
+                    className={field.name === 'full_name' ? 'register-grid__wide' : ''}
+                    label={field.label}
+                    required={field.required}
+                  >
+                    <Input
+                      size="large"
+                      value={googleProfile[field.name] || ''}
+                      onChange={(_, data) => updateGoogleProfile(field.name, data.value)}
+                      autoComplete={field.name === 'full_name' ? 'name' : field.name === 'phone' ? 'tel' : 'off'}
+                    />
+                  </Field>
+                ))}
+              </div>
+
+              <Button
+                appearance="primary"
+                size="large"
+                type="submit"
+                disabled={submitting || (googleSetup.fields || []).some((field) => field.required && !String(googleProfile[field.name] || '').trim())}
+              >
+                {submitting ? 'Dang tao tai khoan...' : 'Hoan tat va vao ClassManager'}
+              </Button>
+              <button className="google-setup-back" type="button" onClick={() => setGoogleSetup(null)}>
+                Quay lai dang nhap
+              </button>
+            </>
+          ) : (
+            <>
           <TabList
             className="auth-mode-switch"
             selectedValue={mode}
@@ -261,6 +345,8 @@ export default function LoginPage() {
             {submitting ? (mode === 'login' ? 'Đang đăng nhập...' : 'Đang tạo tài khoản...') : (mode === 'login' ? 'Vào ClassManager' : 'Tạo tài khoản phụ huynh')}
           </Button>
           {mode === 'register' && <p className="register-security-note">Tài khoản giáo viên, học sinh và quản trị viên chỉ được cấp bởi trung tâm.</p>}
+            </>
+          )}
         </form>
       </section>
     </main>
