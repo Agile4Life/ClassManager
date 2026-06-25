@@ -1,3 +1,8 @@
+const pool = require('../config/db');
+
+let schemaReadyPromise;
+let schemaReady = false;
+
 function normalizeTeacherIds(value) {
   if (value === undefined) return undefined;
   const source = Array.isArray(value) ? value : [value];
@@ -7,7 +12,46 @@ function normalizeTeacherIds(value) {
   return [...new Set(ids)];
 }
 
+async function runClassTeacherSchemaMigration(client) {
+  await client.query('alter table classes alter column teacher_id drop not null');
+  await client.query('alter table teachers add column if not exists is_deleted boolean not null default false');
+  await client.query(
+    `create table if not exists class_teachers (
+       class_id bigint not null references classes(class_id) on delete cascade,
+       teacher_id bigint not null references teachers(teacher_id) on delete cascade,
+       primary key (class_id, teacher_id)
+     )`,
+  );
+  await client.query(
+    `create table if not exists class_schedule_teachers (
+       schedule_id bigint not null references class_schedules(schedule_id) on delete cascade,
+       teacher_id bigint not null references teachers(teacher_id) on delete cascade,
+       primary key (schedule_id, teacher_id)
+     )`,
+  );
+  await client.query('create index if not exists idx_class_teachers_teacher_id on class_teachers(teacher_id)');
+  await client.query('create index if not exists idx_class_schedule_teachers_teacher_id on class_schedule_teachers(teacher_id)');
+}
+
+async function ensureClassTeacherSchema(client = pool) {
+  if (schemaReady) return;
+  if (client !== pool) {
+    await runClassTeacherSchemaMigration(client);
+    return;
+  }
+  if (!schemaReadyPromise) {
+    schemaReadyPromise = runClassTeacherSchemaMigration(pool)
+      .then(() => { schemaReady = true; })
+      .catch((error) => {
+        schemaReadyPromise = null;
+        throw error;
+      });
+  }
+  await schemaReadyPromise;
+}
+
 async function replaceClassTeachers(client, classId, teacherIds) {
+  await ensureClassTeacherSchema(client);
   await client.query('delete from class_teachers where class_id = $1', [classId]);
   if (!teacherIds.length) return [];
   const placeholders = teacherIds.map((_, index) => `($1, $${index + 2})`).join(', ');
@@ -24,6 +68,7 @@ async function replaceClassTeachers(client, classId, teacherIds) {
 }
 
 async function getClassTeacherIds(client, classId) {
+  await ensureClassTeacherSchema(client);
   const result = await client.query(
     `select distinct teacher_id
      from (
@@ -46,7 +91,8 @@ async function getClassTeacherIds(client, classId) {
 async function decorateClassesWithTeachers(rows) {
   if (!rows.length) return rows;
   const classIds = rows.map((row) => row.class_id);
-  const result = await require('../config/db').query(
+  await ensureClassTeacherSchema();
+  const result = await pool.query(
     `select ct.class_id,
             array_agg(t.teacher_id order by t.full_name) as teacher_ids,
             jsonb_agg(jsonb_build_object('teacher_id', t.teacher_id, 'full_name', t.full_name) order by t.full_name) as teachers
@@ -76,6 +122,7 @@ async function decorateClassesWithTeachers(rows) {
 
 module.exports = {
   normalizeTeacherIds,
+  ensureClassTeacherSchema,
   replaceClassTeachers,
   getClassTeacherIds,
   decorateClassesWithTeachers,

@@ -1,6 +1,7 @@
 require('dotenv').config();
 const app = require('./app');
 const pool = require('./config/db');
+const { ensureClassTeacherSchema } = require('./utils/class-teachers');
 
 const port = Number(process.env.PORT) || 3000;
 let server;
@@ -10,7 +11,7 @@ async function start() {
   try {
     await pool.query('ALTER TABLE students ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN NOT NULL DEFAULT FALSE');
     await pool.query('ALTER TABLE teachers ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN NOT NULL DEFAULT FALSE');
-    await pool.query('ALTER TABLE classes ALTER COLUMN teacher_id DROP NOT NULL');
+    await ensureClassTeacherSchema(pool);
   } catch (error) {
     console.error('Failed to run migration:', error.message);
   }

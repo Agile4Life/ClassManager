@@ -21,11 +21,14 @@ function errorHandler(error, req, res, next) {
 
   const postgresErrors = {
     '23505': [409, 'A record with the same unique value already exists'],
+    '23502': [400, 'A required value is missing'],
     '23503': [409, 'The record is referenced by other data or its relation does not exist'],
     '23514': [400, 'The supplied value violates a database constraint'],
     '22P02': [400, 'Invalid value format'],
     '22007': [400, 'Invalid date or time format'],
     '22008': [400, 'Date or time value is out of range'],
+    '42P01': [500, 'A required database table is missing. Please restart the backend or run the latest migrations'],
+    '42703': [500, 'A required database column is missing. Please restart the backend or run the latest migrations'],
   };
   if (postgresErrors[error.code]) {
     const [status, message] = postgresErrors[error.code];
