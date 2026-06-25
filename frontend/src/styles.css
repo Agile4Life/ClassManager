@@ -33,6 +33,24 @@ body { margin: 0; min-width: 320px; min-height: 100dvh; background: var(--canvas
 button, input, select, textarea { font: inherit; }
 a { color: inherit; }
 
+* {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--accent) 46%, #9fb0c5) transparent;
+}
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb {
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 46%, #9fb0c5);
+  background-clip: content-box;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--accent) 68%, #6f829b);
+  background-clip: content-box;
+}
+*::-webkit-scrollbar-corner { background: transparent; }
+
 .btn { --bs-btn-border-radius: var(--radius-control); display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 40px; padding-inline: 15px; font-weight: 650; white-space: nowrap; transition: transform 140ms ease, box-shadow 140ms ease, background-color 140ms ease; }
 .btn:hover { transform: translateY(-1px); }
 .btn:active { transform: translateY(0); }
@@ -207,6 +225,13 @@ a { color: inherit; }
 .toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
 .toolbar > .form-select, .toolbar > .form-control, .toolbar > .input-group { min-width: min(420px, 70vw); }
 .table-surface { overflow-x: auto; }
+.table-surface::-webkit-scrollbar-track,
+.timetable-board::-webkit-scrollbar-track,
+.student-picker__list::-webkit-scrollbar-track,
+.recurring-table-wrap::-webkit-scrollbar-track {
+  border-radius: 999px;
+  background: rgba(220, 228, 238, 0.5);
+}
 .table-surface .table > :not(caption) > * > * { padding: 13px 16px; }
 .table-surface tbody tr:last-child td { border-bottom: 0; }
 .table-surface table { min-width: 850px; }
