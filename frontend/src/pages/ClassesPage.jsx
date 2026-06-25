@@ -4,7 +4,7 @@ import {
   Field, Input, MessageBar, MessageBarBody, Select, Table, TableBody, TableCell,
   TableHeader, TableHeaderCell, TableRow,
 } from '../components/bootstrap-ui';
-import { Add24Regular, Edit24Regular, Search24Regular } from '../components/bootstrap-icons';
+import { Add24Regular, Delete24Regular, Edit24Regular, Search24Regular } from '../components/bootstrap-icons';
 import { api } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
 import { EmptyState, ErrorState, LoadingState } from '../components/FeedbackState';
@@ -26,7 +26,11 @@ export default function ClassesPage() {
   const [form, setForm] = useState(initialForm);
   const [formError, setFormError] = useState('');
   const [saving, setSaving] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
   const canManage = ['admin', 'staff'].includes(user.role);
+  const canDelete = user.role === 'admin';
 
   const { data: classData, loading: classesLoading, error: classesError, refresh: refreshClasses } = usePageData(
     () => api.get(`/classes?page=${page}&limit=10&search=${encodeURIComponent(search)}`).then((response) => response.data),
@@ -94,6 +98,25 @@ export default function ClassesPage() {
       closeDialog(); setPage(1); refreshClasses();
     } catch (requestError) { setFormError(requestError.message); } finally { setSaving(false); }
   }
+  function askToDelete(item) {
+    setDeleteTarget(item);
+    setDeleteError('');
+  }
+  async function deleteClass() {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    setDeleteError('');
+    try {
+      await api.delete(`/classes/${deleteTarget.class_id}`);
+      setDeleteTarget(null);
+      if (classData.items.length === 1 && page > 1) setPage((current) => current - 1);
+      else refreshClasses();
+    } catch (requestError) {
+      setDeleteError(requestError.message);
+    } finally {
+      setDeleting(false);
+    }
+  }
 
   return (
     <div className="page-flow">
@@ -106,7 +129,7 @@ export default function ClassesPage() {
       {classData?.items.length > 0 && referenceData && <div className="table-surface"><Table aria-label="Danh sách lớp học"><TableHeader><TableRow><TableHeaderCell>Lớp</TableHeaderCell><TableHeaderCell>Môn học</TableHeaderCell><TableHeaderCell>Giáo viên</TableHeaderCell><TableHeaderCell>Thời gian</TableHeaderCell><TableHeaderCell>Trạng thái</TableHeaderCell>{canManage && <TableHeaderCell>Thao tác</TableHeaderCell>}</TableRow></TableHeader><TableBody>{classData.items.map((item) => <TableRow key={item.class_id}>
         <TableCell><div className="primary-cell"><span className="class-code">{item.class_code}</span><div><strong>{item.class_name}</strong><span>{maps.rooms[item.room_id] || 'Chưa xếp phòng'}</span></div></div></TableCell>
         <TableCell>{maps.subjects[item.subject_id] || `Môn #${item.subject_id}`}</TableCell><TableCell>{item.teachers?.length ? item.teachers.map((teacher) => teacher.full_name).join(', ') : 'Chưa phân công'}</TableCell>
-        <TableCell><div className="stacked-cell"><span>{formatDate(item.start_date)}</span><small>đến {formatDate(item.end_date)}</small></div></TableCell><TableCell><StatusBadge status={item.status} /></TableCell>{canManage && <TableCell><Button appearance="subtle" size="small" icon={<Edit24Regular />} aria-label={`Sửa ${item.class_name}`} title="Chỉnh sửa lớp" onClick={() => openEditDialog(item)} /></TableCell>}
+        <TableCell><div className="stacked-cell"><span>{formatDate(item.start_date)}</span><small>đến {formatDate(item.end_date)}</small></div></TableCell><TableCell><StatusBadge status={item.status} /></TableCell>{canManage && <TableCell><div className="student-actions"><Button appearance="subtle" size="small" icon={<Edit24Regular />} aria-label={`Sửa ${item.class_name}`} title="Chỉnh sửa lớp" onClick={() => openEditDialog(item)} />{canDelete && <Button appearance="subtle" size="small" icon={<Delete24Regular />} aria-label={`Xóa ${item.class_name}`} title="Xóa lớp học" onClick={() => askToDelete(item)} />}</div></TableCell>}
       </TableRow>)}</TableBody></Table><Pagination pagination={classData.pagination} onPageChange={setPage} /></div>}
 
       <Dialog open={dialogOpen} onOpenChange={(_, details) => { if (!details.open) closeDialog(); }}><DialogSurface><form onSubmit={saveClass}><DialogBody><DialogTitle>{editingClass ? 'Chỉnh sửa lớp học' : 'Tạo lớp học mới'}</DialogTitle><DialogContent className="form-grid">
@@ -121,6 +144,17 @@ export default function ClassesPage() {
         </div>
         <Field label="Phòng học"><Select value={form.room_id} onChange={(event) => updateField('room_id', event.target.value)}><option value="">Chưa xếp phòng</option>{referenceData?.rooms.map((item) => <option key={item.room_id} value={item.room_id}>{item.room_name}</option>)}</Select></Field><Field label="Khối lớp"><Input value={form.grade_level} onChange={(_, value) => updateField('grade_level', value.value)} /></Field>
       </DialogContent><DialogActions><Button appearance="secondary" onClick={closeDialog}>Hủy</Button><Button appearance="primary" type="submit" disabled={saving || !form.class_name || !form.subject_id}>{saving ? 'Đang lưu...' : editingClass ? 'Lưu thay đổi' : 'Tạo lớp'}</Button></DialogActions></DialogBody></form></DialogSurface></Dialog>
+
+      <Dialog open={Boolean(deleteTarget)} onOpenChange={(_, details) => { if (!details.open && !deleting) setDeleteTarget(null); }}>
+        <DialogSurface><DialogBody>
+          <DialogTitle>Xóa lớp học?</DialogTitle>
+          <DialogContent>
+            {deleteError && <MessageBar intent="error"><MessageBarBody>{deleteError}</MessageBarBody></MessageBar>}
+            <p className="delete-confirmation">Lớp <strong>{deleteTarget?.class_code} - {deleteTarget?.class_name}</strong> cùng lịch học, buổi học và dữ liệu liên quan sẽ bị xóa. Thao tác này không thể hoàn tác.</p>
+          </DialogContent>
+          <DialogActions><Button appearance="secondary" disabled={deleting} onClick={() => setDeleteTarget(null)}>Hủy</Button><Button className="danger-button" appearance="primary" disabled={deleting} onClick={deleteClass}>{deleting ? 'Đang xóa...' : 'Xóa lớp học'}</Button></DialogActions>
+        </DialogBody></DialogSurface>
+      </Dialog>
     </div>
   );
 }
