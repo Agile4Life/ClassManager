@@ -275,6 +275,26 @@ a { color: inherit; }
 .schedule-edit-context span { color: var(--muted); font-size: 11px; font-weight: 650; }
 .schedule-edit-context strong { color: var(--accent-dark); font-size: 14px; }
 .schedule-edit-context small { color: var(--muted); font-size: 11px; }
+.timetable-dialog { width: min(520px, calc(100vw - 32px)) !important; max-width: 520px !important; }
+.timetable-dialog .modal-content { border-radius: 18px; }
+.timetable-dialog .modal-title { padding: 26px 28px 20px; font-size: 24px; }
+.timetable-dialog .modal-body { padding: 24px 28px 28px; }
+.timetable-dialog .modal-footer { justify-content: flex-end; gap: 14px; padding: 18px 28px 24px; }
+.timetable-dialog .modal-footer .btn { min-width: 112px; min-height: 48px; font-size: 16px; }
+.timetable-form { gap: 18px 20px; padding-top: 0; }
+.timetable-form .form-label { min-height: 18px; margin-bottom: 8px; }
+.timetable-form .form-control, .timetable-form .form-select { min-height: 54px; font-size: 16px; }
+.timetable-form .schedule-edit-context {
+  gap: 6px; padding: 16px 18px; border-radius: 12px;
+}
+.timetable-form .schedule-edit-context strong { font-size: 16px; }
+.timetable-form .schedule-edit-context small { font-size: 12px; }
+.teacher-checkbox-list {
+  min-height: 54px; display: grid; gap: 8px; align-content: start; padding: 10px 12px;
+  border: 1px solid #ccd7e4; border-radius: var(--radius-control); background: #fff;
+}
+.teacher-checkbox-list .form-check { min-height: 30px; }
+.teacher-checkbox-list > span { color: var(--muted); font-size: 12px; }
 .day-column__empty { min-height: 100px; display: grid; place-content: center; justify-items: center; gap: 7px; color: #9aa6b9; font-size: 11px; }
 
 .recurring-schedule {
@@ -529,7 +549,7 @@ a { color: inherit; }
   border-radius: var(--radius); background: var(--paper);
 }
 .attendance-history-summary {
-  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); overflow: hidden;
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); overflow: hidden;
   border: 1px solid var(--line); border-radius: var(--radius); background: var(--paper);
 }
 .attendance-history-summary > div {

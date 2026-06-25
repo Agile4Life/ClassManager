@@ -92,6 +92,12 @@ values
 ('C002', 'Grade 8 English - Weekend Class', 2, 2, 2, 'Grade 8', 18, 750000, '2026-06-01', '2026-08-31'),
 ('C003', 'Grade 10 Physics - Advanced Class', 3, 3, 3, 'Grade 10', 25, 900000, '2026-06-01', '2026-08-31');
 
+insert into class_teachers (class_id, teacher_id)
+values
+(1, 1),
+(2, 2),
+(3, 3);
+
 -- =========================================================
 -- 7. CLASS SCHEDULES
 -- =========================================================
@@ -107,6 +113,11 @@ values
 
 (3, 3, 'tuesday', '18:00', '19:30'),
 (3, 3, 'thursday', '18:00', '19:30');
+
+insert into class_schedule_teachers (schedule_id, teacher_id)
+select cs.schedule_id, ct.teacher_id
+from class_schedules cs
+join class_teachers ct on ct.class_id = cs.class_id;
 
 -- =========================================================
 -- 8. ENROLLMENTS

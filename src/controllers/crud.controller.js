@@ -57,8 +57,9 @@ function createCrudController(config) {
       `select * from ${table} ${where} order by ${orderBy} desc limit $${values.length - 1} offset $${values.length}`,
       values,
     );
+    const items = config.decorateList ? await config.decorateList(result.rows) : result.rows;
     return success(res, {
-      items: result.rows,
+      items,
       pagination: { page, limit, total: countResult.rows[0].total },
     }, `${table} fetched successfully`);
   });
@@ -69,7 +70,8 @@ function createCrudController(config) {
     if (config.scope) config.scope(req, values, conditions);
     const result = await pool.query(`select * from ${table} where ${conditions.join(' and ')}`, values);
     if (!result.rowCount) throw new AppError(404, 'Record not found');
-    return success(res, result.rows[0], 'Record fetched successfully');
+    const item = config.decorateItem ? await config.decorateItem(result.rows[0]) : result.rows[0];
+    return success(res, item, 'Record fetched successfully');
   });
 
   const create = asyncHandler(async (req, res) => {
@@ -83,7 +85,9 @@ function createCrudController(config) {
     const values = pick(req.body, columns);
     if (!autoCode) {
       const result = await pool.query(buildInsert(table, values));
-      return success(res, result.rows[0], 'Record created successfully', 201);
+      if (config.afterCreate) await config.afterCreate(pool, result.rows[0], req);
+      const item = config.decorateItem ? await config.decorateItem(result.rows[0]) : result.rows[0];
+      return success(res, item, 'Record created successfully', 201);
     }
 
     const client = await pool.connect();
@@ -92,8 +96,10 @@ function createCrudController(config) {
       delete values[autoCode.column];
       values[autoCode.column] = await generateNextCode(client, { ...autoCode, table });
       const result = await client.query(buildInsert(table, values));
+      if (config.afterCreate) await config.afterCreate(client, result.rows[0], req);
       await client.query('commit');
-      return success(res, result.rows[0], 'Record created successfully', 201);
+      const item = config.decorateItem ? await config.decorateItem(result.rows[0]) : result.rows[0];
+      return success(res, item, 'Record created successfully', 201);
     } catch (error) {
       await client.query('rollback');
       throw error;
@@ -105,10 +111,24 @@ function createCrudController(config) {
   const update = asyncHandler(async (req, res) => {
     await assertRecordScope(req, req.params.id);
     if (config.validate) config.validate(req.body, 'update');
-    const query = buildUpdate(table, primaryKey, req.params.id, pick(req.body, columns));
-    const result = await pool.query(query);
-    if (!result.rowCount) throw new AppError(404, 'Record not found');
-    return success(res, result.rows[0], 'Record updated successfully');
+    const client = await pool.connect();
+    try {
+      await client.query('begin');
+      const values = pick(req.body, columns);
+      const result = Object.keys(values).length
+        ? await client.query(buildUpdate(table, primaryKey, req.params.id, values))
+        : await client.query(`select * from ${table} where ${primaryKey} = $1`, [req.params.id]);
+      if (!result.rowCount) throw new AppError(404, 'Record not found');
+      if (config.afterUpdate) await config.afterUpdate(client, result.rows[0], req);
+      await client.query('commit');
+      const item = config.decorateItem ? await config.decorateItem(result.rows[0]) : result.rows[0];
+      return success(res, item, 'Record updated successfully');
+    } catch (error) {
+      await client.query('rollback');
+      throw error;
+    } finally {
+      client.release();
+    }
   });
 
   const remove = asyncHandler(async (req, res) => {

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import {
-  Button, Dialog, DialogActions, DialogBody, DialogContent, DialogSurface, DialogTitle,
+  Button, Checkbox, Dialog, DialogActions, DialogBody, DialogContent, DialogSurface, DialogTitle,
   Field, Input, MessageBar, MessageBarBody, Select,
 } from '../components/bootstrap-ui';
 import {
@@ -14,7 +14,7 @@ import { usePageData } from '../hooks/usePageData';
 import { dayLabels, formatTime } from '../utils/format';
 
 const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
-const initialForm = { class_id: '', room_id: '', day_of_week: 'monday', start_time: '18:00', end_time: '19:30' };
+const initialForm = { class_id: '', room_id: '', day_of_week: 'monday', start_time: '18:00', end_time: '19:30', teacher_ids: [] };
 
 function startOfIsoWeek(date) {
   const result = new Date(date.getFullYear(), date.getMonth(), date.getDate());
@@ -85,7 +85,7 @@ export default function TimetablePage() {
   const { data, loading, error, refresh } = usePageData(async () => {
     const [timetable, classes, rooms] = await Promise.all([
       api.get(pathForUser(user)),
-      canCreate ? api.get('/classes?limit=100') : Promise.resolve(null),
+      canEdit ? api.get('/classes?limit=100') : Promise.resolve(null),
       (canCreate || canEdit) ? api.get('/rooms?limit=100') : Promise.resolve(null),
     ]);
     return { items: timetable.data, classes: classes?.data?.items || [], rooms: rooms?.data?.items || [] };
@@ -100,7 +100,25 @@ export default function TimetablePage() {
     return { week, label: `Tuần ${week} · ${formatShortDate(range[0])} - ${formatShortDate(range[6])}` };
   }), [calendarYear]);
   const visibleDays = dayFilter === 'all' ? days : [dayFilter];
+  const selectedClass = data?.classes.find((item) => String(item.class_id) === String(form.class_id));
+  const scheduleTeacherOptions = selectedClass?.teachers?.length ? selectedClass.teachers : editingSchedule?.teachers || [];
   function updateField(field, value) { setForm((current) => ({ ...current, [field]: value })); }
+  function updateClassField(classId) {
+    const nextClass = data?.classes.find((item) => String(item.class_id) === String(classId));
+    setForm((current) => ({
+      ...current,
+      class_id: classId,
+      teacher_ids: (nextClass?.teacher_ids || []).map(String),
+    }));
+  }
+  function toggleScheduleTeacher(teacherId, checked) {
+    setForm((current) => {
+      const selected = new Set(current.teacher_ids.map(String));
+      if (checked) selected.add(String(teacherId));
+      else selected.delete(String(teacherId));
+      return { ...current, teacher_ids: [...selected] };
+    });
+  }
 
   function changeCalendarYear(value) {
     const year = Number(value);
@@ -131,6 +149,7 @@ export default function TimetablePage() {
       day_of_week: schedule.day_of_week,
       start_time: String(schedule.start_time).slice(0, 5),
       end_time: String(schedule.end_time).slice(0, 5),
+      teacher_ids: (schedule.teacher_ids || []).map(String),
     });
     setFormError('');
     setDialogOpen(true);
@@ -145,7 +164,10 @@ export default function TimetablePage() {
 
   function canEditSchedule(schedule) {
     if (['admin', 'staff'].includes(user.role)) return true;
-    return user.role === 'teacher' && String(schedule.teacher_id) === String(user.teacher_id);
+    return user.role === 'teacher' && (
+      String(schedule.teacher_id) === String(user.teacher_id)
+      || (schedule.teacher_ids || []).map(String).includes(String(user.teacher_id))
+    );
   }
 
   function askToDeleteSchedule(schedule) {
@@ -171,7 +193,13 @@ export default function TimetablePage() {
   async function saveSchedule(event) {
     event.preventDefault(); setSaving(true); setFormError('');
     try {
-      const payload = { room_id: Number(form.room_id), day_of_week: form.day_of_week, start_time: form.start_time, end_time: form.end_time };
+      const payload = {
+        room_id: Number(form.room_id),
+        day_of_week: form.day_of_week,
+        start_time: form.start_time,
+        end_time: form.end_time,
+        teacher_ids: form.teacher_ids.map(Number),
+      };
       if (editingSchedule) await api.put(`/schedules/${editingSchedule.schedule_id}`, payload);
       else await api.post(`/classes/${form.class_id}/schedules`, payload);
       closeDialog(); refresh();
@@ -229,17 +257,31 @@ export default function TimetablePage() {
         />
       )}
 
-      <Dialog open={dialogOpen} onOpenChange={(_, details) => { if (!details.open) closeDialog(); }}><DialogSurface><form onSubmit={saveSchedule}><DialogBody><DialogTitle>{editingSchedule ? 'Chỉnh sửa lịch học' : 'Xếp lịch học'}</DialogTitle><DialogContent className="form-grid">
+      <Dialog open={dialogOpen} onOpenChange={(_, details) => { if (!details.open) closeDialog(); }}><DialogSurface className="timetable-dialog"><form onSubmit={saveSchedule}><DialogBody><DialogTitle>{editingSchedule ? 'Chỉnh sửa lịch học' : 'Xếp lịch học'}</DialogTitle><DialogContent className="form-grid timetable-form">
         {formError && <MessageBar intent="error" className="form-grid__wide"><MessageBarBody>{formError}</MessageBarBody></MessageBar>}
         {editingSchedule ? (
           <div className="schedule-edit-context form-grid__wide"><span>Lớp học</span><strong>{editingSchedule.class_code} - {editingSchedule.class_name}</strong><small>{editingSchedule.subject_name}</small></div>
         ) : (
-          <Field label="Lớp học" required><Select value={form.class_id} onChange={(event) => updateField('class_id', event.target.value)}><option value="">Chọn lớp</option>{data?.classes.map((item) => <option key={item.class_id} value={item.class_id}>{item.class_code} - {item.class_name}</option>)}</Select></Field>
+          <Field label="Lớp học" required><Select value={form.class_id} onChange={(event) => updateClassField(event.target.value)}><option value="">Chọn lớp</option>{data?.classes.map((item) => <option key={item.class_id} value={item.class_id}>{item.class_code} - {item.class_name}</option>)}</Select></Field>
         )}
         <Field label="Phòng học" required><Select value={form.room_id} onChange={(event) => updateField('room_id', event.target.value)}><option value="">Chọn phòng</option>{data?.rooms.map((item) => <option key={item.room_id} value={item.room_id}>{item.room_name}</option>)}</Select></Field>
-        <Field label="Ngày trong tuần"><Select value={form.day_of_week} onChange={(event) => updateField('day_of_week', event.target.value)}>{days.map((day) => <option key={day} value={day}>{dayLabels[day]}</option>)}</Select></Field><div />
+        <Field label="Ngày trong tuần"><Select value={form.day_of_week} onChange={(event) => updateField('day_of_week', event.target.value)}>{days.map((day) => <option key={day} value={day}>{dayLabels[day]}</option>)}</Select></Field>
         <Field label="Bắt đầu"><Input type="time" value={form.start_time} onChange={(_, value) => updateField('start_time', value.value)} /></Field><Field label="Kết thúc"><Input type="time" value={form.end_time} onChange={(_, value) => updateField('end_time', value.value)} /></Field>
-      </DialogContent><DialogActions><Button appearance="secondary" onClick={closeDialog}>Hủy</Button><Button appearance="primary" type="submit" disabled={saving || (!editingSchedule && !form.class_id) || !form.room_id}>{saving ? 'Đang lưu...' : editingSchedule ? 'Lưu thay đổi' : 'Lưu lịch học'}</Button></DialogActions></DialogBody></form></DialogSurface></Dialog>
+        <div className="form-field form-grid__wide">
+          <span className="form-label">Giáo viên dạy buổi này<span className="required-mark" aria-hidden="true">*</span></span>
+          <div className="teacher-checkbox-list">
+            {scheduleTeacherOptions.map((teacher) => (
+              <Checkbox
+                key={teacher.teacher_id}
+                label={teacher.full_name}
+                checked={form.teacher_ids.map(String).includes(String(teacher.teacher_id))}
+                onChange={(_, dataValue) => toggleScheduleTeacher(teacher.teacher_id, dataValue.checked)}
+              />
+            ))}
+            {!scheduleTeacherOptions.length && <span>Chưa có giáo viên phụ trách lớp.</span>}
+          </div>
+        </div>
+      </DialogContent><DialogActions><Button appearance="secondary" onClick={closeDialog}>Hủy</Button><Button appearance="primary" type="submit" disabled={saving || (!editingSchedule && !form.class_id) || !form.room_id || !form.teacher_ids.length}>{saving ? 'Đang lưu...' : editingSchedule ? 'Lưu thay đổi' : 'Lưu lịch học'}</Button></DialogActions></DialogBody></form></DialogSurface></Dialog>
 
       <Dialog open={Boolean(deleteTarget)} onOpenChange={(_, details) => { if (!details.open && !deleting) setDeleteTarget(null); }}>
         <DialogSurface><DialogBody>
@@ -293,6 +335,7 @@ function RecurringWeekTable({ dates, grouped, canEditSchedule, onEdit, onDelete 
                           <b>{schedule.class_name}</b>
                           <small>{schedule.subject_name}</small>
                           <em>{schedule.room_name || 'Chưa xếp phòng'}</em>
+                          <small>{schedule.teacher_name || 'Chưa phân công'}</small>
                         </>
                       );
                       return <div className={editable ? 'recurring-lesson recurring-lesson--editable' : 'recurring-lesson'} key={`${dateKey(date)}-${schedule.schedule_id || schedule.class_id}`}>{content}</div>;

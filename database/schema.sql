@@ -41,7 +41,9 @@ drop table if exists invoices cascade;
 drop table if exists attendance cascade;
 drop table if exists class_sessions cascade;
 drop table if exists enrollments cascade;
+drop table if exists class_schedule_teachers cascade;
 drop table if exists class_schedules cascade;
+drop table if exists class_teachers cascade;
 drop table if exists classes cascade;
 drop table if exists rooms cascade;
 drop table if exists subjects cascade;
@@ -199,6 +201,13 @@ create table classes (
         check (end_date is null or start_date is null or end_date >= start_date)
 );
 
+create table class_teachers (
+    class_id bigint not null references classes(class_id) on delete cascade,
+    teacher_id bigint not null references teachers(teacher_id) on delete cascade,
+    assigned_at timestamptz not null default now(),
+    primary key (class_id, teacher_id)
+);
+
 -- =========================================================
 -- 7. CLASS SCHEDULES
 -- Fixed weekly schedule for each class
@@ -228,6 +237,12 @@ create table class_schedules (
 
     constraint chk_schedule_time
         check (end_time > start_time)
+);
+
+create table class_schedule_teachers (
+    schedule_id bigint not null references class_schedules(schedule_id) on delete cascade,
+    teacher_id bigint not null references teachers(teacher_id) on delete cascade,
+    primary key (schedule_id, teacher_id)
 );
 
 -- =========================================================
@@ -686,6 +701,7 @@ create index idx_teachers_full_name on teachers(full_name);
 
 create index idx_classes_subject_id on classes(subject_id);
 create index idx_classes_teacher_id on classes(teacher_id);
+create index idx_class_teachers_teacher_id on class_teachers(teacher_id);
 
 create index idx_enrollments_student_id on enrollments(student_id);
 create index idx_enrollments_class_id on enrollments(class_id);
@@ -707,6 +723,7 @@ create index idx_payments_invoice_id on payments(invoice_id);
 
 create index idx_class_schedules_room_day on class_schedules(room_id, day_of_week);
 create index idx_class_schedules_class_id on class_schedules(class_id);
+create index idx_class_schedule_teachers_teacher_id on class_schedule_teachers(teacher_id);
 
 create index idx_learning_topics_subject_id on learning_topics(subject_id);
 create index idx_assignments_class_id on assignments(class_id);

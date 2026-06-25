@@ -3,6 +3,11 @@ const createCrudController = require('../controllers/crud.controller');
 const requireAuth = require('../middlewares/auth.middleware');
 const requireRole = require('../middlewares/role.middleware');
 const { AppError } = require('../utils/errors');
+const {
+  decorateClassesWithTeachers,
+  normalizeTeacherIds,
+  replaceClassTeachers,
+} = require('../utils/class-teachers');
 
 const managers = ['admin', 'staff'];
 
@@ -24,7 +29,9 @@ function scopeStudents(req, values, conditions) {
 function scopeClasses(req, values, conditions) {
   if (req.user.role === 'teacher') {
     values.push(req.user.teacher_id);
-    conditions.push(`teacher_id = $${values.length}`);
+    conditions.push(`(teacher_id = $${values.length} or class_id in (
+      select class_id from class_teachers where teacher_id = $${values.length}
+    ))`);
   } else if (req.user.role === 'student') {
     values.push(req.user.student_id);
     conditions.push(`class_id in (select class_id from enrollments where student_id = $${values.length})`);
@@ -72,6 +79,33 @@ const resources = {
     readRoles: ['admin', 'staff', 'teacher', 'student', 'parent'], writeRoles: managers,
     scope: scopeClasses,
     validate: validateClass,
+    decorateList: decorateClassesWithTeachers,
+    decorateItem: async (row) => (await decorateClassesWithTeachers([row]))[0],
+    afterCreate: async (client, row, req) => {
+      const teacherIds = normalizeTeacherIds(req.body.teacher_ids);
+      if (teacherIds === undefined) {
+        if (row.teacher_id) await replaceClassTeachers(client, row.class_id, [Number(row.teacher_id)]);
+        return;
+      }
+      await replaceClassTeachers(client, row.class_id, teacherIds);
+      if (!row.teacher_id && teacherIds.length) {
+        await client.query('update classes set teacher_id = $1 where class_id = $2', [teacherIds[0], row.class_id]);
+      }
+    },
+    afterUpdate: async (client, row, req) => {
+      const teacherIds = normalizeTeacherIds(req.body.teacher_ids);
+      if (teacherIds === undefined) return;
+      await replaceClassTeachers(client, row.class_id, teacherIds);
+      await client.query('update classes set teacher_id = $1 where class_id = $2', [teacherIds[0] || null, row.class_id]);
+      await client.query(
+        `delete from class_schedule_teachers cst
+         using class_schedules cs
+         where cs.schedule_id = cst.schedule_id
+           and cs.class_id = $1
+           and not (cst.teacher_id = any($2::bigint[]))`,
+        [row.class_id, teacherIds],
+      );
+    },
   },
 };
 

@@ -138,7 +138,6 @@ function AttendanceHistoryWorkspace({ user }) {
           <section className="attendance-history-summary" aria-label="Tổng hợp lịch sử điểm danh">
             <div><span>Có mặt</span><strong>{summary.present}</strong></div>
             <div><span>Vắng mặt</span><strong>{summary.absent}</strong></div>
-            <div><span>Chưa điểm danh</span><strong>{summary['not-taken']}</strong></div>
           </section>
 
           <div className="table-surface attendance-history-table">
