@@ -28,3 +28,11 @@ export const Save24Regular = (props) => <Icon name="floppy" {...props} />;
 export const Search24Regular = (props) => <Icon name="search" {...props} />;
 export const SignOut24Regular = (props) => <Icon name="box-arrow-right" {...props} />;
 export const WindowApps24Regular = (props) => <Icon name="grid" {...props} />;
+
+export const TeacherIcon = (props) => (
+  <svg viewBox="0 0 64 64" fill="currentColor" width="1em" height="1em" {...props}>
+    <path d="M32 2a14 14 0 1 0 14 14A14 14 0 0 0 32 2Zm0 24a10 10 0 1 1 10-10 10 10 0 0 1-10 10Zm18 8H14a8 8 0 0 0-8 8v12a2 2 0 0 0 2 2h48a2 2 0 0 0 2-2V42a8 8 0 0 0-8-8ZM10 52V42a4 4 0 0 1 4-4h36a4 4 0 0 1 4 4v10Z"/>
+    <path d="M50 14h8v2h-8zM50 20h6v2h-6zM8 14h8v2H8zM8 20h6v2H8z"/>
+  </svg>
+);
+

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import {
   Button, Field, Input, MessageBar, MessageBarBody, MessageBarTitle, Tab, TabList,
 } from '../components/bootstrap-ui';
-import { BookOpen24Filled, Key24Regular, Person24Regular } from '../components/bootstrap-icons';
+import { BookOpen24Filled, Key24Regular, Person24Regular, TeacherIcon } from '../components/bootstrap-icons';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 
@@ -77,7 +77,7 @@ export default function LoginPage() {
   return (
     <main className="login-page">
       <section className="login-story" aria-label="Giới thiệu ClassManager">
-        <div className="login-story__brand"><BookOpen24Filled /> ClassManager</div>
+        <div className="login-story__brand"><TeacherIcon /> ClassManager</div>
         <div className="login-story__copy">
           <span className="school-label">Một lớp học gọn gàng hơn</span>
           <h1>Quản lý lớp học, nhẹ đầu hơn mỗi ngày.</h1>

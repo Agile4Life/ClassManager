@@ -4,7 +4,7 @@ import {
   BookOpen24Filled, CalendarLtr24Regular, DataTrending24Regular, Dismiss24Regular,
   Home24Regular, MailTemplate24Regular, Navigation24Regular, PeopleCommunity24Regular,
   PeopleCheckmark24Regular, PersonCircle24Regular, SignOut24Regular,
-  WindowApps24Regular, Person24Regular
+  WindowApps24Regular, Person24Regular, TeacherIcon
 } from '../components/bootstrap-icons';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
@@ -37,7 +37,7 @@ export default function AppShell() {
       {menuOpen && <button className="sidebar-scrim" aria-label="Đóng menu" onClick={() => setMenuOpen(false)} />}
       <aside className={`sidebar ${menuOpen ? 'sidebar--open' : ''}`}>
         <div className="brand-lockup">
-          <span className="brand-lockup__mark"><BookOpen24Filled /></span>
+          <span className="brand-lockup__mark"><TeacherIcon /></span>
           <div><strong>ClassManager</strong><span>Học tốt mỗi ngày</span></div>
           <Button className="sidebar__close" appearance="subtle" icon={<Dismiss24Regular />} aria-label="Đóng menu" onClick={() => setMenuOpen(false)} />
         </div>
@@ -73,7 +73,7 @@ export default function AppShell() {
       <main className="main-stage">
         <div className="mobile-topbar">
           <Button appearance="subtle" icon={<Navigation24Regular />} aria-label="Mở menu" onClick={() => setMenuOpen(true)} />
-          <span><BookOpen24Filled /> ClassManager</span>
+          <span><TeacherIcon /> ClassManager</span>
           <Avatar size={28} aria-label={user.full_name} icon={<PersonCircle24Regular />} imageUrl={user.avatar_url} color="brand" />
         </div>
         <div className="page-container"><Outlet /></div>
