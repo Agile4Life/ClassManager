@@ -37,7 +37,9 @@ export default function AppShell() {
       {menuOpen && <button className="sidebar-scrim" aria-label="Đóng menu" onClick={() => setMenuOpen(false)} />}
       <aside className={`sidebar ${menuOpen ? 'sidebar--open' : ''}`}>
         <div className="brand-lockup">
-          <span className="brand-lockup__mark"><TeacherIcon /></span>
+          <span className="brand-lockup__mark" style={{ background: 'transparent', width: '38px', height: '38px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <TeacherIcon style={{ width: '36px', height: '36px' }} />
+          </span>
           <div><strong>ClassManager</strong><span>Học tốt mỗi ngày</span></div>
           <Button className="sidebar__close" appearance="subtle" icon={<Dismiss24Regular />} aria-label="Đóng menu" onClick={() => setMenuOpen(false)} />
         </div>
