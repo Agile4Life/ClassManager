@@ -5,6 +5,7 @@ const { AppError } = require('../utils/errors');
 const { signAccessToken } = require('../utils/jwt');
 const { success } = require('../utils/response');
 const { validateRegistration } = require('../utils/registration');
+const { validateFullName, validatePhone, validateEmail } = require('../utils/registration');
 
 function requestMeta(req) {
   return { ip: req.ip || null, userAgent: req.get('user-agent') || null };
@@ -114,6 +115,65 @@ const logout = asyncHandler(async (req, res) => {
 
 const me = asyncHandler(async (req, res) => success(res, req.user, 'Profile fetched successfully'));
 
+const updateMe = asyncHandler(async (req, res) => {
+  const changes = {};
+  if (req.body.full_name !== undefined) changes.full_name = validateFullName(req.body.full_name);
+  if (req.body.phone !== undefined) changes.phone = validatePhone(req.body.phone, false);
+  if (req.body.email !== undefined) changes.email = validateEmail(req.body.email);
+  const fields = Object.keys(changes);
+  if (!fields.length) throw new AppError(400, 'Không có thay đổi hợp lệ');
+
+  const client = await pool.connect();
+  try {
+    await client.query('begin');
+    if (Object.prototype.hasOwnProperty.call(changes, 'email') && changes.email) {
+      await client.query('select pg_advisory_xact_lock(hashtext($1))', [`account:email:${changes.email}`]);
+      const duplicate = await client.query(
+        `select 1 from user_accounts
+         where lower(email) = lower($1) and user_id <> $2 limit 1`,
+        [changes.email, req.user.user_id],
+      );
+      if (duplicate.rowCount) throw new AppError(409, 'Email đã được sử dụng');
+    }
+
+    const assignments = fields.map((field, index) => `${field} = $${index + 1}`);
+    const values = fields.map((field) => changes[field]);
+    values.push(req.user.user_id);
+    const result = await client.query(
+      `update user_accounts set ${assignments.join(', ')}, updated_at = now()
+       where user_id = $${values.length}
+       returning user_id, username, full_name, email, phone, role,
+                 teacher_id, student_id, parent_id`,
+      values,
+    );
+    const updated = result.rows[0];
+    const profileMap = {
+      teacher: { table: 'teachers', idColumn: 'teacher_id', id: updated.teacher_id },
+      student: { table: 'students', idColumn: 'student_id', id: updated.student_id },
+      parent: { table: 'parents', idColumn: 'parent_id', id: updated.parent_id },
+    };
+    const profile = profileMap[updated.role];
+    if (profile?.id) {
+      const profileFields = fields.filter((field) => field !== 'email' || updated.role !== 'student');
+      if (profileFields.length) {
+        const profileAssignments = profileFields.map((field, index) => `${field} = $${index + 1}`);
+        await client.query(
+          `update ${profile.table} set ${profileAssignments.join(', ')}
+           where ${profile.idColumn} = $${profileFields.length + 1}`,
+          [...profileFields.map((field) => changes[field]), profile.id],
+        );
+      }
+    }
+    await client.query('commit');
+    return success(res, updated, 'Cập nhật hồ sơ thành công');
+  } catch (error) {
+    await client.query('rollback');
+    throw error;
+  } finally {
+    client.release();
+  }
+});
+
 const forgotPassword = asyncHandler(async (req, res) => {
   const identifier = req.body.email || req.body.username;
   if (!identifier) throw new AppError(400, 'email or username is required');
@@ -171,4 +231,4 @@ const resetPassword = asyncHandler(async (req, res) => {
   }
 });
 
-module.exports = { register, login, logout, me, forgotPassword, resetPassword };
+module.exports = { register, login, logout, me, updateMe, forgotPassword, resetPassword };

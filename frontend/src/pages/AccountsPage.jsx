@@ -4,7 +4,7 @@ import {
   Field, Input, MessageBar, MessageBarBody, Select, Table, TableBody, TableCell, TableHeader,
   TableHeaderCell, TableRow,
 } from '../components/bootstrap-ui';
-import { Add24Regular, Delete24Regular, Key24Regular, Search24Regular } from '../components/bootstrap-icons';
+import { Add24Regular, Delete24Regular, Key24Regular, Search24Regular, Edit24Regular } from '../components/bootstrap-icons';
 import { Navigate } from 'react-router-dom';
 import { api } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
@@ -53,6 +53,10 @@ function AccountsWorkspace({ currentUser }) {
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState('');
+  const [editTarget, setEditTarget] = useState(null);
+  const [editForm, setEditForm] = useState({ username: '', full_name: '', phone: '', email: '' });
+  const [editing, setEditing] = useState(false);
+  const [editError, setEditError] = useState('');
 
   const { data, loading, error, refresh } = usePageData(
     () => api.get(`/admin/accounts?page=${page}&limit=15&search=${encodeURIComponent(search)}&role=${role}&status=${status}`).then((response) => response.data),
@@ -160,6 +164,39 @@ function AccountsWorkspace({ currentUser }) {
     }
   }
 
+  function openEditDialog(account) {
+    setEditTarget(account);
+    setEditForm({
+      username: account.username,
+      full_name: account.full_name,
+      phone: account.phone || '',
+      email: account.email || '',
+    });
+    setEditError('');
+  }
+
+  async function updateAccount(event) {
+    event.preventDefault();
+    setEditing(true);
+    setEditError('');
+    try {
+      const payload = {
+        username: editForm.username.trim(),
+        full_name: editForm.full_name.trim(),
+        phone: editForm.phone.trim() || null,
+        email: editForm.email.trim() || null,
+      };
+      await api.put(`/admin/accounts/${editTarget.user_id}`, payload);
+      setEditTarget(null);
+      setActionMessage(`Đã cập nhật thông tin tài khoản ${editTarget.username}.`);
+      refresh();
+    } catch (requestError) {
+      setEditError(requestError.message);
+    } finally {
+      setEditing(false);
+    }
+  }
+
   const canCreate = createForm.username.trim() && createForm.full_name.trim()
     && createForm.password && createPasswordConfirmation
     && createForm.password === createPasswordConfirmation
@@ -215,6 +252,7 @@ function AccountsWorkspace({ currentUser }) {
               <TableCell>{account.last_login_at ? dateTimeFormatter.format(new Date(account.last_login_at)) : 'Chưa đăng nhập'}</TableCell>
               <TableCell><Badge appearance="filled" color={account.status === 'active' ? 'success' : account.status === 'locked' ? 'danger' : 'subtle'}>{statusLabels[account.status]}</Badge></TableCell>
               <TableCell><div className="account-actions">
+                <Button size="small" appearance="subtle" icon={<Edit24Regular />} aria-label={`Sửa ${account.username}`} title="Sửa thông tin" onClick={() => openEditDialog(account)} />
                 <Button size="small" appearance="subtle" disabled={busyId === account.user_id || String(account.user_id) === String(currentUser.user_id)} onClick={() => toggleAccountStatus(account)}>{account.status === 'active' ? 'Khóa' : 'Mở khóa'}</Button>
                 <Button size="small" appearance="subtle" icon={<Key24Regular />} aria-label={`Đặt lại mật khẩu ${account.username}`} title="Đặt lại mật khẩu" onClick={() => openPasswordDialog(account)} />
                 <Button size="small" appearance="subtle" icon={<Delete24Regular />} aria-label={`Xóa ${account.username}`} title="Xóa tài khoản" disabled={String(account.user_id) === String(currentUser.user_id)} onClick={() => { setDeleteTarget(account); setDeleteError(''); }} />
@@ -263,6 +301,20 @@ function AccountsWorkspace({ currentUser }) {
           <DialogContent>{deleteError && <MessageBar intent="error"><MessageBarBody>{deleteError}</MessageBarBody></MessageBar>}<p className="delete-confirmation">Tài khoản <strong>@{deleteTarget?.username}</strong> sẽ không thể đăng nhập. Hồ sơ liên kết và dữ liệu học tập không bị xóa.</p></DialogContent>
           <DialogActions><Button appearance="secondary" disabled={deleting} onClick={() => setDeleteTarget(null)}>Hủy</Button><Button className="danger-button" appearance="primary" disabled={deleting} onClick={deleteAccount}>{deleting ? 'Đang xóa...' : 'Xóa tài khoản'}</Button></DialogActions>
         </DialogBody></DialogSurface>
+      </Dialog>
+
+      <Dialog open={Boolean(editTarget)} onOpenChange={(_, details) => { if (!details.open && !editing) setEditTarget(null); }}>
+        <DialogSurface className="account-dialog"><form onSubmit={updateAccount}><DialogBody>
+          <DialogTitle>Sửa thông tin tài khoản</DialogTitle>
+          <DialogContent className="form-grid account-form">
+            {editError && <MessageBar intent="error" className="form-grid__wide"><MessageBarBody>{editError}</MessageBarBody></MessageBar>}
+            <Field label="Họ và tên" required><Input autoComplete="name" value={editForm.full_name} onChange={(_, value) => setEditForm(cur => ({ ...cur, full_name: value.value }))} /></Field>
+            <Field label="Tên đăng nhập" required><Input autoComplete="off" value={editForm.username} onChange={(_, value) => setEditForm(cur => ({ ...cur, username: value.value }))} /></Field>
+            <Field label="Số điện thoại" required={editTarget?.role === 'parent'}><Input type="tel" autoComplete="tel" value={editForm.phone} onChange={(_, value) => setEditForm(cur => ({ ...cur, phone: value.value }))} /></Field>
+            <Field label="Email"><Input type="email" autoComplete="email" value={editForm.email} onChange={(_, value) => setEditForm(cur => ({ ...cur, email: value.value }))} /></Field>
+          </DialogContent>
+          <DialogActions><Button type="button" appearance="secondary" disabled={editing} onClick={() => setEditTarget(null)}>Hủy</Button><Button appearance="primary" type="submit" disabled={editing || !editForm.full_name.trim() || !editForm.username.trim()}>{editing ? 'Đang lưu...' : 'Lưu thay đổi'}</Button></DialogActions>
+        </DialogBody></form></DialogSurface>
       </Dialog>
     </div>
   );

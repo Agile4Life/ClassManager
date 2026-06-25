@@ -22,6 +22,7 @@ const navItems = [
   { to: '/attendance-history', label: 'Lịch sử điểm danh', icon: DataTrending24Regular, roles: ['admin', 'teacher'] },
   { to: '/parent-notifications', label: 'Thông báo phụ huynh', icon: MailTemplate24Regular, roles: ['admin', 'staff', 'teacher'] },
   { to: '/learning-history', label: 'Quá trình học tập', icon: DataTrending24Regular, roles: ['admin', 'teacher'] },
+  { to: '/profile', label: 'Hồ sơ cá nhân', icon: PersonCircle24Regular, roles: ['admin', 'staff', 'teacher', 'student', 'parent'] },
 ];
 
 export default function AppShell() {
@@ -56,7 +57,7 @@ export default function AppShell() {
 
         <div className="sidebar-user">
           <Avatar aria-label={user.full_name} icon={<PersonCircle24Regular />} color="brand" />
-          <div><strong>{user.full_name}</strong><span>{roleLabels[user.role] || user.role}</span></div>
+          <NavLink className="sidebar-user__profile" to="/profile"><strong>{user.full_name}</strong><span>{roleLabels[user.role] || user.role}</span></NavLink>
           <Button
             className="sidebar-logout"
             type="button"
