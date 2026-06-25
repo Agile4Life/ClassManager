@@ -219,6 +219,24 @@ const updateAccount = asyncHandler(async (req, res) => {
                  teacher_id, student_id, parent_id, last_login_at, created_at`,
       values,
     );
+    const updated = result.rows[0];
+    const profileMap = {
+      teacher: { table: 'teachers', idColumn: 'teacher_id', id: updated.teacher_id },
+      student: { table: 'students', idColumn: 'student_id', id: updated.student_id },
+      parent: { table: 'parents', idColumn: 'parent_id', id: updated.parent_id },
+    };
+    const profile = profileMap[updated.role];
+    if (profile?.id) {
+      const profileFields = fields.filter((field) => ['full_name', 'phone', 'email'].includes(field) && (field !== 'email' || updated.role !== 'student'));
+      if (profileFields.length) {
+        const profileAssignments = profileFields.map((field, index) => `${field} = $${index + 1}`);
+        await client.query(
+          `update ${profile.table} set ${profileAssignments.join(', ')}
+           where ${profile.idColumn} = $${profileFields.length + 1}`,
+          [...profileFields.map((field) => changes[field]), profile.id],
+        );
+      }
+    }
     if (changes.status && changes.status !== 'active') {
       await client.query(
         `update user_sessions set is_revoked = true, logout_at = now()
