@@ -61,41 +61,46 @@ a { color: inherit; }
 .form-control, .input-group-text { min-height: 42px; border-color: #ccd7e4; border-radius: var(--radius-control); }
 .form-control { color: var(--ink); background-color: var(--paper); }
 
-/* Thiết kế lại Dropdown (Select) đổi màu theo theme ngày học, bo tròn mượt mà */
-.form-select {
-  min-height: 44px;
-  color: var(--ink);
-  background-color: color-mix(in srgb, var(--accent-soft) 35%, var(--paper));
-  border: 1.5px solid color-mix(in srgb, var(--accent) 45%, var(--line));
-  border-radius: 999px; /* Bo tròn viên thuốc hiện đại, thân thiện chủ đề lớp học */
-  padding: 0.5rem 2.8rem 0.5rem 1.15rem;
-  cursor: pointer;
-  font-weight: 650;
-  background-position: right 1rem center;
-  background-size: 14px 10px;
-  box-shadow: 0 3px 10px rgba(var(--accent-rgb), 0.08);
-  transition: all 280ms cubic-bezier(0.34, 1.56, 0.64, 1);
+/* Thiết kế lại toàn bộ Dropdown (select, form-select) đổi màu theo theme ngày học, bo tròn viên thuốc */
+select, .form-select, select.form-select {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  min-height: 44px !important;
+  color: var(--ink) !important;
+  background-color: color-mix(in srgb, var(--accent-soft) 35%, var(--paper)) !important;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%2369758a' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 1.1rem center !important;
+  background-size: 14px 10px !important;
+  border: 1.5px solid color-mix(in srgb, var(--accent) 50%, var(--line)) !important;
+  border-radius: 999px !important; /* Bo tròn viên thuốc chuẩn mọi dropdown */
+  padding: 0.5rem 2.8rem 0.5rem 1.25rem !important;
+  cursor: pointer !important;
+  font-weight: 650 !important;
+  box-shadow: 0 3px 10px rgba(var(--accent-rgb), 0.08) !important;
+  transition: all 280ms cubic-bezier(0.34, 1.56, 0.64, 1) !important;
 }
 
-.form-select:focus {
-  border-color: var(--accent);
-  background-color: var(--paper);
-  background-position: right 0.85rem center;
-  background-size: 16px 12px;
-  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 26%, transparent), 0 10px 24px rgba(var(--accent-rgb), 0.16);
-  outline: none;
+select:focus, .form-select:focus, select.form-select:focus {
+  border-color: var(--accent) !important;
+  background-color: var(--paper) !important;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%232563a6' stroke-linecap='round' stroke-linejoin='round' stroke-width='2.2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e") !important;
+  background-position: right 0.95rem center !important;
+  background-size: 16px 12px !important;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 28%, transparent), 0 10px 24px rgba(var(--accent-rgb), 0.18) !important;
+  outline: none !important;
 }
 
-.form-select:active:not(:disabled) {
-  transform: translateY(0) scale(0.975);
+select:active:not(:disabled), .form-select:active:not(:disabled) {
+  transform: translateY(0) scale(0.975) !important;
 }
 
-.form-select:disabled {
-  cursor: not-allowed; color: #7d899b; border-color: #dce4ed; background-color: #f1f4f7;
-  box-shadow: none; opacity: 0.78; transform: none;
+select:disabled, .form-select:disabled {
+  cursor: not-allowed !important; color: #7d899b !important; border-color: #dce4ed !important; background-color: #f1f4f7 !important;
+  box-shadow: none !important; opacity: 0.78 !important; transform: none !important;
 }
 
-.form-select option {
+select option, .form-select option {
   color: var(--ink);
   background: var(--paper);
   font-weight: 600;
@@ -106,13 +111,13 @@ a { color: inherit; }
 .form-control:focus { border-color: var(--accent); box-shadow: 0 0 0 3.5px rgba(var(--accent-rgb), 0.15); }
 
 @media (hover: hover) and (pointer: fine) {
-  .form-select:hover:not(:disabled):not(:focus) {
-    transform: translateY(-2.5px);
-    border-color: var(--accent);
-    background-color: color-mix(in srgb, var(--accent-soft) 65%, var(--paper));
-    background-position: right 0.9rem center;
-    background-size: 15px 11px;
-    box-shadow: 0 8px 20px rgba(var(--accent-rgb), 0.18);
+  select:hover:not(:disabled):not(:focus), .form-select:hover:not(:disabled):not(:focus) {
+    transform: translateY(-2.5px) !important;
+    border-color: var(--accent) !important;
+    background-color: color-mix(in srgb, var(--accent-soft) 68%, var(--paper)) !important;
+    background-position: right 1rem center !important;
+    background-size: 15px 11px !important;
+    box-shadow: 0 8px 20px rgba(var(--accent-rgb), 0.2) !important;
   }
 }
 .input-group { flex-wrap: nowrap; }
