@@ -242,6 +242,11 @@ a { color: inherit; }
 .table-surface table { min-width: 850px; }
 .table-surface th { color: #53617a; background: #f6f9fc; font-size: 12px; font-weight: 700; }
 .table-surface td { padding-top: 13px; padding-bottom: 13px; color: #26334d; font-size: 13px; border-bottom-color: #e8eef5; }
+.class-select-row { cursor: pointer; }
+.class-select-row:focus-visible { outline: 3px solid rgba(var(--accent-rgb), 0.24); outline-offset: -3px; }
+.class-select-row--active > td { background: var(--accent-soft) !important; }
+.class-students-panel { display: grid; gap: 16px; }
+.class-students-table table { min-width: 720px; }
 .student-table table { min-width: 980px; }
 .student-actions { display: flex; align-items: center; gap: 2px; }
 .student-dialog { width: min(760px, calc(100vw - 32px)) !important; max-width: 760px !important; }
