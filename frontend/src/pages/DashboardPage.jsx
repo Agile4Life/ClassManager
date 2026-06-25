@@ -31,6 +31,7 @@ export default function DashboardPage() {
   }, [user.role]);
 
   const firstName = user.full_name?.split(' ').slice(-1)[0] || 'bạn';
+  const studentsPath = ['admin', 'staff', 'teacher'].includes(user.role) ? '/students' : '/classes';
 
   return (
     <div className="page-flow">
@@ -46,9 +47,8 @@ export default function DashboardPage() {
       {data && (
         <>
           <section className="stat-grid stat-grid--three" aria-label="Số liệu tổng quan">
-            <Stat icon={WindowApps24Regular} value={data.classCount} label="Lớp đang theo dõi" tone="blue" />
-            <Stat icon={PeopleCommunity24Regular} value={data.studentCount ?? 'Theo lớp'} label="Học sinh" tone="yellow" />
-            <Stat icon={CalendarLtr24Regular} value={data.timetable.length} label="Lịch học mỗi tuần" tone="blue" />
+            <Stat to={studentsPath} icon={PeopleCommunity24Regular} value={data.studentCount ?? 'Theo lớp'} label="Học sinh" tone="yellow" />
+            <Stat to="/timetable" icon={CalendarLtr24Regular} value={data.timetable.length} label="Lịch học mỗi tuần" tone="blue" />
           </section>
 
           <section className="dashboard-grid">
@@ -123,8 +123,8 @@ function ThemePicker({ preference, setPreference, randomizeTheme, activeTheme, t
   );
 }
 
-function Stat({ icon: Icon, value, label, tone }) {
-  return <div className={`stat-block stat-block--${tone}`}><span><Icon /></span><strong>{value}</strong><p>{label}</p></div>;
+function Stat({ icon: Icon, value, label, tone, to }) {
+  return <Link className={`stat-block stat-block--${tone}`} to={to}><span><Icon /></span><strong>{value}</strong><p>{label}</p></Link>;
 }
 
 function BookStamp() {

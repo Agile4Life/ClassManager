@@ -177,7 +177,8 @@ a { color: inherit; }
 
 .stat-grid { display: grid; grid-template-columns: 1.12fr 0.88fr 1.12fr 0.88fr; gap: 14px; }
 .stat-grid--three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-.stat-block { min-height: 132px; padding: 20px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--paper); box-shadow: 0 8px 28px rgba(38, 78, 132, 0.06); }
+.stat-block { min-height: 132px; display: block; padding: 20px; color: var(--ink); border: 1px solid var(--line); border-radius: var(--radius); background: var(--paper); box-shadow: 0 8px 28px rgba(38, 78, 132, 0.06); text-decoration: none; transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease; }
+.stat-block:hover { color: var(--ink); border-color: var(--accent-soft); box-shadow: 0 12px 32px rgba(38, 78, 132, 0.1); transform: translateY(-2px); }
 .stat-block > span { width: 36px; height: 36px; display: grid; place-items: center; margin-bottom: 13px; border-radius: 10px; }
 .stat-block--blue > span { color: var(--accent-dark); background: var(--accent-soft); }
 .stat-block--yellow > span { color: #6b581b; background: var(--pencil-soft); }
