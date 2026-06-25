@@ -58,39 +58,61 @@ a { color: inherit; }
 .btn-light { --bs-btn-bg: transparent; --bs-btn-border-color: transparent; --bs-btn-hover-bg: var(--accent-soft); --bs-btn-hover-border-color: var(--accent-soft); color: #53617a; }
 .btn-icon { width: 40px; min-width: 40px; padding: 0; }
 .btn__icon { display: inline-grid; place-items: center; font-size: 1rem; line-height: 1; }
-.form-control, .form-select, .input-group-text { min-height: 42px; border-color: #ccd7e4; border-radius: var(--radius-control); }
-.form-control, .form-select { color: var(--ink); background-color: var(--paper); }
+.form-control, .input-group-text { min-height: 42px; border-color: #ccd7e4; border-radius: var(--radius-control); }
+.form-control { color: var(--ink); background-color: var(--paper); }
+
+/* Thiết kế lại Dropdown (Select) đổi màu theo theme ngày học, bo tròn mượt mà */
 .form-select {
-  padding-right: 2.8rem; cursor: pointer; font-weight: 600;
-  background-position: right 0.95rem center; background-size: 15px 11px;
-  box-shadow: 0 1px 2px rgba(29, 57, 91, 0.04);
-  transition:
-    transform 150ms ease,
-    border-color 150ms ease,
-    background-color 150ms ease,
-    background-position 180ms cubic-bezier(0.16, 1, 0.3, 1),
-    background-size 180ms cubic-bezier(0.16, 1, 0.3, 1),
-    box-shadow 180ms ease;
+  min-height: 44px;
+  color: var(--ink);
+  background-color: color-mix(in srgb, var(--accent-soft) 35%, var(--paper));
+  border: 1.5px solid color-mix(in srgb, var(--accent) 45%, var(--line));
+  border-radius: 999px; /* Bo tròn viên thuốc hiện đại, thân thiện chủ đề lớp học */
+  padding: 0.5rem 2.8rem 0.5rem 1.15rem;
+  cursor: pointer;
+  font-weight: 650;
+  background-position: right 1rem center;
+  background-size: 14px 10px;
+  box-shadow: 0 3px 10px rgba(var(--accent-rgb), 0.08);
+  transition: all 280ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
+
 .form-select:focus {
-  border-color: #5f91c5; background-color: #fbfdff;
-  background-position: right 0.78rem center; background-size: 17px 13px;
-  box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.14), 0 8px 20px rgba(var(--accent-rgb), 0.1);
+  border-color: var(--accent);
+  background-color: var(--paper);
+  background-position: right 0.85rem center;
+  background-size: 16px 12px;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 26%, transparent), 0 10px 24px rgba(var(--accent-rgb), 0.16);
+  outline: none;
 }
-.form-select:active:not(:disabled) { transform: translateY(0) scale(0.995); }
+
+.form-select:active:not(:disabled) {
+  transform: translateY(0) scale(0.975);
+}
+
 .form-select:disabled {
   cursor: not-allowed; color: #7d899b; border-color: #dce4ed; background-color: #f1f4f7;
-  box-shadow: none; opacity: 0.78;
+  box-shadow: none; opacity: 0.78; transform: none;
 }
-.form-select option { color: var(--ink); background: var(--paper); font-weight: 500; }
+
+.form-select option {
+  color: var(--ink);
+  background: var(--paper);
+  font-weight: 600;
+  padding: 10px;
+}
+
 .form-control::placeholder { color: #98a4b6; opacity: 1; }
-.form-control:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.13); }
+.form-control:focus { border-color: var(--accent); box-shadow: 0 0 0 3.5px rgba(var(--accent-rgb), 0.15); }
 
 @media (hover: hover) and (pointer: fine) {
   .form-select:hover:not(:disabled):not(:focus) {
-    transform: translateY(-1px); border-color: #8aafd5; background-color: #fbfdff;
-    background-position: right 0.82rem center; background-size: 16px 12px;
-    box-shadow: 0 6px 16px rgba(var(--accent-rgb), 0.09);
+    transform: translateY(-2.5px);
+    border-color: var(--accent);
+    background-color: color-mix(in srgb, var(--accent-soft) 65%, var(--paper));
+    background-position: right 0.9rem center;
+    background-size: 15px 11px;
+    box-shadow: 0 8px 20px rgba(var(--accent-rgb), 0.18);
   }
 }
 .input-group { flex-wrap: nowrap; }
