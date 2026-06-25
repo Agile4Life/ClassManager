@@ -19,6 +19,7 @@ const navItems = [
   { to: '/classes', label: 'Lớp học', icon: WindowApps24Regular, roles: ['admin', 'staff', 'teacher', 'student', 'parent'] },
   { to: '/timetable', label: 'Thời khóa biểu', icon: CalendarLtr24Regular, roles: ['admin', 'staff', 'teacher', 'student', 'parent'] },
   { to: '/attendance', label: 'Điểm danh', icon: PeopleCheckmark24Regular, roles: ['admin', 'teacher'] },
+  { to: '/attendance-history', label: 'Lịch sử điểm danh', icon: DataTrending24Regular, roles: ['admin', 'teacher'] },
   { to: '/parent-notifications', label: 'Thông báo phụ huynh', icon: MailTemplate24Regular, roles: ['admin', 'staff', 'teacher'] },
   { to: '/learning-history', label: 'Quá trình học tập', icon: DataTrending24Regular, roles: ['admin', 'teacher'] },
 ];

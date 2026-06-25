@@ -13,5 +13,6 @@ router.post('/:classId/schedules', requireRole('admin', 'staff'), timetable.crea
 router.post('/:classId/generate-sessions', requireRole('admin', 'staff', 'teacher'), timetable.generateSessions);
 router.get('/:classId/sessions', requireRole('admin', 'staff', 'teacher'), sessions.listSessions);
 router.post('/:classId/sessions', requireRole('admin', 'staff', 'teacher'), sessions.createSession);
+router.get('/:classId/attendance-history', requireRole('admin', 'teacher'), sessions.getAttendanceHistory);
 
 module.exports = router;

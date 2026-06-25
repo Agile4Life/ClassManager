@@ -523,6 +523,27 @@ a { color: inherit; }
   padding: 12px 18px; border-top: 1px solid var(--line); background: #f9fbfd;
 }
 .attendance-save-bar > span { color: var(--muted); font-size: 12px; }
+.attendance-history-filters {
+  display: grid; grid-template-columns: repeat(2, minmax(240px, 1fr));
+  align-items: end; gap: 16px; padding: 20px; border: 1px solid var(--line);
+  border-radius: var(--radius); background: var(--paper);
+}
+.attendance-history-summary {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); overflow: hidden;
+  border: 1px solid var(--line); border-radius: var(--radius); background: var(--paper);
+}
+.attendance-history-summary > div {
+  min-height: 92px; display: flex; flex-direction: column; justify-content: center;
+  padding: 18px 22px; border-right: 1px solid var(--line);
+}
+.attendance-history-summary > div:last-child { border-right: 0; }
+.attendance-history-summary span { color: var(--muted); font-size: 12px; }
+.attendance-history-summary strong { margin-top: 7px; color: var(--accent-dark); font-size: 28px; letter-spacing: -0.04em; }
+.attendance-history-table table { min-width: 860px; }
+.attendance-status { min-width: 112px; display: inline-flex; justify-content: center; }
+.attendance-status--present { color: #1f6b33 !important; background: #eaf7ed !important; }
+.attendance-status--absent { color: #9b3d3d !important; background: #faecec !important; }
+.attendance-status--not-taken { color: #5f6c80 !important; background: #edf1f5 !important; }
 
 @media print {
   .sidebar, .mobile-topbar, .page-header, .notification-context, .notification-editor,
@@ -736,6 +757,10 @@ a { color: inherit; }
   .attendance-student-cell .initial-tile { display: none !important; }
   .attendance-list-header span:first-child { padding-left: 2px; }
   .attendance-save-bar .btn { width: 100%; }
+  .attendance-history-filters { grid-template-columns: 1fr; padding: 14px; }
+  .attendance-history-summary { grid-template-columns: 1fr; }
+  .attendance-history-summary > div { min-height: 78px; border-right: 0; border-bottom: 1px solid var(--line); }
+  .attendance-history-summary > div:last-child { border-bottom: 0; }
   .learning-history-filters { grid-template-columns: 1fr; padding: 14px; }
   .learning-history-summary { grid-template-columns: 1fr; }
   .learning-history-summary > div { min-height: 78px; border-right: 0; border-bottom: 1px solid var(--line); }

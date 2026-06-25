@@ -91,6 +91,45 @@ const getAttendance = asyncHandler(async (req, res) => {
   return success(res, result.rows, 'Attendance fetched successfully');
 });
 
+const getAttendanceHistory = asyncHandler(async (req, res) => {
+  await assertTeacherClassAccess(req.user, req.params.classId);
+  const values = [req.params.classId];
+  const sessionConditions = ['cs.class_id = $1'];
+  if (req.query.from_date !== undefined) {
+    assertOptionalIsoDate(req.query.from_date, 'from_date');
+    values.push(req.query.from_date);
+    sessionConditions.push(`cs.session_date >= $${values.length}`);
+  }
+  if (req.query.to_date !== undefined) {
+    assertOptionalIsoDate(req.query.to_date, 'to_date');
+    values.push(req.query.to_date);
+    sessionConditions.push(`cs.session_date <= $${values.length}`);
+  }
+  const result = await pool.query(
+    `with selected_sessions as (
+       select cs.session_id, cs.class_id, cs.session_date, cs.start_time, cs.end_time, cs.topic
+       from class_sessions cs
+       where ${sessionConditions.join(' and ')}
+     ),
+     enrolled_students as (
+       select distinct s.student_id, s.student_code, s.full_name as student_name
+       from enrollments e
+       join students s on s.student_id = e.student_id
+       where e.class_id = $1 and e.status in ('studying', 'completed')
+     )
+     select ss.session_id, ss.session_date, ss.start_time, ss.end_time, ss.topic,
+            es.student_id, es.student_code, es.student_name,
+            a.attendance_id, a.status, a.check_in_time, a.note,
+            case when a.attendance_id is null then 'not_taken' else a.status end as attendance_status
+     from selected_sessions ss
+     cross join enrolled_students es
+     left join attendance a on a.session_id = ss.session_id and a.student_id = es.student_id
+     order by ss.session_date desc, ss.start_time desc nulls last, es.student_name`,
+    values,
+  );
+  return success(res, result.rows, 'Attendance history fetched successfully');
+});
+
 const saveAttendance = asyncHandler(async (req, res) => {
   const session = await getSessionForAccess(req.params.sessionId, req.user);
   const entries = Array.isArray(req.body.attendance) ? req.body.attendance : [req.body];
@@ -162,4 +201,7 @@ const updateAttendance = asyncHandler(async (req, res) => {
   return success(res, result.rows[0], 'Attendance updated successfully');
 });
 
-module.exports = { listSessions, createSession, updateSession, deleteSession, getAttendance, saveAttendance, updateAttendance };
+module.exports = {
+  listSessions, createSession, updateSession, deleteSession,
+  getAttendance, getAttendanceHistory, saveAttendance, updateAttendance,
+};
