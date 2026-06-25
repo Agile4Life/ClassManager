@@ -6,7 +6,7 @@ import {
   PeopleCheckmark24Regular, PersonCircle24Regular, SignOut24Regular,
   WindowApps24Regular, Person24Regular, TeacherIcon, Building24Regular
 } from '../components/bootstrap-icons';
-import { NavLink, Outlet, useLocation } from 'react-router-dom';
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 
 const roleLabels = { admin: 'Quản trị viên', staff: 'Nhân viên', teacher: 'Giáo viên', student: 'Học sinh', parent: 'Phụ huynh' };
@@ -30,6 +30,7 @@ export default function AppShell() {
   const { user, logout } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => setMenuOpen(false), [location.pathname]);
 
@@ -37,7 +38,7 @@ export default function AppShell() {
     <div className="app-shell">
       {menuOpen && <button className="sidebar-scrim" aria-label="Đóng menu" onClick={() => setMenuOpen(false)} />}
       <aside className={`sidebar ${menuOpen ? 'sidebar--open' : ''}`}>
-        <div className="brand-lockup">
+        <div className="brand-lockup" onClick={() => navigate('/')} style={{ cursor: 'pointer' }} title="Về trang Tổng quan">
           <span className="brand-lockup__mark" style={{ background: 'transparent', width: '38px', height: '38px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <TeacherIcon style={{ width: '36px', height: '36px' }} />
           </span>

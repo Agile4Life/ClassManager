@@ -31,13 +31,19 @@ export default function DashboardPage() {
     };
   }, [user.role]);
 
-  const firstName = user.full_name?.split(' ').slice(-1)[0] || 'bạn';
+  const hour = new Date().getHours();
+  let greeting = 'Chào buổi sáng';
+  if (hour >= 11 && hour < 13) greeting = 'Chào buổi trưa';
+  else if (hour >= 13 && hour < 18) greeting = 'Chào buổi chiều';
+  else if (hour >= 18 || hour < 4) greeting = 'Chào buổi tối';
+
+  const displayName = user.full_name || user.username || 'bạn';
   const studentsPath = ['admin', 'staff', 'teacher'].includes(user.role) ? '/students' : '/classes';
 
   return (
     <div className="page-flow">
       <section className="welcome-strip">
-        <div><span>Chào buổi học mới, {firstName}</span><h1>Mọi thứ đang đi đúng nhịp.</h1><p>Xem nhanh lớp học, lịch dạy và những việc cần chú ý hôm nay.</p></div>
+        <div><span>{greeting}, {displayName}</span><h1>Mọi thứ đang đi đúng nhịp.</h1><p>Xem nhanh lớp học, lịch dạy và những việc cần chú ý hôm nay.</p></div>
         <div className="welcome-strip__stamp"><BookStamp /></div>
       </section>
 
