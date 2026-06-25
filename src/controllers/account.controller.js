@@ -198,6 +198,9 @@ const updateAccount = asyncHandler(async (req, res) => {
     if (!STATUSES.includes(req.body.status)) throw new AppError(400, 'Trạng thái không hợp lệ');
     changes.status = req.body.status;
   }
+  if (req.body.teacher_id !== undefined) changes.teacher_id = req.body.teacher_id || null;
+  if (req.body.student_id !== undefined) changes.student_id = req.body.student_id || null;
+  if (req.body.parent_id !== undefined) changes.parent_id = req.body.parent_id || null;
   const fields = Object.keys(changes);
   if (!fields.length) throw new AppError(400, 'Không có thay đổi hợp lệ');
 

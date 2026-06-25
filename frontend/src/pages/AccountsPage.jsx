@@ -164,6 +164,8 @@ function AccountsWorkspace({ currentUser }) {
     }
   }
 
+  const [profiles, setProfiles] = useState([]);
+
   function openEditDialog(account) {
     setEditTarget(account);
     setEditForm({
@@ -171,8 +173,15 @@ function AccountsWorkspace({ currentUser }) {
       full_name: account.full_name,
       phone: account.phone || '',
       email: account.email || '',
+      linked_profile_id: account[`${account.role}_id`] || '',
     });
     setEditError('');
+    setProfiles([]);
+    if (['teacher', 'student', 'parent'].includes(account.role)) {
+      api.get(`/${account.role}s?limit=1000`).then((res) => {
+        setProfiles(res.data.items);
+      });
+    }
   }
 
   async function updateAccount(event) {
@@ -186,6 +195,10 @@ function AccountsWorkspace({ currentUser }) {
         phone: editForm.phone.trim() || null,
         email: editForm.email.trim() || null,
       };
+      if (editTarget.role === 'teacher') payload.teacher_id = editForm.linked_profile_id || null;
+      if (editTarget.role === 'student') payload.student_id = editForm.linked_profile_id || null;
+      if (editTarget.role === 'parent') payload.parent_id = editForm.linked_profile_id || null;
+      
       await api.put(`/admin/accounts/${editTarget.user_id}`, payload);
       setEditTarget(null);
       setActionMessage(`Đã cập nhật thông tin tài khoản ${editTarget.username}.`);
@@ -312,6 +325,18 @@ function AccountsWorkspace({ currentUser }) {
             <Field label="Tên đăng nhập" required><Input autoComplete="off" value={editForm.username} onChange={(_, value) => setEditForm(cur => ({ ...cur, username: value.value }))} /></Field>
             <Field label="Số điện thoại" required={editTarget?.role === 'parent'}><Input type="tel" autoComplete="tel" value={editForm.phone} onChange={(_, value) => setEditForm(cur => ({ ...cur, phone: value.value }))} /></Field>
             <Field label="Email"><Input type="email" autoComplete="email" value={editForm.email} onChange={(_, value) => setEditForm(cur => ({ ...cur, email: value.value }))} /></Field>
+            {['teacher', 'student', 'parent'].includes(editTarget?.role) && (
+              <Field label="Hồ sơ liên kết (Tùy chọn)" className="form-grid__wide">
+                <Select value={editForm.linked_profile_id || ''} onChange={(e) => setEditForm(cur => ({ ...cur, linked_profile_id: e.target.value }))}>
+                  <option value="">-- Không liên kết --</option>
+                  {profiles.map(p => (
+                    <option key={p[`${editTarget.role}_id`]} value={p[`${editTarget.role}_id`]}>
+                      {p.full_name} {p[`${editTarget.role}_code`] ? `(${p[`${editTarget.role}_code`]})` : ''}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+            )}
           </DialogContent>
           <DialogActions><Button type="button" appearance="secondary" disabled={editing} onClick={() => setEditTarget(null)}>Hủy</Button><Button appearance="primary" type="submit" disabled={editing || !editForm.full_name.trim() || !editForm.username.trim()}>{editing ? 'Đang lưu...' : 'Lưu thay đổi'}</Button></DialogActions>
         </DialogBody></form></DialogSurface>

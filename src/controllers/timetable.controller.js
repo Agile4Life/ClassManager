@@ -57,13 +57,15 @@ const getAll = asyncHandler(async (req, res) => {
     values.push(req.query.teacher_id);
     conditions.push(`(
       exists (select 1 from class_schedule_teachers cst where cst.schedule_id = cs.schedule_id and cst.teacher_id = $${values.length})
-      or (not exists (select 1 from class_schedule_teachers cst where cst.schedule_id = cs.schedule_id) and c.teacher_id = $${values.length})
+      or exists (select 1 from class_teachers ct where ct.class_id = c.class_id and ct.teacher_id = $${values.length})
+      or c.teacher_id = $${values.length}
     )`);
   } else if (req.user.role === 'teacher') {
     values.push(req.user.teacher_id);
     conditions.push(`(
       exists (select 1 from class_schedule_teachers cst where cst.schedule_id = cs.schedule_id and cst.teacher_id = $${values.length})
-      or (not exists (select 1 from class_schedule_teachers cst where cst.schedule_id = cs.schedule_id) and c.teacher_id = $${values.length})
+      or exists (select 1 from class_teachers ct where ct.class_id = c.class_id and ct.teacher_id = $${values.length})
+      or c.teacher_id = $${values.length}
     )`);
   }
   const where = conditions.length ? `where ${conditions.join(' and ')}` : '';
@@ -291,7 +293,8 @@ module.exports = {
   getAll, getByClass,
   getByTeacher: getBySimpleType('teacher', `(
     exists (select 1 from class_schedule_teachers cst where cst.schedule_id = cs.schedule_id and cst.teacher_id = $1)
-    or (not exists (select 1 from class_schedule_teachers cst where cst.schedule_id = cs.schedule_id) and c.teacher_id = $1)
+    or exists (select 1 from class_teachers ct where ct.class_id = c.class_id and ct.teacher_id = $1)
+    or c.teacher_id = $1
   )`),
   getByStudent: getBySimpleType('student', `c.class_id in (select class_id from enrollments where student_id = $1 and status = 'studying')`),
   getByRoom: getBySimpleType('room', 'cs.room_id = $1', false),
