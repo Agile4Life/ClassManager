@@ -113,7 +113,7 @@ const importStudents = asyncHandler(async (req, res) => {
 const list = asyncHandler(async (req, res) => {
   const { limit, page, offset } = getPagination(req.query);
   const values = [];
-  const conditions = [];
+  const conditions = ['s.is_deleted = false'];
 
   if (req.query.search) {
     values.push(`%${req.query.search}%`);
@@ -162,7 +162,7 @@ const getById = asyncHandler(async (req, res) => {
     left join parents p on p.parent_id = sp.parent_id
     left join enrollments e on e.student_id = s.student_id
     left join classes c on c.class_id = e.class_id
-    where s.student_id = $1
+    where s.student_id = $1 and s.is_deleted = false
     group by s.student_id
   `, [req.params.id]);
   if (!result.rowCount) throw new AppError(404, 'Record not found');
@@ -219,7 +219,7 @@ const update = asyncHandler(async (req, res) => {
   try {
     await client.query('begin');
     const result = await client.query(
-      `update students set full_name = $1, status = $2, phone = $3 where student_id = $4 returning student_id, student_code, full_name, status, phone as student_phone`,
+      `update students set full_name = $1, status = $2, phone = $3 where student_id = $4 and is_deleted = false returning student_id, student_code, full_name, status, phone as student_phone`,
       [full_name, status || 'active', student_phone || null, req.params.id]
     );
     await client.query('update user_accounts set full_name = $1, phone = $2 where student_id = $3', [full_name, student_phone || null, req.params.id]);
@@ -258,8 +258,11 @@ const update = asyncHandler(async (req, res) => {
 });
 
 const remove = asyncHandler(async (req, res) => {
-  const result = await pool.query(`delete from students where student_id = $1 returning student_id`, [req.params.id]);
+  const result = await pool.query(`update students set is_deleted = true where student_id = $1 returning student_id`, [req.params.id]);
   if (!result.rowCount) throw new AppError(404, 'Record not found');
+  
+  // Update related user accounts if any to inactive or maybe just leave them?
+  // User asked for soft delete and hide from list, so updating students is enough.
   return success(res, result.rows[0], 'Record deleted successfully');
 });
 
