@@ -4,7 +4,7 @@ import {
   Field, Input, MessageBar, MessageBarBody, Select,
 } from '../components/bootstrap-ui';
 import {
-  Add24Regular, CalendarLtr24Regular, ChevronLeft24Regular, ChevronRight24Regular, Edit24Regular,
+  Add24Regular, CalendarLtr24Regular, ChevronLeft24Regular, ChevronRight24Regular, Delete24Regular, Edit24Regular,
 } from '../components/bootstrap-icons';
 import { api } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
@@ -76,8 +76,11 @@ export default function TimetablePage() {
   const [form, setForm] = useState(initialForm);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState('');
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
   const canCreate = ['admin', 'staff'].includes(user.role);
-  const canEdit = ['admin', 'teacher'].includes(user.role);
+  const canEdit = ['admin', 'staff', 'teacher'].includes(user.role);
 
   const { data, loading, error, refresh } = usePageData(async () => {
     const [timetable, classes, rooms] = await Promise.all([
@@ -141,8 +144,28 @@ export default function TimetablePage() {
   }
 
   function canEditSchedule(schedule) {
-    if (user.role === 'admin') return true;
+    if (['admin', 'staff'].includes(user.role)) return true;
     return user.role === 'teacher' && String(schedule.teacher_id) === String(user.teacher_id);
+  }
+
+  function askToDeleteSchedule(schedule) {
+    setDeleteTarget(schedule);
+    setDeleteError('');
+  }
+
+  async function deleteSchedule() {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    setDeleteError('');
+    try {
+      await api.delete(`/schedules/${deleteTarget.schedule_id}`);
+      setDeleteTarget(null);
+      refresh();
+    } catch (requestError) {
+      setDeleteError(requestError.message);
+    } finally {
+      setDeleting(false);
+    }
   }
 
   async function saveSchedule(event) {
@@ -187,7 +210,10 @@ export default function TimetablePage() {
           <div className="lesson-card__top">
             <span className="lesson-card__time">{formatTime(item.start_time)} - {formatTime(item.end_time)}</span>
             {canEditSchedule(item) && (
-              <Button appearance="subtle" className="lesson-card__edit" icon={<Edit24Regular />} aria-label={`Chỉnh sửa lịch ${item.class_name}`} title="Chỉnh sửa lịch" onClick={() => openEditDialog(item)} />
+              <div className="lesson-card__actions">
+                <Button appearance="subtle" className="lesson-card__action" icon={<Edit24Regular />} aria-label={`Chỉnh sửa lịch ${item.class_name}`} title="Chỉnh sửa lịch" onClick={() => openEditDialog(item)} />
+                <Button appearance="subtle" className="lesson-card__action lesson-card__action--danger" icon={<Delete24Regular />} aria-label={`Xóa lịch ${item.class_name}`} title="Xóa lịch" onClick={() => askToDeleteSchedule(item)} />
+              </div>
             )}
           </div>
           <strong>{item.class_name}</strong><p>{item.subject_name}</p><div className="lesson-card__meta"><span>{item.room_name || 'Chưa xếp phòng'}</span><small>{item.teacher_name || item.student_name || ''}</small></div>
@@ -199,6 +225,7 @@ export default function TimetablePage() {
           grouped={grouped}
           canEditSchedule={canEditSchedule}
           onEdit={openEditDialog}
+          onDelete={askToDeleteSchedule}
         />
       )}
 
@@ -213,11 +240,22 @@ export default function TimetablePage() {
         <Field label="Ngày trong tuần"><Select value={form.day_of_week} onChange={(event) => updateField('day_of_week', event.target.value)}>{days.map((day) => <option key={day} value={day}>{dayLabels[day]}</option>)}</Select></Field><div />
         <Field label="Bắt đầu"><Input type="time" value={form.start_time} onChange={(_, value) => updateField('start_time', value.value)} /></Field><Field label="Kết thúc"><Input type="time" value={form.end_time} onChange={(_, value) => updateField('end_time', value.value)} /></Field>
       </DialogContent><DialogActions><Button appearance="secondary" onClick={closeDialog}>Hủy</Button><Button appearance="primary" type="submit" disabled={saving || (!editingSchedule && !form.class_id) || !form.room_id}>{saving ? 'Đang lưu...' : editingSchedule ? 'Lưu thay đổi' : 'Lưu lịch học'}</Button></DialogActions></DialogBody></form></DialogSurface></Dialog>
+
+      <Dialog open={Boolean(deleteTarget)} onOpenChange={(_, details) => { if (!details.open && !deleting) setDeleteTarget(null); }}>
+        <DialogSurface><DialogBody>
+          <DialogTitle>Xóa lịch học?</DialogTitle>
+          <DialogContent>
+            {deleteError && <MessageBar intent="error"><MessageBarBody>{deleteError}</MessageBarBody></MessageBar>}
+            <p className="delete-confirmation">Lịch <strong>{deleteTarget?.class_name}</strong> vào <strong>{deleteTarget ? dayLabels[deleteTarget.day_of_week] : ''}</strong>, từ <strong>{deleteTarget ? formatTime(deleteTarget.start_time) : ''}</strong> đến <strong>{deleteTarget ? formatTime(deleteTarget.end_time) : ''}</strong> sẽ bị xóa khỏi tuần mẫu. Thao tác này không thể hoàn tác.</p>
+          </DialogContent>
+          <DialogActions><Button appearance="secondary" disabled={deleting} onClick={() => setDeleteTarget(null)}>Hủy</Button><Button className="danger-button" appearance="primary" disabled={deleting} onClick={deleteSchedule}>{deleting ? 'Đang xóa...' : 'Xóa lịch học'}</Button></DialogActions>
+        </DialogBody></DialogSurface>
+      </Dialog>
     </div>
   );
 }
 
-function RecurringWeekTable({ dates, grouped, canEditSchedule, onEdit }) {
+function RecurringWeekTable({ dates, grouped, canEditSchedule, onEdit, onDelete }) {
   const today = new Date();
   const weekNumber = getIsoWeek(dates[0]).week;
   return (
@@ -243,28 +281,21 @@ function RecurringWeekTable({ dates, grouped, canEditSchedule, onEdit }) {
                       const editable = canEditSchedule(schedule);
                       const content = (
                         <>
-                          <span><strong>{formatTime(schedule.start_time)} - {formatTime(schedule.end_time)}</strong>{editable && <Edit24Regular aria-hidden="true" />}</span>
+                          <span>
+                            <strong>{formatTime(schedule.start_time)} - {formatTime(schedule.end_time)}</strong>
+                            {editable && (
+                              <span className="recurring-lesson__actions">
+                                <button type="button" aria-label={`Chỉnh sửa lịch ${schedule.class_name}`} title="Chỉnh sửa lịch" onClick={() => onEdit(schedule)}><Edit24Regular aria-hidden="true" /></button>
+                                <button type="button" aria-label={`Xóa lịch ${schedule.class_name}`} title="Xóa lịch" onClick={() => onDelete(schedule)}><Delete24Regular aria-hidden="true" /></button>
+                              </span>
+                            )}
+                          </span>
                           <b>{schedule.class_name}</b>
                           <small>{schedule.subject_name}</small>
                           <em>{schedule.room_name || 'Chưa xếp phòng'}</em>
                         </>
                       );
-                      return editable ? (
-                        <button
-                          type="button"
-                          className="recurring-lesson recurring-lesson--editable"
-                          aria-label={`Chỉnh sửa lịch ${schedule.class_name} ngày ${formatShortDate(date)}`}
-                          title="Chỉnh sửa lịch lặp"
-                          key={`${dateKey(date)}-${schedule.schedule_id}`}
-                          onClick={() => onEdit(schedule)}
-                        >
-                          {content}
-                        </button>
-                      ) : (
-                        <div className="recurring-lesson" key={`${dateKey(date)}-${schedule.schedule_id || schedule.class_id}`}>
-                          {content}
-                        </div>
-                      );
+                      return <div className={editable ? 'recurring-lesson recurring-lesson--editable' : 'recurring-lesson'} key={`${dateKey(date)}-${schedule.schedule_id || schedule.class_id}`}>{content}</div>;
                     })}
                     {!schedules.length && <span className="recurring-table__empty">Không có lịch</span>}
                   </div>

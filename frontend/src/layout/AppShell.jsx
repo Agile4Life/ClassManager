@@ -49,7 +49,7 @@ export default function AppShell() {
         </nav>
 
         <div className="sidebar-note">
-          <span>Góc nhắc nhỏ</span>
+          <span>Góc nhắc nhở</span>
           <strong>Mỗi buổi học đều đáng được ghi nhận.</strong>
         </div>
 
