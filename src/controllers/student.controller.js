@@ -125,7 +125,18 @@ const list = asyncHandler(async (req, res) => {
   }
 
   const where = conditions.length ? `where ${conditions.join(' and ')}` : '';
-  const countResult = await pool.query(`select count(*)::int as total from students s ${where}`, values);
+  let countResult;
+  try {
+    countResult = await pool.query(`select count(*)::int as total from students s ${where}`, values);
+  } catch (error) {
+    if (error.code === '42703') { // column does not exist
+      await pool.query('ALTER TABLE students ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN NOT NULL DEFAULT FALSE');
+      countResult = await pool.query(`select count(*)::int as total from students s ${where}`, values);
+    } else {
+      throw error;
+    }
+  }
+  
   values.push(limit, offset);
 
   const query = `
@@ -143,7 +154,18 @@ const list = asyncHandler(async (req, res) => {
     order by s.student_id desc
     limit $${values.length - 1} offset $${values.length}
   `;
-  const result = await pool.query(query, values);
+  
+  let result;
+  try {
+    result = await pool.query(query, values);
+  } catch (error) {
+    if (error.code === '42703') {
+      await pool.query('ALTER TABLE students ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN NOT NULL DEFAULT FALSE');
+      result = await pool.query(query, values);
+    } else {
+      throw error;
+    }
+  }
 
   return success(res, {
     items: result.rows,
@@ -152,7 +174,7 @@ const list = asyncHandler(async (req, res) => {
 });
 
 const getById = asyncHandler(async (req, res) => {
-  const result = await pool.query(`
+  const queryText = `
     select s.student_id, s.student_code, s.full_name, s.phone as student_phone, s.status,
       max(case when sp.relationship = 'father' then p.phone end) as father_phone,
       max(case when sp.relationship = 'mother' then p.phone end) as mother_phone,
@@ -164,7 +186,18 @@ const getById = asyncHandler(async (req, res) => {
     left join classes c on c.class_id = e.class_id
     where s.student_id = $1 and s.is_deleted = false
     group by s.student_id
-  `, [req.params.id]);
+  `;
+  let result;
+  try {
+    result = await pool.query(queryText, [req.params.id]);
+  } catch (error) {
+    if (error.code === '42703') {
+      await pool.query('ALTER TABLE students ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN NOT NULL DEFAULT FALSE');
+      result = await pool.query(queryText, [req.params.id]);
+    } else {
+      throw error;
+    }
+  }
   if (!result.rowCount) throw new AppError(404, 'Record not found');
   return success(res, result.rows[0], 'Record fetched successfully');
 });
@@ -218,10 +251,23 @@ const update = asyncHandler(async (req, res) => {
   const client = await pool.connect();
   try {
     await client.query('begin');
-    const result = await client.query(
-      `update students set full_name = $1, status = $2, phone = $3 where student_id = $4 and is_deleted = false returning student_id, student_code, full_name, status, phone as student_phone`,
-      [full_name, status || 'active', student_phone || null, req.params.id]
-    );
+    let result;
+    try {
+      result = await client.query(
+        `update students set full_name = $1, status = $2, phone = $3 where student_id = $4 and is_deleted = false returning student_id, student_code, full_name, status, phone as student_phone`,
+        [full_name, status || 'active', student_phone || null, req.params.id]
+      );
+    } catch (error) {
+      if (error.code === '42703') {
+        await client.query('ALTER TABLE students ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN NOT NULL DEFAULT FALSE');
+        result = await client.query(
+          `update students set full_name = $1, status = $2, phone = $3 where student_id = $4 and is_deleted = false returning student_id, student_code, full_name, status, phone as student_phone`,
+          [full_name, status || 'active', student_phone || null, req.params.id]
+        );
+      } else {
+        throw error;
+      }
+    }
     await client.query('update user_accounts set full_name = $1, phone = $2 where student_id = $3', [full_name, student_phone || null, req.params.id]);
     if (!result.rowCount) throw new AppError(404, 'Record not found');
     const student = result.rows[0];
@@ -258,7 +304,17 @@ const update = asyncHandler(async (req, res) => {
 });
 
 const remove = asyncHandler(async (req, res) => {
-  const result = await pool.query(`update students set is_deleted = true where student_id = $1 returning student_id`, [req.params.id]);
+  let result;
+  try {
+    result = await pool.query(`update students set is_deleted = true where student_id = $1 returning student_id`, [req.params.id]);
+  } catch (error) {
+    if (error.code === '42703') {
+      await pool.query('ALTER TABLE students ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN NOT NULL DEFAULT FALSE');
+      result = await pool.query(`update students set is_deleted = true where student_id = $1 returning student_id`, [req.params.id]);
+    } else {
+      throw error;
+    }
+  }
   if (!result.rowCount) throw new AppError(404, 'Record not found');
   
   // Update related user accounts if any to inactive or maybe just leave them?
