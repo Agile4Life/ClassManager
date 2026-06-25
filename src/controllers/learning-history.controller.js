@@ -13,6 +13,12 @@ function cleanText(value, maxLength) {
   return value.trim().slice(0, maxLength);
 }
 
+function createTemplateLabel(content) {
+  const compact = cleanText(content, 160).replace(/\s+/g, ' ');
+  if (compact.length <= 80) return compact;
+  return `${compact.slice(0, 77)}...`;
+}
+
 function getCategoryKey(templateId, detail) {
   const safeTemplateId = cleanText(templateId, 80);
   if (safeTemplateId && safeTemplateId !== 'custom') return safeTemplateId;
@@ -196,11 +202,11 @@ const listTemplates = asyncHandler(async (req, res) => {
 const createTemplate = asyncHandler(async (req, res) => {
   await ensureLearningHistorySchema();
   const classId = req.body.class_id;
-  const label = cleanText(req.body.label, 160);
   const content = cleanText(req.body.content, 2000);
+  const label = createTemplateLabel(content);
   const audience = req.body.audience === 'class' ? 'class' : 'students';
   if (!classId || !/^\d+$/.test(String(classId))) throw new AppError(400, 'class_id is required');
-  if (!label || !content) throw new AppError(400, 'label and content are required');
+  if (!content) throw new AppError(400, 'content is required');
   await assertTeacherClassAccess(req.user, classId);
   const result = await pool.query(
     `insert into notification_templates (class_id, label, content, audience, created_by_user_id)

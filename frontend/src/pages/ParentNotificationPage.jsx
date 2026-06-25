@@ -19,13 +19,20 @@ import {
 
 const allowedRoles = ['admin', 'staff', 'teacher'];
 const CREATE_TEMPLATE_OPTION = '__create_notification_template__';
-const initialTemplateForm = { label: '', content: '', audience: 'students' };
+const initialTemplateForm = { content: '', audience: 'students' };
+
+function getTemplateDisplayLabel(template) {
+  const label = String(template.label || '').trim();
+  if (label) return label;
+  const content = String(template.content || '').trim().replace(/\s+/g, ' ');
+  return content.length > 60 ? `${content.slice(0, 57)}...` : content;
+}
 
 function normalizeSavedTemplate(template) {
   return {
     id: `saved_template_${template.template_id}`,
     classId: template.class_id ? String(template.class_id) : '',
-    label: template.label,
+    label: getTemplateDisplayLabel(template),
     content: template.content,
     audience: template.audience || 'students',
     savedTemplateId: template.template_id,
@@ -273,14 +280,13 @@ export default function ParentNotificationPage() {
 
   async function saveTemplate(event) {
     event.preventDefault();
-    const label = templateForm.label.trim();
     const content = templateForm.content.trim();
     if (!classId) {
       setTemplateError('Vui lòng chọn lớp trước khi tạo mẫu nhận xét.');
       return;
     }
-    if (!label || !content) {
-      setTemplateError('Vui lòng nhập tên mẫu và nội dung mẫu.');
+    if (!content) {
+      setTemplateError('Vui lòng nhập nội dung mẫu.');
       return;
     }
     setTemplateSaving(true);
@@ -288,7 +294,6 @@ export default function ParentNotificationPage() {
     try {
       const response = await api.post('/learning-history/notification-templates', {
         class_id: Number(classId),
-        label,
         content,
         audience: templateForm.audience,
       });
@@ -522,13 +527,6 @@ export default function ParentNotificationPage() {
               <DialogTitle>Tạo nhận xét mẫu mới</DialogTitle>
               <DialogContent className="form-grid notification-template-form">
                 {templateError && <MessageBar intent="error" className="form-grid__wide"><MessageBarBody>{templateError}</MessageBarBody></MessageBar>}
-                <Field label="Tên mẫu" required>
-                  <Input
-                    value={templateForm.label}
-                    placeholder="Ví dụ: Cần ôn lại phương trình tích"
-                    onChange={(_, data) => setTemplateForm((current) => ({ ...current, label: data.value }))}
-                  />
-                </Field>
                 <Field label="Đối tượng mặc định">
                   <Select value={templateForm.audience} onChange={(event) => setTemplateForm((current) => ({ ...current, audience: event.target.value }))}>
                     <option value="students">Học sinh được chọn</option>
@@ -546,7 +544,7 @@ export default function ParentNotificationPage() {
               </DialogContent>
               <DialogActions>
                 <Button appearance="secondary" disabled={templateSaving} onClick={closeTemplateDialog}>Hủy</Button>
-                <Button appearance="primary" type="submit" disabled={templateSaving || !templateForm.label.trim() || !templateForm.content.trim()}>
+                <Button appearance="primary" type="submit" disabled={templateSaving || !templateForm.content.trim()}>
                   {templateSaving ? 'Đang lưu...' : 'Lưu mẫu'}
                 </Button>
               </DialogActions>

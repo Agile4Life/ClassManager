@@ -10,6 +10,7 @@ async function start() {
   try {
     await pool.query('ALTER TABLE students ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN NOT NULL DEFAULT FALSE');
     await pool.query('ALTER TABLE teachers ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN NOT NULL DEFAULT FALSE');
+    await pool.query('ALTER TABLE classes ALTER COLUMN teacher_id DROP NOT NULL');
   } catch (error) {
     console.error('Failed to run migration:', error.message);
   }

@@ -155,7 +155,7 @@ export default function ClassesPage() {
         if (payload[key] !== undefined) payload[key] = Number(payload[key]);
       }
       payload.teacher_ids = form.teacher_ids.map(Number);
-      payload.teacher_id = payload.teacher_ids[0] || null;
+      if (payload.teacher_ids.length) payload.teacher_id = payload.teacher_ids[0];
       if (!editingClass) payload.max_students = 40;
       if (editingClass) await api.put(`/classes/${editingClass.class_id}`, payload);
       else await api.post('/classes', payload);
