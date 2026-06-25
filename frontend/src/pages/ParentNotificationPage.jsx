@@ -28,6 +28,18 @@ function normalizeSearchText(value) {
     .trim();
 }
 
+function compactStudentName(fullName) {
+  const parts = String(fullName || '').trim().split(/\s+/).filter(Boolean);
+  if (parts.length <= 2) return parts.join(' ');
+  return parts.slice(-2).join(' ');
+}
+
+function duplicateStudentName(fullName) {
+  const parts = String(fullName || '').trim().split(/\s+/).filter(Boolean);
+  if (parts.length <= 2) return parts.join(' ');
+  return `${parts[0]} ${parts.at(-1)}`;
+}
+
 function StudentPicker({ students, selectedStudentIds, onToggle, onSelectAll, onClear, labelledBy }) {
   const [query, setQuery] = useState('');
   const normalizedQuery = normalizeSearchText(query);
@@ -35,6 +47,20 @@ function StudentPicker({ students, selectedStudentIds, onToggle, onSelectAll, on
     () => students.filter((student) => normalizeSearchText(student.full_name).includes(normalizedQuery)),
     [normalizedQuery, students],
   );
+  const displayNames = useMemo(() => {
+    const compactCounts = students.reduce((counts, student) => {
+      const name = compactStudentName(student.full_name);
+      counts.set(name, (counts.get(name) || 0) + 1);
+      return counts;
+    }, new Map());
+    return new Map(students.map((student) => {
+      const compactName = compactStudentName(student.full_name);
+      return [
+        String(student.student_id),
+        compactCounts.get(compactName) > 1 ? duplicateStudentName(student.full_name) : compactName,
+      ];
+    }));
+  }, [students]);
 
   return (
     <div className="student-picker" role="group" aria-labelledby={labelledBy}>
@@ -80,7 +106,7 @@ function StudentPicker({ students, selectedStudentIds, onToggle, onSelectAll, on
               className={checked ? 'student-picker__option student-picker__option--selected' : 'student-picker__option'}
               key={studentId}
               checked={checked}
-              label={student.full_name}
+              label={displayNames.get(studentId) || student.full_name}
               onChange={(_, data) => onToggle(studentId, data.checked === true)}
             />
           );
