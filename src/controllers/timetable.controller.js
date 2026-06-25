@@ -17,9 +17,9 @@ const BASE_QUERY = `
          coalesce(schedule_teachers.teachers, case when legacy_teacher.teacher_id is null then '[]'::jsonb else jsonb_build_array(jsonb_build_object('teacher_id', legacy_teacher.teacher_id, 'full_name', legacy_teacher.full_name)) end) as teachers,
          r.room_id, r.room_name, cs.day_of_week, cs.start_time, cs.end_time
   from class_schedules cs
-  join classes c on c.class_id = cs.class_id
+  join classes c on c.class_id = cs.class_id and c.status <> 'cancelled'
   join subjects sub on sub.subject_id = c.subject_id
-  left join teachers legacy_teacher on legacy_teacher.teacher_id = c.teacher_id
+  left join teachers legacy_teacher on legacy_teacher.teacher_id = c.teacher_id and legacy_teacher.is_deleted = false
   left join rooms r on r.room_id = cs.room_id`;
 const TEACHER_LATERAL = `
   left join lateral (
@@ -27,7 +27,7 @@ const TEACHER_LATERAL = `
            string_agg(t.full_name, ', ' order by t.full_name) as teacher_name,
            jsonb_agg(jsonb_build_object('teacher_id', t.teacher_id, 'full_name', t.full_name) order by t.full_name) as teachers
     from class_schedule_teachers cst
-    join teachers t on t.teacher_id = cst.teacher_id
+    join teachers t on t.teacher_id = cst.teacher_id and t.is_deleted = false
     where cst.schedule_id = cs.schedule_id
   ) schedule_teachers on true`;
 const TIMETABLE_QUERY = `${BASE_QUERY} ${TEACHER_LATERAL}`;
@@ -101,16 +101,16 @@ const getByParent = asyncHandler(async (req, res) => {
      join student_parents sp on sp.parent_id = p.parent_id
      join students s on s.student_id = sp.student_id
      join enrollments e on e.student_id = s.student_id and e.status = 'studying'
-     join classes c on c.class_id = e.class_id
+     join classes c on c.class_id = e.class_id and c.status <> 'cancelled'
      join class_schedules cs on cs.class_id = c.class_id
      join subjects sub on sub.subject_id = c.subject_id
-     left join teachers legacy_teacher on legacy_teacher.teacher_id = c.teacher_id
+     left join teachers legacy_teacher on legacy_teacher.teacher_id = c.teacher_id and legacy_teacher.is_deleted = false
      left join lateral (
        select array_agg(t.teacher_id order by t.full_name) as teacher_ids,
               string_agg(t.full_name, ', ' order by t.full_name) as teacher_name,
               jsonb_agg(jsonb_build_object('teacher_id', t.teacher_id, 'full_name', t.full_name) order by t.full_name) as teachers
        from class_schedule_teachers cst
-       join teachers t on t.teacher_id = cst.teacher_id
+       join teachers t on t.teacher_id = cst.teacher_id and t.is_deleted = false
        where cst.schedule_id = cs.schedule_id
      ) schedule_teachers on true
      left join rooms r on r.room_id = cs.room_id
@@ -132,7 +132,11 @@ async function replaceScheduleTeachers(client, scheduleId, teacherIds) {
 
 async function getScheduleTeacherIds(client, scheduleId, classId) {
   const current = await client.query(
-    'select teacher_id from class_schedule_teachers where schedule_id = $1 order by teacher_id',
+    `select cst.teacher_id
+     from class_schedule_teachers cst
+     join teachers t on t.teacher_id = cst.teacher_id and t.is_deleted = false
+     where cst.schedule_id = $1
+     order by cst.teacher_id`,
     [scheduleId],
   );
   if (current.rowCount) return current.rows.map((row) => Number(row.teacher_id));
@@ -146,7 +150,10 @@ async function validateAndLockSchedule(client, { classId, roomId, day, start, en
   if (startMinutes === null || endMinutes === null || startMinutes >= endMinutes) {
     throw new AppError(400, 'end_time must be later than start_time');
   }
-  const classResult = await client.query('select class_id, teacher_id from classes where class_id = $1', [classId]);
+  const classResult = await client.query(
+    "select class_id, teacher_id from classes where class_id = $1 and status <> 'cancelled'",
+    [classId],
+  );
   if (!classResult.rowCount) throw new AppError(404, 'Class not found');
   const classTeacherIds = await getClassTeacherIds(client, classId);
   const selectedTeacherIds = teacherIds === undefined ? classTeacherIds : normalizeTeacherIds(teacherIds);
@@ -159,9 +166,12 @@ async function validateAndLockSchedule(client, { classId, roomId, day, start, en
     if (!room.rowCount) throw new AppError(400, 'Room does not exist or is unavailable');
     await client.query('select pg_advisory_xact_lock(hashtext($1))', [`room:${roomId}:${day}`]);
     const conflict = await client.query(
-      `select schedule_id from class_schedules where room_id = $1 and day_of_week = $2
-       and $3::time < end_time and $4::time > start_time
-       and ($5::bigint is null or schedule_id <> $5) limit 1`,
+      `select cs.schedule_id
+       from class_schedules cs
+       join classes c on c.class_id = cs.class_id and c.status <> 'cancelled'
+       where cs.room_id = $1 and cs.day_of_week = $2
+       and $3::time < cs.end_time and $4::time > cs.start_time
+       and ($5::bigint is null or cs.schedule_id <> $5) limit 1`,
       [roomId, day, start, end, scheduleId],
     );
     if (conflict.rowCount) throw new AppError(409, 'Room is already booked during this time');
@@ -173,7 +183,7 @@ async function validateAndLockSchedule(client, { classId, roomId, day, start, en
     const conflict = await client.query(
       `select cs.schedule_id
        from class_schedules cs
-       join classes c on c.class_id = cs.class_id
+       join classes c on c.class_id = cs.class_id and c.status <> 'cancelled'
        left join class_schedule_teachers cst on cst.schedule_id = cs.schedule_id
        where cs.day_of_week = $2
          and $3::time < cs.end_time and $4::time > cs.start_time
@@ -261,7 +271,10 @@ const generateSessions = asyncHandler(async (req, res) => {
   try {
     await client.query('begin');
     await client.query('select pg_advisory_xact_lock(hashtext($1))', [`generate-sessions:${req.params.classId}`]);
-    const classResult = await client.query('select 1 from classes where class_id = $1', [req.params.classId]);
+    const classResult = await client.query(
+      "select 1 from classes where class_id = $1 and status <> 'cancelled'",
+      [req.params.classId],
+    );
     if (!classResult.rowCount) throw new AppError(404, 'Class not found');
     const range = await client.query('select ($2::date - $1::date) as days', [fromDate, toDate]);
     if (range.rows[0].days < 0 || range.rows[0].days > 366) throw new AppError(400, 'Date range must be between 0 and 366 days');

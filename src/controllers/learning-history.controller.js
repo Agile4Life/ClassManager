@@ -72,7 +72,10 @@ const createEvents = asyncHandler(async (req, res) => {
   if (observations.length > 50) throw new AppError(400, 'A notification can contain at most 50 observation groups');
   await assertTeacherClassAccess(req.user, classId);
 
-  const classResult = await pool.query('select class_id, teacher_id from classes where class_id = $1', [classId]);
+  const classResult = await pool.query(
+    "select class_id, teacher_id from classes where class_id = $1 and status <> 'cancelled'",
+    [classId],
+  );
   if (!classResult.rowCount) throw new AppError(404, 'Class not found');
 
   const flattened = new Map();
@@ -174,8 +177,8 @@ const listEvents = asyncHandler(async (req, res) => {
             ua.full_name as recorded_by_name, counts.occurrence_count
      from student_learning_events e
      join students s on s.student_id = e.student_id
-     left join classes c on c.class_id = e.class_id
-     left join teachers t on t.teacher_id = e.teacher_id
+     left join classes c on c.class_id = e.class_id and c.status <> 'cancelled'
+     left join teachers t on t.teacher_id = e.teacher_id and t.is_deleted = false
      left join user_accounts ua on ua.user_id = e.recorded_by_user_id
      join counts on counts.student_id = e.student_id and counts.category_key = e.category_key
      ${where}

@@ -20,12 +20,13 @@ function createCrudController(config) {
 
   [table, primaryKey, orderBy, ...columns, ...searchColumns, ...filterColumns]
     .forEach((identifier) => assertIdentifier(identifier, 'CRUD configuration identifier'));
+  if (config.softDelete) assertIdentifier(config.softDelete.column, 'CRUD soft delete column');
 
   async function assertRecordScope(req, id) {
-    if (!config.scope) return;
     const values = [id];
     const conditions = [`${primaryKey} = $1`];
-    config.scope(req, values, conditions);
+    if (config.defaultScope) config.defaultScope(req, values, conditions);
+    if (config.scope) config.scope(req, values, conditions);
     const result = await pool.query(
       `select 1 from ${table} where ${conditions.join(' and ')} limit 1`,
       values,
@@ -48,6 +49,7 @@ function createCrudController(config) {
         conditions.push(`${column} = $${values.length}`);
       }
     }
+    if (config.defaultScope) config.defaultScope(req, values, conditions);
     if (config.scope) config.scope(req, values, conditions);
 
     const where = conditions.length ? `where ${conditions.join(' and ')}` : '';
@@ -67,6 +69,7 @@ function createCrudController(config) {
   const getById = asyncHandler(async (req, res) => {
     const values = [req.params.id];
     const conditions = [`${primaryKey} = $1`];
+    if (config.defaultScope) config.defaultScope(req, values, conditions);
     if (config.scope) config.scope(req, values, conditions);
     const result = await pool.query(`select * from ${table} where ${conditions.join(' and ')}`, values);
     if (!result.rowCount) throw new AppError(404, 'Record not found');
@@ -133,6 +136,25 @@ function createCrudController(config) {
 
   const remove = asyncHandler(async (req, res) => {
     await assertRecordScope(req, req.params.id);
+    if (config.softDelete) {
+      const client = await pool.connect();
+      try {
+        await client.query('begin');
+        const result = await client.query(
+          `update ${table} set ${config.softDelete.column} = $2 where ${primaryKey} = $1 returning *`,
+          [req.params.id, config.softDelete.value],
+        );
+        if (!result.rowCount) throw new AppError(404, 'Record not found');
+        if (config.afterSoftDelete) await config.afterSoftDelete(client, result.rows[0], req);
+        await client.query('commit');
+        return success(res, result.rows[0], 'Record deleted successfully');
+      } catch (error) {
+        await client.query('rollback');
+        throw error;
+      } finally {
+        client.release();
+      }
+    }
     const result = await pool.query(`delete from ${table} where ${primaryKey} = $1 returning ${primaryKey}`, [req.params.id]);
     if (!result.rowCount) throw new AppError(404, 'Record not found');
     return success(res, result.rows[0], 'Record deleted successfully');

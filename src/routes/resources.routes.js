@@ -44,6 +44,14 @@ function scopeClasses(req, values, conditions) {
   }
 }
 
+function hideCancelledClasses(req, values, conditions) {
+  conditions.push("status <> 'cancelled'");
+}
+
+function hideDeletedTeachers(req, values, conditions) {
+  conditions.push('is_deleted = false');
+}
+
 const resources = {
   parents: {
     table: 'parents', primaryKey: 'parent_id',
@@ -60,8 +68,27 @@ const resources = {
     required: ['teacher_code', 'full_name'], searchColumns: ['teacher_code', 'full_name', 'email'], filterColumns: ['status'],
     autoCode: { column: 'teacher_code', prefix: 'T', digits: 3 },
     readRoles: ['admin', 'staff', 'teacher', 'student', 'parent'], writeRoles: managers,
+    defaultScope: hideDeletedTeachers,
+    softDelete: { column: 'is_deleted', value: true },
     afterUpdate: async (client, row) => {
       await client.query('update user_accounts set full_name = $1, phone = $2, email = $3 where teacher_id = $4', [row.full_name, row.phone, row.email, row.teacher_id]);
+    },
+    afterSoftDelete: async (client, row) => {
+      await client.query(
+        `update user_accounts
+         set status = 'inactive', updated_at = now()
+         where teacher_id = $1`,
+        [row.teacher_id],
+      );
+      await client.query(
+        `update user_sessions us
+         set is_revoked = true, logout_at = now()
+         from user_accounts ua
+         where ua.user_id = us.user_id
+           and ua.teacher_id = $1
+           and us.is_revoked = false`,
+        [row.teacher_id],
+      );
     },
   },
   subjects: {
@@ -83,6 +110,8 @@ const resources = {
     required: ['class_code', 'class_name', 'subject_id'], searchColumns: ['class_code', 'class_name'], filterColumns: ['status', 'subject_id', 'teacher_id', 'grade_level'],
     autoCode: { column: 'class_code', prefix: 'C', digits: 3 },
     readRoles: ['admin', 'staff', 'teacher', 'student', 'parent'], writeRoles: managers,
+    defaultScope: hideCancelledClasses,
+    softDelete: { column: 'status', value: 'cancelled' },
     scope: scopeClasses,
     validate: validateClass,
     decorateList: decorateClassesWithTeachers,
@@ -90,19 +119,22 @@ const resources = {
     afterCreate: async (client, row, req) => {
       const teacherIds = normalizeTeacherIds(req.body.teacher_ids);
       if (teacherIds === undefined) {
-        if (row.teacher_id) await replaceClassTeachers(client, row.class_id, [Number(row.teacher_id)]);
+        if (row.teacher_id) {
+          const activeTeacherIds = await replaceClassTeachers(client, row.class_id, [Number(row.teacher_id)]);
+          await client.query('update classes set teacher_id = $1 where class_id = $2', [activeTeacherIds[0] || null, row.class_id]);
+        }
         return;
       }
-      await replaceClassTeachers(client, row.class_id, teacherIds);
-      if (!row.teacher_id && teacherIds.length) {
-        await client.query('update classes set teacher_id = $1 where class_id = $2', [teacherIds[0], row.class_id]);
+      const activeTeacherIds = await replaceClassTeachers(client, row.class_id, teacherIds);
+      if (!row.teacher_id && activeTeacherIds.length) {
+        await client.query('update classes set teacher_id = $1 where class_id = $2', [activeTeacherIds[0], row.class_id]);
       }
     },
     afterUpdate: async (client, row, req) => {
       const teacherIds = normalizeTeacherIds(req.body.teacher_ids);
       if (teacherIds === undefined) return;
-      await replaceClassTeachers(client, row.class_id, teacherIds);
-      await client.query('update classes set teacher_id = $1 where class_id = $2', [teacherIds[0] || null, row.class_id]);
+      const activeTeacherIds = await replaceClassTeachers(client, row.class_id, teacherIds);
+      await client.query('update classes set teacher_id = $1 where class_id = $2', [activeTeacherIds[0] || null, row.class_id]);
       await client.query(
         `delete from class_schedule_teachers cst
          using class_schedules cs

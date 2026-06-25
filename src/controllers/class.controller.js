@@ -35,6 +35,7 @@ const getClassStudents = asyncHandler(async (req, res) => {
     `select e.enrollment_id, e.enrolled_date, e.status as enrollment_status,
             e.discount_percent, e.note as enrollment_note, s.*
      from enrollments e join students s on s.student_id = e.student_id
+     join classes c on c.class_id = e.class_id and c.status <> 'cancelled'
      where e.class_id = $1 order by s.full_name`,
     [req.params.classId],
   );
@@ -46,7 +47,10 @@ const enrollStudent = asyncHandler(async (req, res) => {
   const client = await pool.connect();
   try {
     await client.query('begin');
-    const classResult = await client.query('select class_id, max_students from classes where class_id = $1 for update', [req.params.classId]);
+    const classResult = await client.query(
+      "select class_id, max_students from classes where class_id = $1 and status <> 'cancelled' for update",
+      [req.params.classId],
+    );
     if (!classResult.rowCount) throw new AppError(404, 'Class not found');
     const studentResult = await client.query('select student_id from students where student_id = $1', [req.params.studentId]);
     if (!studentResult.rowCount) throw new AppError(404, 'Student not found');

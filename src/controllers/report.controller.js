@@ -15,7 +15,7 @@ async function assertStudentVisibility(user, studentId) {
   if (user.role === 'teacher') {
     const result = await pool.query(
       `select 1 from enrollments e join classes c on c.class_id = e.class_id
-       where e.student_id = $1 and c.teacher_id = $2 limit 1`, [studentId, user.teacher_id],
+       where e.student_id = $1 and c.teacher_id = $2 and c.status <> 'cancelled' limit 1`, [studentId, user.teacher_id],
     );
     if (result.rowCount) return;
   }
@@ -28,8 +28,8 @@ const getStudentReports = asyncHandler(async (req, res) => {
   const result = await pool.query(
     `select pr.*, c.class_code, c.class_name, t.full_name as teacher_name, p.full_name as parent_name
      from progress_reports pr
-     left join classes c on c.class_id = pr.class_id
-     left join teachers t on t.teacher_id = pr.teacher_id
+     left join classes c on c.class_id = pr.class_id and c.status <> 'cancelled'
+     left join teachers t on t.teacher_id = pr.teacher_id and t.is_deleted = false
      left join parents p on p.parent_id = pr.parent_id
      where pr.student_id = $1 ${onlySent ? "and pr.status = 'sent'" : ''}
      order by pr.created_at desc`, [req.params.studentId],
@@ -95,21 +95,28 @@ const getWeakTopics = asyncHandler(async (req, res) => {
   if (req.query.class_id) { values.push(req.query.class_id); where.push(`class_id = $${values.length}`); }
   if (req.user.role === 'teacher') {
     values.push(req.user.teacher_id);
-    where.push(`class_id in (select class_id from classes where teacher_id = $${values.length})`);
+    where.push(`class_id in (select class_id from classes where teacher_id = $${values.length} and status <> 'cancelled')`);
   }
+  where.push("class_id in (select class_id from classes where status <> 'cancelled')");
   const result = await pool.query(`select * from v_student_weak_topics ${where.length ? `where ${where.join(' and ')}` : ''} order by mastery_percent`, values);
   return success(res, result.rows, 'Weak topics fetched successfully');
 });
 
 const getStudentWeakTopics = asyncHandler(async (req, res) => {
   await assertStudentVisibility(req.user, req.params.studentId);
-  const result = await pool.query('select * from v_student_weak_topics where student_id = $1 order by mastery_percent', [req.params.studentId]);
+  const result = await pool.query(
+    "select * from v_student_weak_topics where student_id = $1 and class_id in (select class_id from classes where status <> 'cancelled') order by mastery_percent",
+    [req.params.studentId],
+  );
   return success(res, result.rows, 'Student weak topics fetched successfully');
 });
 
 const getAssignmentSummary = asyncHandler(async (req, res) => {
   await assertStudentVisibility(req.user, req.params.studentId);
-  const result = await pool.query('select * from v_student_assignment_summary where student_id = $1 order by assignment_id desc', [req.params.studentId]);
+  const result = await pool.query(
+    "select * from v_student_assignment_summary where student_id = $1 and class_id in (select class_id from classes where status <> 'cancelled') order by assignment_id desc",
+    [req.params.studentId],
+  );
   return success(res, result.rows, 'Assignment summary fetched successfully');
 });
 

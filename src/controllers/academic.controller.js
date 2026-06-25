@@ -6,7 +6,13 @@ const { success } = require('../utils/response');
 const { assertTeacherClassAccess: assertTeacherOwnsClass } = require('../utils/access');
 
 async function getAssignment(id) {
-  const result = await pool.query('select * from assignments where assignment_id = $1', [id]);
+  const result = await pool.query(
+    `select a.*
+     from assignments a
+     join classes c on c.class_id = a.class_id and c.status <> 'cancelled'
+     where a.assignment_id = $1`,
+    [id],
+  );
   if (!result.rowCount) throw new AppError(404, 'Assignment not found');
   return result.rows[0];
 }
@@ -66,9 +72,15 @@ const deleteTopic = asyncHandler(async (req, res) => {
 });
 
 const listClassAssignments = asyncHandler(async (req, res) => {
-  if (req.user.role === 'teacher') await assertTeacherOwnsClass(req.user, req.params.classId);
+  if (req.user.role !== 'student') await assertTeacherOwnsClass(req.user, req.params.classId);
   if (req.user.role === 'student') {
-    const enrolled = await pool.query('select 1 from enrollments where class_id = $1 and student_id = $2', [req.params.classId, req.user.student_id]);
+    const enrolled = await pool.query(
+      `select 1
+       from enrollments e
+       join classes c on c.class_id = e.class_id and c.status <> 'cancelled'
+       where e.class_id = $1 and e.student_id = $2`,
+      [req.params.classId, req.user.student_id],
+    );
     if (!enrolled.rowCount) throw new AppError(403, 'You are not enrolled in this class');
   }
   const result = await pool.query(
@@ -215,7 +227,7 @@ const listStudentSubmissions = asyncHandler(async (req, res) => {
   if (req.user.role === 'teacher') {
     const visible = await pool.query(
       `select 1 from enrollments e join classes c on c.class_id = e.class_id
-       where e.student_id = $1 and c.teacher_id = $2 limit 1`,
+       where e.student_id = $1 and c.teacher_id = $2 and c.status <> 'cancelled' limit 1`,
       [req.params.studentId, req.user.teacher_id],
     );
     if (!visible.rowCount) throw new AppError(403, 'This student is not in one of your classes');
@@ -231,7 +243,7 @@ const listStudentSubmissions = asyncHandler(async (req, res) => {
      from assignment_submissions sub
      join students s on s.student_id = sub.student_id
      join assignments a on a.assignment_id = sub.assignment_id
-     join classes c on c.class_id = a.class_id
+     join classes c on c.class_id = a.class_id and c.status <> 'cancelled'
      where sub.student_id = $1 order by a.assignment_id desc`, [req.params.studentId],
   );
   return success(res, result.rows, 'Student submissions fetched successfully');
@@ -240,7 +252,9 @@ const listStudentSubmissions = asyncHandler(async (req, res) => {
 async function getSubmission(submissionId) {
   const result = await pool.query(
     `select sub.*, a.class_id from assignment_submissions sub
-     join assignments a on a.assignment_id = sub.assignment_id where sub.submission_id = $1`, [submissionId],
+     join assignments a on a.assignment_id = sub.assignment_id
+     join classes c on c.class_id = a.class_id and c.status <> 'cancelled'
+     where sub.submission_id = $1`, [submissionId],
   );
   if (!result.rowCount) throw new AppError(404, 'Submission not found');
   return result.rows[0];

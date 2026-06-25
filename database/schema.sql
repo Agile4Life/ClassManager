@@ -119,6 +119,7 @@ create table teachers (
     specialization varchar(100),
     hourly_rate numeric(12,2) default 0,
     status varchar(20) not null default 'active',
+    is_deleted boolean not null default false,
     note text,
     created_at timestamptz not null default now(),
 
@@ -785,6 +786,7 @@ join assignments a
     on asub.assignment_id = a.assignment_id
 join classes c
     on a.class_id = c.class_id
+    and c.status <> 'cancelled'
 
 group by
     s.student_id,
@@ -836,7 +838,8 @@ join students s
 join assignments a
     on asub.assignment_id = a.assignment_id
 join classes c
-    on a.class_id = c.class_id;
+    on a.class_id = c.class_id
+    and c.status <> 'cancelled';
 
 -- =========================================================
 -- END OF schema.sql

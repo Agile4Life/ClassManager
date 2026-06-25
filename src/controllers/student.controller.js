@@ -32,6 +32,14 @@ async function getOrCreateParent(client, { phone, relationship, studentName }) {
   return result.rows[0].parent_id;
 }
 
+async function assertActiveClass(client, classId) {
+  const result = await client.query(
+    "select 1 from classes where class_id = $1 and status <> 'cancelled'",
+    [classId],
+  );
+  if (!result.rowCount) throw new AppError(400, 'Class does not exist or has been deleted');
+}
+
 const importStudents = asyncHandler(async (req, res) => {
   const rows = Array.isArray(req.body.rows) ? req.body.rows : [];
   if (!rows.length) throw new AppError(400, 'File CSV không có học sinh để nhập');
@@ -148,7 +156,7 @@ const list = asyncHandler(async (req, res) => {
     left join student_parents sp on sp.student_id = s.student_id
     left join parents p on p.parent_id = sp.parent_id
     left join enrollments e on e.student_id = s.student_id
-    left join classes c on c.class_id = e.class_id
+    left join classes c on c.class_id = e.class_id and c.status <> 'cancelled'
     ${where}
     group by s.student_id
     order by s.student_id desc
@@ -183,7 +191,7 @@ const getById = asyncHandler(async (req, res) => {
     left join student_parents sp on sp.student_id = s.student_id
     left join parents p on p.parent_id = sp.parent_id
     left join enrollments e on e.student_id = s.student_id
-    left join classes c on c.class_id = e.class_id
+    left join classes c on c.class_id = e.class_id and c.status <> 'cancelled'
     where s.student_id = $1 and s.is_deleted = false
     group by s.student_id
   `;
@@ -231,6 +239,7 @@ const create = asyncHandler(async (req, res) => {
     }
     
     if (class_id) {
+      await assertActiveClass(client, class_id);
       await client.query(`insert into enrollments (student_id, class_id) values ($1, $2)`, [student.student_id, class_id]);
     }
 
@@ -290,6 +299,7 @@ const update = asyncHandler(async (req, res) => {
     
     await client.query(`delete from enrollments where student_id = $1`, [student.student_id]);
     if (class_id) {
+      await assertActiveClass(client, class_id);
       await client.query(`insert into enrollments (student_id, class_id) values ($1, $2)`, [student.student_id, class_id]);
     }
 
@@ -334,6 +344,7 @@ const bulkAssignClass = asyncHandler(async (req, res) => {
     await client.query(`delete from enrollments where student_id = any($1::bigint[])`, [student_ids]);
     
     if (class_id) {
+      await assertActiveClass(client, class_id);
       await client.query(
         `insert into enrollments (student_id, class_id) select unnest($1::bigint[]), $2`,
         [student_ids, class_id]

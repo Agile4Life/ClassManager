@@ -11,7 +11,13 @@ const { generateNextCode } = require('../utils/code-generator');
 const ROLES = ['admin', 'staff', 'teacher', 'student', 'parent'];
 const STATUSES = ['active', 'inactive', 'locked'];
 const LINK_CONFIG = {
-  teacher: { table: 'teachers', idColumn: 'teacher_id', codeColumn: 'teacher_code', codePrefix: 'T' },
+  teacher: {
+    table: 'teachers',
+    idColumn: 'teacher_id',
+    codeColumn: 'teacher_code',
+    codePrefix: 'T',
+    availableCondition: 'profile.is_deleted = false',
+  },
   student: { table: 'students', idColumn: 'student_id', codeColumn: 'student_code', codePrefix: 'S' },
   parent: { table: 'parents', idColumn: 'parent_id' },
 };
@@ -35,11 +41,13 @@ async function findOrCreateProfile(client, role, { fullName, phone, email }) {
   }
 
   if (contactConditions.length) {
+    const availability = config.availableCondition ? `and ${config.availableCondition}` : '';
     const existing = await client.query(
       `select profile.${config.idColumn} as id
        from ${config.table} profile
        left join user_accounts account on account.${config.idColumn} = profile.${config.idColumn}
        where account.user_id is null and lower(profile.full_name) = lower($1)
+         ${availability}
          and (${contactConditions.join(' or ')})
        order by profile.${config.idColumn}
        limit 1`,
@@ -48,11 +56,13 @@ async function findOrCreateProfile(client, role, { fullName, phone, email }) {
     if (existing.rowCount) return { linkColumn: config.idColumn, linkId: existing.rows[0].id };
   }
 
+  const availability = config.availableCondition ? `and ${config.availableCondition}` : '';
   const sameName = await client.query(
     `select profile.${config.idColumn} as id
      from ${config.table} profile
      left join user_accounts account on account.${config.idColumn} = profile.${config.idColumn}
      where account.user_id is null and lower(profile.full_name) = lower($1)
+       ${availability}
      order by profile.${config.idColumn}
      limit 2`,
     [fullName],
@@ -94,6 +104,15 @@ async function lockAndAssertUnique(client, { username, email, excludeUserId = nu
   if (duplicate.rowCount) throw new AppError(409, 'Tên đăng nhập hoặc email đã được sử dụng');
 }
 
+async function assertTeacherAvailable(client, teacherId) {
+  if (!teacherId) return;
+  const result = await client.query(
+    'select 1 from teachers where teacher_id = $1 and is_deleted = false',
+    [teacherId],
+  );
+  if (!result.rowCount) throw new AppError(400, 'Teacher does not exist or has been deleted');
+}
+
 const listAccounts = asyncHandler(async (req, res) => {
   const { page, limit, offset } = getPagination(req.query, 15);
   const values = [];
@@ -127,7 +146,7 @@ const listAccounts = asyncHandler(async (req, res) => {
             coalesce(t.full_name, s.full_name, p.full_name) as linked_profile_name,
             coalesce(t.teacher_code, s.student_code) as linked_profile_code
      from user_accounts ua
-     left join teachers t on t.teacher_id = ua.teacher_id
+     left join teachers t on t.teacher_id = ua.teacher_id and t.is_deleted = false
      left join students s on s.student_id = ua.student_id
      left join parents p on p.parent_id = ua.parent_id
      ${where}
@@ -212,6 +231,9 @@ const updateAccount = asyncHandler(async (req, res) => {
       email: Object.prototype.hasOwnProperty.call(changes, 'email') ? changes.email : null,
       excludeUserId: userId,
     });
+    if (Object.prototype.hasOwnProperty.call(changes, 'teacher_id')) {
+      await assertTeacherAvailable(client, changes.teacher_id);
+    }
     const assignments = fields.map((field, index) => `${field} = $${index + 1}`);
     const values = fields.map((field) => changes[field]);
     values.push(userId);

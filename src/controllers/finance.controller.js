@@ -15,11 +15,20 @@ async function assertStudentFinanceAccess(user, studentId) {
   throw new AppError(403, 'You do not have access to this student finance data');
 }
 
+async function assertActiveClass(classId) {
+  if (!classId) return;
+  const result = await pool.query(
+    "select 1 from classes where class_id = $1 and status <> 'cancelled'",
+    [classId],
+  );
+  if (!result.rowCount) throw new AppError(400, 'Class does not exist or has been deleted');
+}
+
 const INVOICE_SELECT = `
   select i.*, s.student_code, s.full_name as student_name, c.class_code, c.class_name,
          coalesce((select sum(p.amount) from payments p where p.invoice_id = i.invoice_id and p.status = 'paid'), 0) as paid_amount
   from invoices i join students s on s.student_id = i.student_id
-  left join classes c on c.class_id = i.class_id`;
+  left join classes c on c.class_id = i.class_id and c.status <> 'cancelled'`;
 
 const listInvoices = asyncHandler(async (req, res) => {
   const { page, limit, offset } = getPagination(req.query);
@@ -47,6 +56,7 @@ const getInvoice = asyncHandler(async (req, res) => {
 const createInvoice = asyncHandler(async (req, res) => {
   const { student_id: studentId, class_id: classId = null, invoice_month: month, invoice_year: year } = req.body;
   if (!studentId || !month || !year) throw new AppError(400, 'student_id, invoice_month and invoice_year are required');
+  await assertActiveClass(classId);
   const total = Number(req.body.total_amount ?? 0);
   const discount = Number(req.body.discount_amount ?? 0);
   if (!Number.isFinite(total) || total <= 0 || !Number.isFinite(discount) || discount < 0 || discount > total) {
@@ -64,6 +74,7 @@ const updateInvoice = asyncHandler(async (req, res) => {
   const current = await pool.query('select * from invoices where invoice_id = $1', [req.params.invoiceId]);
   if (!current.rowCount) throw new AppError(404, 'Invoice not found');
   const values = pick(req.body, ['student_id', 'class_id', 'invoice_month', 'invoice_year', 'total_amount', 'discount_amount', 'due_date', 'status', 'note']);
+  if (values.class_id !== undefined) await assertActiveClass(values.class_id);
   if (values.total_amount !== undefined || values.discount_amount !== undefined) {
     const total = Number(values.total_amount ?? current.rows[0].total_amount);
     const discount = Number(values.discount_amount ?? current.rows[0].discount_amount);
@@ -114,7 +125,7 @@ const listPayments = asyncHandler(async (req, res) => {
   const result = await pool.query(
     `select p.*, s.student_code, s.full_name as student_name, c.class_code, c.class_name
      from payments p join students s on s.student_id = p.student_id
-     left join classes c on c.class_id = p.class_id ${where}
+     left join classes c on c.class_id = p.class_id and c.status <> 'cancelled' ${where}
      order by p.created_at desc limit $${values.length - 1} offset $${values.length}`,
     values,
   );
