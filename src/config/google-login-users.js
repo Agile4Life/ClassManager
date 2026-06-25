@@ -2,7 +2,7 @@ const googleLoginUsers = [
   
   // { email: 'teacher@example.com', role: 'teacher' },
   // { email: 'staff@example.com', role: 'staff' },
-  
+  {email:'hoangletran50@gmail.com', role:'admin'}
 ];
 
 const allowedRoles = new Set(['admin', 'staff', 'teacher', 'student', 'parent']);
