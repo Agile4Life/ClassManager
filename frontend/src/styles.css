@@ -132,7 +132,8 @@ a { color: inherit; }
 .brand-lockup strong { font-size: 16px; letter-spacing: -0.02em; }
 .brand-lockup span { margin-top: 2px; color: var(--muted); font-size: 12px; }
 .sidebar__close { display: none !important; }
-.primary-nav { min-height: 0; display: grid; align-content: start; gap: 5px; overflow-y: auto; padding-right: 2px; }
+.primary-nav { min-height: 0; display: grid; align-content: start; gap: 5px; overflow-y: auto; padding-right: 2px; scrollbar-width: none; -ms-overflow-style: none; }
+.primary-nav::-webkit-scrollbar { display: none; }
 .nav-item { display: flex; align-items: center; gap: 12px; min-height: 46px; padding: 0 13px; border-radius: var(--radius-control); color: #56647d; font-size: 14px; font-weight: 600; text-decoration: none; transition: background-color 160ms ease, color 160ms ease, transform 160ms ease; }
 .nav-item:hover { color: var(--accent-dark); background: var(--paper-blue); }
 .nav-item:active { transform: translateY(1px); }
