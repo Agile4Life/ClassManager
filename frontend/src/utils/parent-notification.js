@@ -55,24 +55,24 @@ export function createNotificationLine(templateId = 'custom') {
   };
 }
 
-export function getStudentNames(studentIds, students) {
+export function getStudentNames(studentIds, students, displayNames = null) {
   const selected = new Set(studentIds.map(String));
   return students
     .filter((student) => selected.has(String(student.student_id)))
-    .map((student) => student.full_name)
+    .map((student) => displayNames ? (displayNames.get(String(student.student_id)) || student.full_name) : student.full_name)
     .join(', ');
 }
 
-export function buildNotificationLine(line, students) {
-  const subject = line.audience === 'class' ? 'Cả lớp' : getStudentNames(line.studentIds, students);
+export function buildNotificationLine(line, students, displayNames = null) {
+  const subject = line.audience === 'class' ? 'Cả lớp' : getStudentNames(line.studentIds, students, displayNames);
   const content = line.content.trim();
   if (!subject || !content) return '';
   const note = line.studentNote.trim();
   return `-${subject}${note ? ` (${note})` : ''} ${content}`;
 }
 
-export function buildParentNotification(lines, students, opening = NOTIFICATION_OPENING, closing = NOTIFICATION_CLOSING) {
-  const body = lines.map((line) => buildNotificationLine(line, students)).filter(Boolean);
+export function buildParentNotification(lines, students, displayNames = null, opening = NOTIFICATION_OPENING, closing = NOTIFICATION_CLOSING) {
+  const body = lines.map((line) => buildNotificationLine(line, students, displayNames)).filter(Boolean);
   return [opening.trim(), ...body, closing.trim()].filter(Boolean).join('\n');
 }
 

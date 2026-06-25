@@ -55,33 +55,36 @@ function compactStudentName(fullName) {
   return parts.slice(-2).join(' ');
 }
 
+
+function normalizeSearchText(value) {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd')
+    .replace(/Đ/g, 'D')
+    .toLowerCase()
+    .trim();
+}
+
+function compactStudentName(fullName) {
+  const parts = String(fullName || '').trim().split(/\s+/).filter(Boolean);
+  if (parts.length <= 2) return parts.join(' ');
+  return parts.slice(-2).join(' ');
+}
+
 function duplicateStudentName(fullName) {
   const parts = String(fullName || '').trim().split(/\s+/).filter(Boolean);
   if (parts.length <= 2) return parts.join(' ');
   return `${parts[0]} ${parts.at(-1)}`;
 }
 
-function StudentPicker({ students, selectedStudentIds, onToggle, onSelectAll, onClear, labelledBy }) {
+function StudentPicker({ students, displayNames, selectedStudentIds, onToggle, onSelectAll, onClear, labelledBy }) {
   const [query, setQuery] = useState('');
   const normalizedQuery = normalizeSearchText(query);
   const visibleStudents = useMemo(
     () => students.filter((student) => normalizeSearchText(student.full_name).includes(normalizedQuery)),
     [normalizedQuery, students],
   );
-  const displayNames = useMemo(() => {
-    const compactCounts = students.reduce((counts, student) => {
-      const name = compactStudentName(student.full_name);
-      counts.set(name, (counts.get(name) || 0) + 1);
-      return counts;
-    }, new Map());
-    return new Map(students.map((student) => {
-      const compactName = compactStudentName(student.full_name);
-      return [
-        String(student.student_id),
-        compactCounts.get(compactName) > 1 ? duplicateStudentName(student.full_name) : compactName,
-      ];
-    }));
-  }, [students]);
 
   return (
     <div className="student-picker" role="group" aria-labelledby={labelledBy}>
@@ -211,10 +214,24 @@ export default function ParentNotificationPage() {
     return () => { active = false; };
   }, [classId]);
 
+  const displayNames = useMemo(() => {
+    const compactCounts = context.students.reduce((counts, student) => {
+      const name = compactStudentName(student.full_name);
+      counts.set(name, (counts.get(name) || 0) + 1);
+      return counts;
+    }, new Map());
+    return new Map(context.students.map((student) => {
+      const compactName = compactStudentName(student.full_name);
+      return [
+        String(student.student_id),
+        compactCounts.get(compactName) > 1 ? duplicateStudentName(student.full_name) : compactName,
+      ];
+    }));
+  }, [context.students]);
 
   const generatedText = useMemo(
-    () => buildParentNotification(lines, context.students),
-    [lines, context.students],
+    () => buildParentNotification(lines, context.students, displayNames),
+    [lines, context.students, displayNames],
   );
 
   useEffect(() => {
@@ -317,8 +334,6 @@ export default function ParentNotificationPage() {
       setTemplateSaving(false);
     }
   }
-
-
 
   function toggleStudent(lineId, studentId, checked) {
     setLines((current) => current.map((line) => {
@@ -431,8 +446,6 @@ export default function ParentNotificationPage() {
 
       {classId && !contextLoading && !contextError && (
         <>
-
-
           <div className="notification-workspace">
             <section className="notification-editor" aria-labelledby="notification-lines-title">
               <div className="notification-section-heading">
@@ -475,6 +488,7 @@ export default function ParentNotificationPage() {
                             </span>
                             <StudentPicker
                               students={context.students}
+                              displayNames={displayNames}
                               selectedStudentIds={selectedStudentIds}
                               labelledBy={`student-picker-label-${line.id}`}
                               onToggle={(studentId, checked) => toggleStudent(line.id, studentId, checked)}
