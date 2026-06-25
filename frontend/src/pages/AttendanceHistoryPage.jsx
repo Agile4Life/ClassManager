@@ -91,11 +91,6 @@ function AttendanceHistoryWorkspace({ user }) {
     ? history.filter((item) => String(item.student_id) === studentId)
     : history;
 
-  const summary = filteredHistory.reduce((result, item) => {
-    result[attendanceState(item.attendance_status)] += 1;
-    return result;
-  }, { present: 0, absent: 0, 'not-taken': 0 });
-
   return (
     <div className="page-flow attendance-history-page">
       <PageHeader
@@ -135,11 +130,6 @@ function AttendanceHistoryWorkspace({ user }) {
 
       {!!filteredHistory.length && (
         <>
-          <section className="attendance-history-summary" aria-label="Tổng hợp lịch sử điểm danh">
-            <div><span>Có mặt</span><strong>{summary.present}</strong></div>
-            <div><span>Vắng mặt</span><strong>{summary.absent}</strong></div>
-          </section>
-
           <div className="table-surface attendance-history-table">
             <Table aria-label="Lịch sử điểm danh học sinh">
               <TableHeader><TableRow>
