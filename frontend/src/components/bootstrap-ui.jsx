@@ -175,7 +175,7 @@ export function Dialog({ open, onOpenChange, children }) {
   }, [open, onOpenChange]);
   if (!open) return null;
   const close = (event) => onOpenChange?.(event, { open: false });
-  return <DialogContext.Provider value={{ close }}><div className="modal fade show d-block" role="dialog" aria-modal="true" onMouseDown={(event) => event.target === event.currentTarget && close(event)}>{children}</div><div className="modal-backdrop fade show" /></DialogContext.Provider>;
+  return <DialogContext.Provider value={{ close }}><div className="modal fade show custom-modal-backdrop-flex" role="dialog" aria-modal="true" onMouseDown={(event) => event.target === event.currentTarget && close(event)}>{children}</div><div className="modal-backdrop fade show" /></DialogContext.Provider>;
 }
 
 export function DialogSurface({ className, children }) {

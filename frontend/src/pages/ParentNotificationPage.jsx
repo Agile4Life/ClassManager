@@ -508,7 +508,7 @@ export default function ParentNotificationPage() {
               {copied && <MessageBar intent="success"><MessageBarBody>Đã sao chép thông báo.</MessageBarBody></MessageBar>}
               {historyMessage && <MessageBar intent="success"><MessageBarBody>{historyMessage}</MessageBarBody></MessageBar>}
               {historyError && <MessageBar intent="error"><MessageBarBody>{historyError}</MessageBarBody></MessageBar>}
-              <p className="notification-history-hint">Khi sao chép hoặc in, các học sinh được chọn sẽ tự động được ghi vào Quá trình học tập.</p>
+              <p className="notification-history-hint">Khi nhấn lưu và sao chép, các học sinh được chọn sẽ tự động được ghi vào Quá trình học tập.</p>
               <div className="notification-preview__actions">
                 <Button appearance="primary" icon={<Copy24Regular />} disabled={savingHistory || !finalText.trim()} onClick={copyNotification}>{savingHistory ? 'Đang lưu...' : 'Lưu và sao chép'}</Button>
               </div>
