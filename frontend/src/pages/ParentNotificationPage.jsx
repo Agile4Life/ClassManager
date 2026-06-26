@@ -188,7 +188,11 @@ export default function ParentNotificationPage() {
       .then((studentsResponse) => {
         if (!active) return;
         setContext({
-          students: studentsResponse.data.filter((student) => student.enrollment_status === 'studying'),
+          students: studentsResponse.data.filter((student) => 
+            student.enrollment_status === 'studying' && 
+            student.is_deleted !== true && 
+            student.status !== 'inactive'
+          ),
         });
         setLines([{ id: nextLineId.current++, ...createNotificationLine() }]);
       })

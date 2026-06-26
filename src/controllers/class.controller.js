@@ -31,12 +31,14 @@ const getStudentParents = asyncHandler(async (req, res) => {
 
 const getClassStudents = asyncHandler(async (req, res) => {
   await assertTeacherClassAccess(req.user, req.params.classId);
+  await pool.query('ALTER TABLE students ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN NOT NULL DEFAULT FALSE');
   const result = await pool.query(
     `select e.enrollment_id, e.enrolled_date, e.status as enrollment_status,
             e.discount_percent, e.note as enrollment_note, s.*
      from enrollments e join students s on s.student_id = e.student_id
      join classes c on c.class_id = e.class_id and c.status <> 'cancelled'
-     where e.class_id = $1 order by s.full_name`,
+     where e.class_id = $1 and (s.is_deleted = false or s.is_deleted is null) and s.status <> 'inactive'
+     order by s.full_name`,
     [req.params.classId],
   );
   return success(res, result.rows, 'Class students fetched successfully');
