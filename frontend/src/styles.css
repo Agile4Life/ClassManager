@@ -71,6 +71,19 @@ body::after {
   z-index: 1;
 }
 
+/* Thanh chắn bảo vệ tai thỏ iOS (iOS Notch Shield): ngăn văn bản trượt lên đè vào đồng hồ hệ thống */
+.main-stage::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: env(safe-area-inset-top);
+  background: var(--paper, #f4f7fb);
+  z-index: 99999;
+  pointer-events: none;
+}
+
 /* Ý tưởng 5: Phát quang xúc giác khi Hover trên nút bấm và ô nhập liệu */
 .btn-primary:hover:not(:disabled) {
   box-shadow: 0 10px 25px rgba(var(--accent-rgb), 0.35) !important;
@@ -176,19 +189,7 @@ select option, .form-select option {
 
 /* Ẩn select gốc tuyệt đối không để lộ bất kỳ dấu vết nào dù ở trạng thái disabled hay active */
 select.custom-select-native-hidden, .custom-select-native-hidden {
-  position: absolute !important;
-  width: 1px !important;
-  height: 1px !important;
-  min-height: 0 !important;
-  min-width: 0 !important;
-  padding: 0 !important;
-  margin: -1px !important;
-  border: 0 !important;
-  opacity: 0 !important;
-  pointer-events: none !important;
-  clip: rect(0, 0, 0, 0) !important;
-  overflow: hidden !important;
-  background: transparent !important;
+  display: none !important;
 }
 
 /* Menu Dropdown nổi mở ra */
@@ -1061,6 +1062,25 @@ select.custom-select-native-hidden, .custom-select-native-hidden {
   .timetable-toolbar__filters { grid-template-columns: 1fr; }
   .student-picker__actions, .notification-preview__actions { grid-template-columns: 1fr; }
   .notification-preview__text { min-height: 160px; }
+}
+
+/* Chuẩn hóa form tạo mẫu nhận xét trên iPhone & iPad */
+.notification-template-form {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 16px !important;
+  padding-top: 6px;
+}
+.notification-template-form .form-field,
+.notification-template-form .custom-select-container,
+.notification-template-form .form-select,
+.notification-template-form textarea {
+  width: 100% !important;
+  min-width: 100% !important;
+  max-width: 100% !important;
+}
+.notification-template-form textarea {
+  min-height: 120px !important;
 }
 
 @media (prefers-reduced-motion: reduce) {

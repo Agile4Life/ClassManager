@@ -522,15 +522,15 @@ export default function ParentNotificationPage() {
           <form onSubmit={saveTemplate}>
             <DialogBody>
               <DialogTitle>Tạo nhận xét mẫu mới</DialogTitle>
-              <DialogContent className="form-grid notification-template-form">
-                {templateError && <MessageBar intent="error" className="form-grid__wide"><MessageBarBody>{templateError}</MessageBarBody></MessageBar>}
+              <DialogContent className="notification-template-form">
+                {templateError && <MessageBar intent="error"><MessageBarBody>{templateError}</MessageBarBody></MessageBar>}
                 <Field label="Đối tượng mặc định">
                   <Select value={templateForm.audience} onChange={(event) => setTemplateForm((current) => ({ ...current, audience: event.target.value }))}>
                     <option value="students">Học sinh được chọn</option>
                     <option value="class">Cả lớp</option>
                   </Select>
                 </Field>
-                <Field className="form-grid__wide" label="Nội dung mẫu" required>
+                <Field label="Nội dung mẫu" required>
                   <Textarea
                     resize="vertical"
                     value={templateForm.content}
