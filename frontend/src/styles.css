@@ -263,6 +263,16 @@ select.custom-select-native-hidden, .custom-select-native-hidden {
 .form-check-input { flex: none; margin: 0; border-color: #aebccd; }
 .form-check-input:checked { border-color: var(--accent); background-color: var(--accent); }
 .form-check-label { min-width: 0; }
+/* Chuẩn hóa căn giữa hộp thoại Modal trên mọi kích thước màn hình */
+.modal.show {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)) !important;
+}
+.modal-dialog {
+  margin: auto !important;
+}
 .modal-content { overflow: hidden; border: 0; border-radius: var(--radius); box-shadow: 0 26px 80px rgba(16, 34, 58, 0.23); }
 .modal-content > .modal-title { padding: 20px 22px 16px; border-bottom: 1px solid var(--line); font-weight: 750; letter-spacing: -0.02em; }
 .modal-body { padding: 22px; }
@@ -922,7 +932,8 @@ select.custom-select-native-hidden, .custom-select-native-hidden {
 @media (max-width: 600px) {
   .btn { min-height: 44px; }
   .form-control, .form-select { min-height: 44px; font-size: 16px; }
-  .modal-dialog { width: calc(100dvw - 24px) !important; max-width: calc(100dvw - 24px) !important; max-height: calc(100dvh - 24px); margin: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left)); }
+  .modal.show { display: flex !important; align-items: center !important; justify-content: center !important; padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)) !important; }
+  .modal-dialog { margin: auto !important; width: calc(100dvw - 32px) !important; max-width: calc(100dvw - 32px) !important; max-height: calc(100dvh - 32px); }
   .page-header { display: grid; }
   .page-header__action, .page-header__action > button { width: 100%; }
   .welcome-strip { grid-template-columns: 1fr; min-height: auto; padding: 28px 24px 62px; }
