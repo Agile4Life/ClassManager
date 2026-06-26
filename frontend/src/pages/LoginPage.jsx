@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Button, Field, Input, MessageBar, MessageBarBody, MessageBarTitle, Tab, TabList,
 } from '../components/bootstrap-ui';
@@ -50,6 +50,7 @@ export default function LoginPage() {
   } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const googleBtnRef = useRef(null);
   const [mode, setMode] = useState('login');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -103,10 +104,21 @@ export default function LoginPage() {
           client_id: googleClientId,
           callback: handleGoogleCredential,
         });
+        if (googleBtnRef.current) {
+          googleBtnRef.current.innerHTML = '';
+          window.google.accounts.id.renderButton(googleBtnRef.current, {
+            theme: 'outline',
+            size: 'large',
+            width: googleBtnRef.current.offsetWidth || 340,
+            text: 'continue_with',
+            shape: 'pill',
+            locale: 'vi',
+          });
+        }
         setGoogleButtonReady(true);
       })
       .catch(() => {
-        if (!cancelled) setError('Không thể tải nút đăng nhập Google. Vui lòng kiểm tra kết nối mạng.');
+        if (!cancelled) setError('Không thể kết nối máy chủ Google. Vui lòng kiểm tra kết nối mạng hoặc trình chặn quảng cáo.');
       });
 
     return () => {
@@ -116,6 +128,7 @@ export default function LoginPage() {
 
   const handleGoogleFallback = useCallback(async () => {
     setError('');
+    setGoogleSubmitting(true);
     try {
       await loadGoogleScript();
       if (!window.google?.accounts?.id) throw new Error('Google login is not available');
@@ -123,9 +136,23 @@ export default function LoginPage() {
         client_id: googleClientId,
         callback: handleGoogleCredential,
       });
+      if (googleBtnRef.current) {
+        googleBtnRef.current.innerHTML = '';
+        window.google.accounts.id.renderButton(googleBtnRef.current, {
+          theme: 'outline',
+          size: 'large',
+          width: googleBtnRef.current.offsetWidth || 340,
+          text: 'continue_with',
+          shape: 'pill',
+          locale: 'vi',
+        });
+        setGoogleButtonReady(true);
+      }
       window.google.accounts.id.prompt();
     } catch {
-      setError('Không thể mở đăng nhập Google. Hãy tải lại trang và thử lại.');
+      setError('Không thể kết nối với Google. Vui lòng kiểm tra mạng hoặc tắt trình chặn quảng cáo.');
+    } finally {
+      setGoogleSubmitting(false);
     }
   }, [handleGoogleCredential]);
 
@@ -298,18 +325,23 @@ export default function LoginPage() {
               {googleClientId && (
                 <div className="google-login">
                   <div className="google-login__divider"><span>hoặc</span></div>
-                  <button
-                    className="google-login__action"
-                    type="button"
-                    onClick={handleGoogleFallback}
-                    disabled={googleSubmitting || !googleButtonReady}
-                  >
-                    <span className="google-login__mark" aria-hidden="true"><span>G</span></span>
-                    <span className="google-login__copy">
-                      <strong>{googleSubmitting ? 'Đang mở Google...' : 'Tiếp tục với Google'}</strong>
-                      <small>Gmail đã được cấp quyền sẽ vào hệ thống ngay</small>
-                    </span>
-                  </button>
+                  <div className="google-login__btn-wrapper" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', minHeight: 44 }}>
+                    <div ref={googleBtnRef} style={{ display: googleButtonReady ? 'flex' : 'none', justifyContent: 'center', width: '100%' }}></div>
+                    {!googleButtonReady && (
+                      <button
+                        className="google-login__action"
+                        type="button"
+                        onClick={handleGoogleFallback}
+                        disabled={googleSubmitting}
+                      >
+                        <span className="google-login__mark" aria-hidden="true"><span>G</span></span>
+                        <span className="google-login__copy">
+                          <strong>{googleSubmitting ? 'Đang kết nối Google...' : 'Tiếp tục với Google'}</strong>
+                          <small>Gmail đã được cấp quyền sẽ vào hệ thống ngay</small>
+                        </span>
+                      </button>
+                    )}
+                  </div>
                   {googleSubmitting && <p className="google-login__status">Đang đăng nhập với Google...</p>}
                 </div>
               )}
