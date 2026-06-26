@@ -401,7 +401,7 @@ select.custom-select-native-hidden, .custom-select-native-hidden {
 
 .toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
 .toolbar > .form-select, .toolbar > .form-control, .toolbar > .input-group { min-width: min(420px, 70vw); }
-.table-surface { overflow-x: auto; }
+.table-surface { overflow-x: auto; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; }
 .table-surface::-webkit-scrollbar-track,
 .timetable-board::-webkit-scrollbar-track,
 .student-picker__list::-webkit-scrollbar-track,
@@ -449,7 +449,7 @@ select.custom-select-native-hidden, .custom-select-native-hidden {
 .recurring-week-controls { display: flex; align-items: center; gap: 7px; }
 .recurring-week-controls .form-select:first-of-type { width: 112px; }
 .recurring-week-controls .form-select:last-of-type { width: 245px; }
-.timetable-board { display: grid; grid-template-columns: repeat(7, minmax(170px, 1fr)); gap: 12px; overflow-x: auto; padding-bottom: 8px; }
+.timetable-board { display: grid; grid-template-columns: repeat(7, minmax(170px, 1fr)); gap: 12px; overflow-x: auto; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; padding-bottom: 8px; }
 .timetable-board--single { grid-template-columns: minmax(260px, 500px); overflow: visible; }
 .day-column { min-height: 390px; border: 1px solid var(--line); border-radius: var(--radius); background: rgba(253, 254, 254, 0.72); }
 .day-column__heading { display: flex; align-items: center; justify-content: space-between; padding: 14px; color: var(--accent-dark); border-bottom: 1px solid var(--line); font-weight: 800; }
@@ -911,12 +911,17 @@ select.custom-select-native-hidden, .custom-select-native-hidden {
   .account-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .account-summary > div:nth-child(2) { border-right: 0; }
   .account-summary > div:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
+
+  /* Ngăn iOS Safari tự động zoom màn hình khi bấm vào input/select dưới 16px */
+  input, select, textarea, .form-control, .form-select, .custom-select__button {
+    font-size: 16px !important;
+  }
 }
 
 @media (max-width: 600px) {
   .btn { min-height: 44px; }
   .form-control, .form-select { min-height: 44px; font-size: 16px; }
-  .modal-dialog { width: calc(100vw - 24px) !important; max-width: calc(100vw - 24px) !important; max-height: calc(100dvh - 24px); margin: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left)); }
+  .modal-dialog { width: calc(100dvw - 24px) !important; max-width: calc(100dvw - 24px) !important; max-height: calc(100dvh - 24px); margin: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left)); }
   .page-header { display: grid; }
   .page-header__action, .page-header__action > button { width: 100%; }
   .welcome-strip { grid-template-columns: 1fr; min-height: auto; padding: 28px 24px 62px; }
