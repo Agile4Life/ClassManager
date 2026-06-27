@@ -1,9 +1,7 @@
 const googleLoginUsers = [
-  // Thêm các tài khoản Google được phép đăng nhập tại đây, rồi deploy lại.
-  // Vai trò hợp lệ: admin, staff, teacher, student, parent.
-  // { email: 'teacher@example.com', role: 'teacher' },
-  // { email: 'staff@example.com', role: 'staff' },
+  
   { email: 'hoangletran50@gmail.com', role: 'admin' },
+  { email: 'nhatletran50@gmail.com', role: 'staff' }
 ];
 
 const allowedRoles = new Set(['admin', 'staff', 'teacher', 'student', 'parent']);
