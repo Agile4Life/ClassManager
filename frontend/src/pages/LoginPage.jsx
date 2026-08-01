@@ -2,7 +2,9 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Button, Field, Input, MessageBar, MessageBarBody, MessageBarTitle, Tab, TabList,
 } from '../components/bootstrap-ui';
-import { BookOpen24Filled, Key24Regular, Person24Regular, TeacherIcon } from '../components/bootstrap-icons';
+import {
+  BookOpen24Filled, Key24Regular, Person24Regular, TeacherIcon, Eye24Regular, EyeOff24Regular, PeopleCommunity24Regular, DataTrending24Regular
+} from '../components/bootstrap-icons';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 
@@ -54,6 +56,9 @@ export default function LoginPage() {
   const [mode, setMode] = useState('login');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showRegPassword, setShowRegPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [registration, setRegistration] = useState(initialRegistration);
   const [submitting, setSubmitting] = useState(false);
   const [googleSubmitting, setGoogleSubmitting] = useState(false);
@@ -231,32 +236,83 @@ export default function LoginPage() {
     && registration.confirm_password;
 
   return (
-    <main className="login-page">
-      <section className="login-story" aria-label="Giới thiệu ClassManager">
-        <div className="login-story__brand"><TeacherIcon /> ClassManager</div>
-        <div className="login-story__copy">
-          <span className="school-label">Một lớp học gọn gàng hơn</span>
-          <h1>Quản lý lớp học, nhẹ đầu hơn mỗi ngày.</h1>
-          <p>Lịch học, lớp học và hồ sơ học sinh nằm cùng một nơi để thầy cô có thêm thời gian cho việc dạy.</p>
+    <main className="login-page hallmark-login">
+      {/* Dynamic Hallmark Hero Section */}
+      <section className="login-story hallmark-hero" aria-label="Giới thiệu ClassManager">
+        <div className="hallmark-hero__glow hallmark-hero__glow--1" />
+        <div className="hallmark-hero__glow hallmark-hero__glow--2" />
+        <div className="hallmark-hero__mesh" />
+
+        <div className="login-story__brand hallmark-brand">
+          <div className="hallmark-brand__icon">
+            <TeacherIcon />
+          </div>
+          <span className="hallmark-brand__name">ClassManager</span>
+          <span className="hallmark-brand__tag">Pro v2.0</span>
         </div>
-        <div className="notebook-card" aria-hidden="true">
-          <div className="notebook-card__line"><span>Thứ hai</span><strong>Toán 9</strong></div>
-          <div className="notebook-card__line"><span>Thứ tư</span><strong>Ôn phương trình</strong></div>
-          <div className="notebook-card__line"><span>Thứ sáu</span><strong>Kiểm tra nhanh</strong></div>
+
+        <div className="login-story__copy hallmark-copy">
+          <div className="hallmark-pill">
+            <span className="hallmark-pill__dot" />
+            Nền tảng quản lý giáo dục thế hệ mới
+          </div>
+          <h1>Quản lý lớp học, <br /><span className="hallmark-gradient-text">nhẹ đầu hơn mỗi ngày.</span></h1>
+          <p>Tối ưu hóa thời gian giảng dạy, tự động hóa điểm danh, thời khóa biểu và kết nối phụ huynh trên cùng một nền tảng thông minh.</p>
+        </div>
+
+        {/* Floating Glassmorphism Cards Showcase */}
+        <div className="hallmark-showcase" aria-hidden="true">
+          <div className="hallmark-glass-card hallmark-glass-card--main">
+            <div className="hallmark-glass-card__header">
+              <div className="hallmark-glass-card__badge">
+                <BookOpen24Filled /> Lớp Toán 9A1
+              </div>
+              <span className="hallmark-glass-card__status">Đang diễn ra</span>
+            </div>
+            <div className="hallmark-glass-card__content">
+              <div className="hallmark-schedule-row">
+                <span>Ca học: 18:00 - 19:30</span>
+                <strong>28 / 30 Học sinh</strong>
+              </div>
+              <div className="hallmark-progress-bar">
+                <div className="hallmark-progress-bar__fill" style={{ width: '93.3%' }} />
+              </div>
+            </div>
+          </div>
+
+          <div className="hallmark-glass-card hallmark-glass-card--stat">
+            <div className="hallmark-stat-icon">
+              <DataTrending24Regular />
+            </div>
+            <div>
+              <strong>99.8%</strong>
+              <span>Tỷ lệ đi học đúng giờ</span>
+            </div>
+          </div>
+
+          <div className="hallmark-glass-card hallmark-glass-card--users">
+            <div className="hallmark-avatar-group">
+              <span className="hallmark-avatar">Th</span>
+              <span className="hallmark-avatar">Ph</span>
+              <span className="hallmark-avatar">Hs</span>
+            </div>
+            <span>Hơn 500+ giáo viên & phụ huynh tin dùng</span>
+          </div>
         </div>
       </section>
 
-      <section className="login-panel">
+      {/* Login & Form Panel */}
+      <section className="login-panel hallmark-panel">
         <form
-          className={`login-form ${mode === 'register' ? 'login-form--register' : ''}`}
+          className={`login-form hallmark-form ${mode === 'register' ? 'login-form--register' : ''}`}
           onSubmit={googleSetup ? handleGoogleProfileSubmit : handleSubmit}
         >
           {googleSetup ? (
             <>
-              <div className="login-form__heading">
-                <span>Google đã được cấp quyền</span>
+              <div className="login-form__heading hallmark-heading">
+                <span className="hallmark-badge">Xác thực Google thành công</span>
                 <h2>Bổ sung hồ sơ</h2>
-                <p>{googleSetup.email} sẽ được tạo với vai trò {roleLabels[googleSetup.role] || googleSetup.role}.</p>
+                <p>{googleSetup.email} sẽ được tạo với vai trò <strong className="text-primary">{roleLabels[googleSetup.role] || googleSetup.role}</strong>.</p>
               </div>
 
               {error && <MessageBar intent="error"><MessageBarBody><MessageBarTitle>Chưa tạo được tài khoản</MessageBarTitle>{error}</MessageBarBody></MessageBar>}
@@ -283,6 +339,7 @@ export default function LoginPage() {
                 appearance="primary"
                 size="large"
                 type="submit"
+                className="hallmark-btn-primary"
                 disabled={submitting || (googleSetup.fields || []).some((field) => field.required && !String(googleProfile[field.name] || '').trim())}
               >
                 {submitting ? 'Đang tạo tài khoản...' : 'Hoàn tất và vào ClassManager'}
@@ -293,104 +350,178 @@ export default function LoginPage() {
             </>
           ) : (
             <>
-          <TabList
-            className="auth-mode-switch"
-            selectedValue={mode}
-            onTabSelect={(_, data) => changeMode(data.value)}
-            aria-label="Chọn đăng nhập hoặc đăng ký"
-          >
-            <Tab value="login">Đăng nhập</Tab>
-            <Tab value="register">Đăng ký phụ huynh</Tab>
-          </TabList>
+              <TabList
+                className="auth-mode-switch hallmark-tabs"
+                selectedValue={mode}
+                onTabSelect={(_, data) => changeMode(data.value)}
+                aria-label="Chọn đăng nhập hoặc đăng ký"
+              >
+                <Tab value="login">Đăng nhập</Tab>
+                <Tab value="register">Đăng ký phụ huynh</Tab>
+              </TabList>
 
-          <div className="login-form__heading">
-            <span>{mode === 'login' ? 'Chào bạn trở lại' : 'Bắt đầu cùng ClassManager'}</span>
-            <h2>{mode === 'login' ? 'Đăng nhập' : 'Tạo tài khoản'}</h2>
-            <p>{mode === 'login'
-              ? 'Dùng tài khoản của trung tâm để tiếp tục.'
-              : 'Đăng ký tài khoản phụ huynh. Hồ sơ con sẽ được trung tâm liên kết sau.'}</p>
-          </div>
-
-          {error && <MessageBar intent="error"><MessageBarBody><MessageBarTitle>{mode === 'login' ? 'Đăng nhập chưa thành công' : 'Đăng ký chưa thành công'}</MessageBarTitle>{error}</MessageBarBody></MessageBar>}
-          {successMessage && <MessageBar intent="success"><MessageBarBody><MessageBarTitle>Đăng ký thành công</MessageBarTitle>{successMessage}</MessageBarBody></MessageBar>}
-
-          {mode === 'login' ? (
-            <>
-              <Field label="Tên đăng nhập" required>
-                <Input size="large" contentBefore={<Person24Regular />} value={username} onChange={(_, data) => setUsername(data.value)} autoComplete="username" />
-              </Field>
-              <Field label="Mật khẩu" required>
-                <Input size="large" type="password" contentBefore={<Key24Regular />} value={password} onChange={(_, data) => setPassword(data.value)} autoComplete="current-password" />
-              </Field>
-            </>
-          ) : (
-            <div className="register-grid">
-              <Field className="register-grid__wide" label="Họ và tên phụ huynh" required>
-                <Input size="large" value={registration.full_name} onChange={(_, data) => updateRegistration('full_name', data.value)} autoComplete="name" />
-              </Field>
-              <Field label="Số điện thoại" required>
-                <Input size="large" type="tel" value={registration.phone} onChange={(_, data) => updateRegistration('phone', data.value)} autoComplete="tel" />
-              </Field>
-              <Field label="Email" hint="Không bắt buộc">
-                <Input size="large" type="email" value={registration.email} onChange={(_, data) => updateRegistration('email', data.value)} autoComplete="email" />
-              </Field>
-              <Field className="register-grid__wide" label="Tên đăng nhập" hint="3-50 ký tự không dấu, có thể dùng số, dấu chấm hoặc gạch dưới" required>
-                <Input size="large" contentBefore={<Person24Regular />} value={registration.username} onChange={(_, data) => updateRegistration('username', data.value)} autoComplete="username" />
-              </Field>
-              <Field label="Mật khẩu" hint="Tối thiểu 8 ký tự, có chữ và số" required>
-                <Input size="large" type="password" contentBefore={<Key24Regular />} value={registration.password} onChange={(_, data) => updateRegistration('password', data.value)} autoComplete="new-password" />
-              </Field>
-              <Field label="Xác nhận mật khẩu" required>
-                <Input size="large" type="password" contentBefore={<Key24Regular />} value={registration.confirm_password} onChange={(_, data) => updateRegistration('confirm_password', data.value)} autoComplete="new-password" />
-              </Field>
-            </div>
-          )}
-
-          <Button
-            appearance="primary"
-            size="large"
-            type="submit"
-            disabled={submitting || googleSubmitting || (mode === 'login' ? !username || !password : !canRegister)}
-          >
-            {submitting ? (mode === 'login' ? 'Đang đăng nhập...' : 'Đang tạo tài khoản...') : (mode === 'login' ? 'Vào ClassManager' : 'Tạo tài khoản phụ huynh')}
-          </Button>
-
-          {mode === 'login' && googleClientId && (
-            <div className="google-login mt-3">
-              <div className="google-login__divider d-flex align-items-center my-3">
-                <hr className="flex-grow-1 text-muted opacity-25 m-0" />
-                <span className="px-3 text-muted small fw-bold text-uppercase" style={{ letterSpacing: '0.08em', fontSize: '11px' }}>HOẶC</span>
-                <hr className="flex-grow-1 text-muted opacity-25 m-0" />
+              <div className="login-form__heading hallmark-heading">
+                <span className="hallmark-subhead">{mode === 'login' ? 'Chào mừng bạn trở lại' : 'Bắt đầu cùng ClassManager'}</span>
+                <h2>{mode === 'login' ? 'Đăng nhập hệ thống' : 'Tạo tài khoản phụ huynh'}</h2>
+                <p>{mode === 'login'
+                  ? 'Sử dụng tài khoản được cấp bởi trung tâm để tiếp tục.'
+                  : 'Đăng ký nhanh tài khoản phụ huynh. Hồ sơ học sinh sẽ được trung tâm liên kết sau.'}</p>
               </div>
-              <div className="google-login__btn-wrapper position-relative w-100 d-flex flex-column align-items-center">
-                <button
-                  className="btn btn-light py-2 px-4 rounded-pill shadow-sm border d-flex align-items-center justify-content-center gap-3 google-custom-bootstrap"
-                  type="button"
-                  onClick={handleGoogleFallback}
-                  disabled={googleSubmitting}
-                  style={{ minHeight: '46px', width: '100%', maxWidth: 340 }}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 48 48" className="flex-shrink-0">
-                    <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
-                    <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
-                    <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
-                    <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
-                  </svg>
-                  <span className="fw-bold text-dark fs-6">
-                    {googleSubmitting ? 'Đang kết nối Google...' : 'Đăng nhập bằng Google'}
+
+              {error && <MessageBar intent="error"><MessageBarBody><MessageBarTitle>{mode === 'login' ? 'Đăng nhập chưa thành công' : 'Đăng ký chưa thành công'}</MessageBarTitle>{error}</MessageBarBody></MessageBar>}
+              {successMessage && <MessageBar intent="success"><MessageBarBody><MessageBarTitle>Đăng ký thành công</MessageBarTitle>{successMessage}</MessageBarBody></MessageBar>}
+
+              {mode === 'login' ? (
+                <div className="hallmark-field-group">
+                  <Field label="Tên đăng nhập" required>
+                    <Input
+                      size="large"
+                      contentBefore={<Person24Regular />}
+                      placeholder="Nhập username của bạn..."
+                      value={username}
+                      onChange={(_, data) => setUsername(data.value)}
+                      autoComplete="username"
+                    />
+                  </Field>
+
+                  <Field label="Mật khẩu" required>
+                    <Input
+                      size="large"
+                      type={showPassword ? 'text' : 'password'}
+                      contentBefore={<Key24Regular />}
+                      contentAfter={
+                        <button
+                          type="button"
+                          className="btn-password-toggle"
+                          onClick={() => setShowPassword(!showPassword)}
+                          title={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+                        >
+                          {showPassword ? <EyeOff24Regular /> : <Eye24Regular />}
+                        </button>
+                      }
+                      placeholder="••••••••"
+                      value={password}
+                      onChange={(_, data) => setPassword(data.value)}
+                      autoComplete="current-password"
+                    />
+                  </Field>
+                </div>
+              ) : (
+                <div className="register-grid hallmark-register-grid">
+                  <Field className="register-grid__wide" label="Họ và tên phụ huynh" required>
+                    <Input size="large" placeholder="Ví dụ: Nguyễn Văn A" value={registration.full_name} onChange={(_, data) => updateRegistration('full_name', data.value)} autoComplete="name" />
+                  </Field>
+
+                  <Field label="Số điện thoại" required>
+                    <Input size="large" type="tel" placeholder="0901234567" value={registration.phone} onChange={(_, data) => updateRegistration('phone', data.value)} autoComplete="tel" />
+                  </Field>
+
+                  <Field label="Email" hint="Không bắt buộc">
+                    <Input size="large" type="email" placeholder="phuhuynh@example.com" value={registration.email} onChange={(_, data) => updateRegistration('email', data.value)} autoComplete="email" />
+                  </Field>
+
+                  <Field className="register-grid__wide" label="Tên đăng nhập" hint="3-50 ký tự không dấu, có thể dùng số, dấu chấm hoặc gạch dưới" required>
+                    <Input size="large" contentBefore={<Person24Regular />} placeholder="ten_dang_nhap" value={registration.username} onChange={(_, data) => updateRegistration('username', data.value)} autoComplete="username" />
+                  </Field>
+
+                  <Field label="Mật khẩu" hint="Tối thiểu 8 ký tự" required>
+                    <Input
+                      size="large"
+                      type={showRegPassword ? 'text' : 'password'}
+                      contentBefore={<Key24Regular />}
+                      contentAfter={
+                        <button
+                          type="button"
+                          className="btn-password-toggle"
+                          onClick={() => setShowRegPassword(!showRegPassword)}
+                          title={showRegPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+                        >
+                          {showRegPassword ? <EyeOff24Regular /> : <Eye24Regular />}
+                        </button>
+                      }
+                      placeholder="••••••••"
+                      value={registration.password}
+                      onChange={(_, data) => updateRegistration('password', data.value)}
+                      autoComplete="new-password"
+                    />
+                  </Field>
+
+                  <Field label="Xác nhận mật khẩu" required>
+                    <Input
+                      size="large"
+                      type={showConfirmPassword ? 'text' : 'password'}
+                      contentBefore={<Key24Regular />}
+                      contentAfter={
+                        <button
+                          type="button"
+                          className="btn-password-toggle"
+                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                          title={showConfirmPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+                        >
+                          {showConfirmPassword ? <EyeOff24Regular /> : <Eye24Regular />}
+                        </button>
+                      }
+                      placeholder="••••••••"
+                      value={registration.confirm_password}
+                      onChange={(_, data) => updateRegistration('confirm_password', data.value)}
+                      autoComplete="new-password"
+                    />
+                  </Field>
+                </div>
+              )}
+
+              <Button
+                appearance="primary"
+                size="large"
+                type="submit"
+                className="hallmark-btn-submit"
+                disabled={submitting || googleSubmitting || (mode === 'login' ? !username || !password : !canRegister)}
+              >
+                {submitting ? (
+                  <span className="d-flex align-items-center justify-content-center gap-2">
+                    <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true" />
+                    {mode === 'login' ? 'Đang xác thực...' : 'Đang khởi tạo tài khoản...'}
                   </span>
-                </button>
+                ) : (
+                  <span>{mode === 'login' ? 'Đăng Nhập Ngay' : 'Đăng Ký Tài Khoản Phụ Huynh'}</span>
+                )}
+              </Button>
 
-                <div 
-                  ref={googleBtnRef} 
-                  className="position-absolute top-0 start-50 translate-middle-x overflow-hidden"
-                  style={{ opacity: 0.0001, zIndex: 10, width: '100%', maxWidth: 340, minHeight: 46 }}
-                ></div>
-              </div>
-              {googleSubmitting && <p className="text-muted small text-center mt-2 mb-0 animate-pulse">Đang kết nối với máy chủ bảo mật Google...</p>}
-            </div>
-          )}
-          {mode === 'register' && <p className="register-security-note">Tài khoản giáo viên, học sinh và quản trị viên chỉ được cấp bởi trung tâm.</p>}
+              {mode === 'login' && googleClientId && (
+                <div className="google-login hallmark-google-wrapper mt-3">
+                  <div className="google-login__divider hallmark-divider">
+                    <span className="hallmark-divider__line" />
+                    <span className="hallmark-divider__text">HOẶC ĐĂNG NHẬP VỚI</span>
+                    <span className="hallmark-divider__line" />
+                  </div>
+                  <div className="google-login__btn-wrapper position-relative w-100 d-flex flex-column align-items-center">
+                    <button
+                      className="btn hallmark-google-btn"
+                      type="button"
+                      onClick={handleGoogleFallback}
+                      disabled={googleSubmitting}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 48 48" className="flex-shrink-0">
+                        <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+                        <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+                        <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+                        <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+                      </svg>
+                      <span className="fw-semibold text-dark fs-6">
+                        {googleSubmitting ? 'Đang kết nối Google...' : 'Tiếp tục với Google'}
+                      </span>
+                    </button>
+
+                    <div 
+                      ref={googleBtnRef} 
+                      className="position-absolute top-0 start-50 translate-middle-x overflow-hidden"
+                      style={{ opacity: 0.0001, zIndex: 10, width: '100%', maxWidth: 360, minHeight: 48 }}
+                    ></div>
+                  </div>
+                  {googleSubmitting && <p className="text-muted small text-center mt-2 mb-0 animate-pulse">Đang bảo mật và xác thực thông tin...</p>}
+                </div>
+              )}
+              {mode === 'register' && <p className="register-security-note hallmark-security-note">Tài khoản giáo viên, học sinh và quản trị viên chỉ được khởi tạo bởi Trung tâm.</p>}
             </>
           )}
         </form>

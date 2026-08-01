@@ -26,7 +26,7 @@ export function Button({ as: Component = 'button', appearance = 'secondary', siz
   );
 }
 
-export const Input = forwardRef(function Input({ contentBefore, onChange, className, size, ...props }, ref) {
+export const Input = forwardRef(function Input({ contentBefore, contentAfter, onChange, className, size, ...props }, ref) {
   const input = (
     <input
       ref={ref}
@@ -35,8 +35,14 @@ export const Input = forwardRef(function Input({ contentBefore, onChange, classN
       {...props}
     />
   );
-  if (!contentBefore) return input;
-  return <div className="input-group"><span className="input-group-text" aria-hidden="true">{contentBefore}</span>{input}</div>;
+  if (!contentBefore && !contentAfter) return input;
+  return (
+    <div className="input-group">
+      {contentBefore && <span className="input-group-text" aria-hidden="true">{contentBefore}</span>}
+      {input}
+      {contentAfter && <span className="input-group-text input-group-text--after">{contentAfter}</span>}
+    </div>
+  );
 });
 
 export const Textarea = forwardRef(function Textarea({ onChange, className, resize, ...props }, ref) {

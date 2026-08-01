@@ -28,6 +28,8 @@ export const Print24Regular = (props) => <Icon name="printer" {...props} />;
 export const Save24Regular = (props) => <Icon name="floppy" {...props} />;
 export const Search24Regular = (props) => <Icon name="search" {...props} />;
 export const SignOut24Regular = (props) => <Icon name="box-arrow-right" {...props} />;
+export const Eye24Regular = (props) => <Icon name="eye" {...props} />;
+export const EyeOff24Regular = (props) => <Icon name="eye-slash" {...props} />;
 export const WindowApps24Regular = (props) => <Icon name="grid" {...props} />;
 
 export const TeacherIcon = ({ className = '', style = {}, ...props }) => (
