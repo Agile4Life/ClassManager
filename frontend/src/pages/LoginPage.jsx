@@ -246,14 +246,6 @@ export default function LoginPage() {
 
       {/* Centered Login Panel */}
       <section className="login-panel hallmark-panel hallmark-panel--centered">
-        <div className="hallmark-brand hallmark-brand--centered mb-4">
-          <div className="hallmark-brand__icon">
-            <TeacherIcon />
-          </div>
-          <span className="hallmark-brand__name">ClassManager</span>
-          <span className="hallmark-brand__tag">Pro v2.0</span>
-        </div>
-
         <form
           className={`login-form hallmark-form ${mode === 'register' ? 'login-form--register' : ''}`}
           onSubmit={googleSetup ? handleGoogleProfileSubmit : handleSubmit}
@@ -310,14 +302,6 @@ export default function LoginPage() {
                 <Tab value="login">Đăng nhập</Tab>
                 <Tab value="register">Đăng ký phụ huynh</Tab>
               </TabList>
-
-              <div className="login-form__heading hallmark-heading">
-                <span className="hallmark-subhead">{mode === 'login' ? 'Chào mừng bạn trở lại' : 'Bắt đầu cùng ClassManager'}</span>
-                <h2>{mode === 'login' ? 'Đăng nhập hệ thống' : 'Tạo tài khoản phụ huynh'}</h2>
-                <p>{mode === 'login'
-                  ? 'Sử dụng tài khoản được cấp bởi trung tâm để tiếp tục.'
-                  : 'Đăng ký nhanh tài khoản phụ huynh. Hồ sơ học sinh sẽ được trung tâm liên kết sau.'}</p>
-              </div>
 
               {error && <MessageBar intent="error"><MessageBarBody><MessageBarTitle>{mode === 'login' ? 'Đăng nhập chưa thành công' : 'Đăng ký chưa thành công'}</MessageBarTitle>{error}</MessageBarBody></MessageBar>}
               {successMessage && <MessageBar intent="success"><MessageBarBody><MessageBarTitle>Đăng ký thành công</MessageBarTitle>{successMessage}</MessageBarBody></MessageBar>}
