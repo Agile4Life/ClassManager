@@ -1,30 +1,72 @@
 :root {
-  font-family: 'Segoe UI Variable', 'Avenir Next', 'Segoe UI', Arial, sans-serif;
-  color: #162033;
-  background: var(--canvas);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  --canvas: #f3f6fa;
-  --paper: #ffffff;
-  --paper-blue: #eef4fb;
-  --ink: #162033;
-  --muted: #69758a;
-  --accent: #2563a6;
-  --accent-dark: #174a82;
-  --accent-soft: #e1edfa;
+  --color-canvas: #f3f6fa;
+  --color-paper: #ffffff;
+  --color-paper-2: #f0f5fc;
+  --color-paper-3: #e5eef8;
+  --color-ink: #162033;
+  --color-ink-2: #41506b;
+  --color-muted: #69758a;
+  --color-rule: #dce4ee;
+  --color-accent: #2563a6;
+  --color-accent-strong: #174a82;
+  --color-accent-soft: #e1edfa;
+  --color-pencil: #efd06a;
+  --color-pencil-soft: #fff6d7;
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-danger: #ef4444;
+  --color-focus: #3b82f6;
+
+  --font-display: "Segoe UI Variable", "Aptos Display", "Avenir Next", system-ui, sans-serif;
+  --font-body: "Segoe UI Variable", "Aptos", "Avenir Next", system-ui, sans-serif;
+  --font-mono: "Cascadia Mono", "SFMono-Regular", Consolas, monospace;
+
+  --space-2xs: 0.5rem;
+  --space-xs: 0.75rem;
+  --space-sm: 1rem;
+  --space-md: 1.5rem;
+  --space-lg: 2rem;
+  --space-xl: 3rem;
+  --space-2xl: 4.5rem;
+
+  --radius-xs: 8px;
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-pill: 999px;
+
+  --shadow-soft: 0 14px 36px rgba(29, 57, 91, 0.07);
+  --shadow-raised: 0 20px 48px rgba(29, 57, 91, 0.12);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in: cubic-bezier(0.7, 0, 0.84, 0);
+  --ease-in-out: cubic-bezier(0.87, 0, 0.13, 1);
+  --dur-fast: 140ms;
+  --dur-base: 220ms;
+  --dur-slow: 360ms;
+
+  /* Legacy variable mappings */
+  --canvas: var(--color-canvas);
+  --paper: var(--color-paper);
+  --paper-blue: var(--color-paper-2);
+  --ink: var(--color-ink);
+  --muted: var(--color-muted);
+  --accent: var(--color-accent);
+  --accent-dark: var(--color-accent-strong);
+  --accent-soft: var(--color-accent-soft);
   --accent-rgb: 37, 99, 166;
-  --pencil: #efd06a;
-  --pencil-soft: #fff6d7;
-  --line: #dce4ee;
-  --shadow: 0 18px 48px rgba(29, 57, 91, 0.1);
-  --radius: 14px;
-  --radius-control: 10px;
+  --pencil: var(--color-pencil);
+  --pencil-soft: var(--color-pencil-soft);
+  --line: var(--color-rule);
+  --shadow: var(--shadow-soft);
+  --radius: var(--radius-md);
+  --radius-control: var(--radius-sm);
+
   --bs-primary: var(--accent);
   --bs-primary-rgb: var(--accent-rgb);
-  --bs-body-font-family: 'Segoe UI Variable', 'Avenir Next', 'Segoe UI', Arial, sans-serif;
-  --bs-body-color: #162033;
-  --bs-body-bg: var(--canvas);
-  --bs-border-color: #dce4ee;
+  --bs-body-font-family: var(--font-body);
+  --bs-body-color: var(--color-ink);
+  --bs-body-bg: var(--color-canvas);
+  --bs-border-color: var(--color-rule);
 }
 
 * { box-sizing: border-box; }
@@ -92,6 +134,35 @@ body::after {
 body { margin: 0; min-width: 320px; min-height: 100dvh; background: var(--canvas); color: var(--ink); transition: background-color 240ms ease; }
 button, input, select, textarea { font: inherit; }
 a { color: inherit; }
+
+/* Surface Systems */
+.surface-flat {
+  background: transparent;
+  border-top: 1px solid var(--color-rule);
+  padding-top: var(--space-sm);
+}
+
+.surface-paper {
+  background: var(--color-paper);
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-soft);
+}
+
+.surface-board {
+  background: var(--color-paper-2);
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius-lg);
+  position: relative;
+  overflow: hidden;
+}
+
+.surface-focus {
+  background: var(--color-paper);
+  border: 1.5px solid var(--color-accent);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-raised);
+}
 
 * {
   scrollbar-width: thin;
@@ -323,9 +394,9 @@ select.custom-select-native-hidden, .custom-select-native-hidden {
   box-shadow: 12px 0 36px rgba(16, 34, 58, 0.05); z-index: 20;
   transition: transform 200ms ease, background-color 240ms ease, border-color 240ms ease;
 }
-.brand-lockup { display: grid; grid-template-columns: 42px 1fr auto; align-items: center; gap: 11px; padding: 0 8px 24px; }
-.brand-lockup__mark { width: 44px; height: 44px; display: grid; place-items: center; color: #fff; background: var(--accent-dark); border: 1px solid rgba(255, 255, 255, 0.18); border-radius: 12px; box-shadow: 0 9px 22px rgba(var(--accent-rgb), 0.22); }
-.brand-lockup__mark i { font-size: 23px; line-height: 1; }
+.brand-lockup { display: grid; grid-template-columns: 40px 1fr auto; align-items: center; gap: 11px; padding: 0 8px 24px; cursor: pointer; }
+.brand-lockup__mark { width: 40px; height: 40px; display: grid; place-items: center; color: var(--accent); background: var(--accent-soft); border: 1px solid color-mix(in srgb, var(--accent) 25%, var(--line)); border-radius: 12px; }
+.brand-lockup__mark i, .brand-lockup__mark svg { width: 26px; height: 26px; font-size: 24px; line-height: 1; }
 .brand-lockup strong, .brand-lockup span { display: block; }
 .brand-lockup strong { font-size: 16px; letter-spacing: -0.02em; }
 .brand-lockup span { margin-top: 2px; color: var(--muted); font-size: 12px; }
@@ -453,8 +524,21 @@ select.custom-select-native-hidden, .custom-select-native-hidden {
 .class-select-row--active > td { background: var(--accent-soft) !important; }
 .class-students-panel { display: grid; gap: 16px; }
 .class-students-table table { min-width: 720px; }
-.student-table table { min-width: 980px; }
 .student-actions { display: flex; align-items: center; gap: 2px; }
+.bulk-actions-bar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 18px;
+  margin: 12px 16px 14px;
+  background: var(--color-accent-soft);
+  border: 1px solid color-mix(in srgb, var(--color-accent) 30%, var(--color-rule));
+  border-radius: var(--radius-sm);
+  color: var(--color-accent-strong);
+  font-size: 13.5px;
+}
+.bulk-actions-bar strong { font-weight: 700; color: var(--color-accent-strong); }
+.bulk-actions-bar .form-select { min-width: 210px !important; }
 .student-dialog { width: min(760px, calc(100vw - 32px)) !important; max-width: 760px !important; }
 .student-form textarea { min-height: 74px; }
 .delete-confirmation { margin: 8px 0 0; color: var(--muted); line-height: 1.6; }

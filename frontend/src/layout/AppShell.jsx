@@ -38,9 +38,9 @@ export default function AppShell() {
     <div className="app-shell">
       {menuOpen && <button className="sidebar-scrim" aria-label="Đóng menu" onClick={() => setMenuOpen(false)} />}
       <aside className={`sidebar ${menuOpen ? 'sidebar--open' : ''}`}>
-        <div className="brand-lockup" onClick={() => navigate('/')} style={{ cursor: 'pointer' }} title="Về trang Tổng quan">
-          <span className="brand-lockup__mark" style={{ background: 'transparent', width: '38px', height: '38px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <TeacherIcon style={{ width: '36px', height: '36px' }} />
+        <div className="brand-lockup" onClick={() => navigate('/')} title="Về trang Tổng quan">
+          <span className="brand-lockup__mark">
+            <TeacherIcon />
           </span>
           <div><strong>ClassManager</strong><span>Học tốt mỗi ngày</span></div>
           <Button className="sidebar__close" appearance="subtle" icon={<Dismiss24Regular />} aria-label="Đóng menu" onClick={() => setMenuOpen(false)} />

@@ -251,9 +251,9 @@ export default function StudentsPage() {
       {data?.items.length > 0 && (
         <div className="table-surface student-table">
           {selectedStudentIds.size > 0 && (
-            <div className="bulk-actions toolbar" style={{ background: '#f5f5f5', padding: '8px 16px', borderRadius: '4px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <div className="bulk-actions-bar">
               <strong>Đã chọn {selectedStudentIds.size} học sinh</strong>
-              <Select value={bulkClassId} onChange={(e) => setBulkClassId(e.target.value)} style={{ minWidth: 200 }}>
+              <Select value={bulkClassId} onChange={(e) => setBulkClassId(e.target.value)}>
                 <option value="">Không có lớp</option>
                 {classes.map((c) => <option key={c.class_id} value={c.class_id}>{c.class_name}</option>)}
               </Select>
