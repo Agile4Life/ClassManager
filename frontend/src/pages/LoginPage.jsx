@@ -277,7 +277,6 @@ export default function LoginPage() {
       {/* Decorative background shapes */}
       <div className="hallmark-deco hallmark-deco--1" />
       <div className="hallmark-deco hallmark-deco--2" />
-      <div className="hallmark-deco hallmark-deco--3" />
 
       {/* Brand mark */}
       <div className="hallmark-brand-mark">

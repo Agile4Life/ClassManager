@@ -1171,7 +1171,7 @@ body:has(.hallmark-login--centered)::after {
   max-width: 440px;
   min-height: auto;
   margin: 0 auto;
-  padding: 28px 32px;
+  padding: 22px 28px;
   background: #ffffff;
   border-radius: 20px;
   box-shadow: 0 8px 32px rgba(99, 102, 241, 0.1), 0 2px 8px rgba(0, 0, 0, 0.04);
@@ -1213,7 +1213,7 @@ body:has(.hallmark-login--centered)::after {
   background: #f1f5f9;
   border: 1px solid #e2e8f0;
   border-radius: 12px;
-  margin-bottom: 20px;
+  margin-bottom: 14px;
 }
 .auth-mode-switch.hallmark-tabs .nav-link {
   flex: 1 1 50%;
@@ -1266,16 +1266,16 @@ body:has(.hallmark-login--centered)::after {
 .hallmark-field-group {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 14px;
 }
 .hallmark-form .form-label {
   font-size: 13px;
   font-weight: 600;
   color: #334155;
-  margin-bottom: 6px;
+  margin-bottom: 4px;
 }
 .hallmark-form .form-control {
-  min-height: 50px;
+  min-height: 44px;
   border-radius: 12px;
   border: 1px solid #cbd5e1;
   background: #f8fafc;
@@ -1380,8 +1380,8 @@ body:has(.hallmark-login--centered)::after {
 /* Buttons — indigo classroom gradient */
 .hallmark-btn-submit {
   width: 100%;
-  min-height: 52px;
-  margin-top: 28px;
+  min-height: 48px;
+  margin-top: 18px;
   border-radius: 12px;
   font-size: 15px;
   font-weight: 700;
@@ -1443,7 +1443,7 @@ body:has(.hallmark-login--centered)::after {
 .hallmark-register-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
+  gap: 12px;
 }
 .hallmark-register-grid .register-grid__wide {
   grid-column: 1 / -1;
@@ -1453,7 +1453,7 @@ body:has(.hallmark-login--centered)::after {
   flex-direction: column;
 }
 .hallmark-security-note {
-  margin-top: 20px;
+  margin-top: 12px;
   font-size: 12px;
   color: #94a3b8;
   text-align: center;
