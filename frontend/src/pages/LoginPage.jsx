@@ -273,8 +273,6 @@ export default function LoginPage() {
           transform: `translate3d(${mousePos.x - 300}px, ${mousePos.y - 300}px, 0)`,
         }}
       />
-      <div className="hallmark-hero__glow hallmark-hero__glow--1" />
-      <div className="hallmark-hero__glow hallmark-hero__glow--2" />
       <div className="hallmark-hero__mesh" />
 
       {/* Centered Login Panel */}
