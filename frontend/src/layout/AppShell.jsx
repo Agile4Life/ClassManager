@@ -40,7 +40,7 @@ export default function AppShell() {
       <aside className={`sidebar ${menuOpen ? 'sidebar--open' : ''}`}>
         <div className="brand-lockup" onClick={() => navigate('/')} title="Về trang Tổng quan">
           <span className="brand-lockup__mark">
-            <TeacherIcon />
+            <TeacherIcon style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
           </span>
           <div><strong>ClassManager</strong><span>Học tốt mỗi ngày</span></div>
           <Button className="sidebar__close" appearance="subtle" icon={<Dismiss24Regular />} aria-label="Đóng menu" onClick={() => setMenuOpen(false)} />

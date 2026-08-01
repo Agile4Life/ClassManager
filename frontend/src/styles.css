@@ -363,6 +363,7 @@ select.custom-select-native-hidden, .custom-select-native-hidden {
 .form-check-input { flex: none; margin: 0; border-color: #aebccd; }
 .form-check-input:checked { border-color: var(--accent); background-color: var(--accent); }
 .form-check-label { min-width: 0; }
+
 /* Chuẩn hóa căn giữa hộp thoại Modal trên mọi kích thước màn hình */
 .custom-modal-backdrop-flex, .modal.show {
   display: flex !important;
@@ -410,9 +411,9 @@ select.custom-select-native-hidden, .custom-select-native-hidden {
   box-shadow: 12px 0 36px rgba(16, 34, 58, 0.05); z-index: 20;
   transition: transform 200ms ease, background-color 240ms ease, border-color 240ms ease;
 }
-.brand-lockup { display: grid; grid-template-columns: 40px 1fr auto; align-items: center; gap: 11px; padding: 0 8px 24px; cursor: pointer; }
-.brand-lockup__mark { width: 40px; height: 40px; display: grid; place-items: center; color: var(--accent); background: var(--accent-soft); border: 1px solid color-mix(in srgb, var(--accent) 25%, var(--line)); border-radius: 12px; }
-.brand-lockup__mark i, .brand-lockup__mark svg { width: 26px; height: 26px; font-size: 24px; line-height: 1; }
+.brand-lockup { display: flex; align-items: center; gap: 11px; padding: 0 8px 24px; cursor: pointer; }
+.brand-lockup__mark { width: 44px; height: 44px; flex: 0 0 44px; display: flex; align-items: center; justify-content: center; color: var(--accent); background: var(--accent-soft); border: 1px solid color-mix(in srgb, var(--accent) 25%, var(--line)); border-radius: 12px; padding: 4px; overflow: hidden; }
+.brand-lockup__mark img, .brand-lockup__mark svg, .brand-lockup__mark i { width: 100% !important; height: 100% !important; max-width: 36px; max-height: 36px; object-fit: contain; display: block; margin: 0 auto; }
 .brand-lockup strong, .brand-lockup span { display: block; }
 .brand-lockup strong { font-size: 16px; letter-spacing: -0.02em; }
 .brand-lockup span { margin-top: 2px; color: var(--muted); font-size: 12px; }
@@ -449,12 +450,6 @@ select.custom-select-native-hidden, .custom-select-native-hidden {
 .welcome-strip { position: relative; min-height: 220px; display: grid; grid-template-columns: minmax(0, 1fr) 180px; align-items: center; gap: 30px; padding: 34px 38px; overflow: hidden; border: 1px solid var(--accent-soft); border-radius: var(--radius); background-color: var(--paper-blue); background-image: linear-gradient(rgba(var(--accent-rgb), 0.055) 1px, transparent 1px), linear-gradient(90deg, rgba(var(--accent-rgb), 0.055) 1px, transparent 1px); background-size: 24px 24px; }
 .welcome-strip::after { content: ''; position: absolute; width: 150px; height: 18px; right: 34px; bottom: 25px; background: rgba(239, 208, 106, 0.7); transform: rotate(-3deg); border-radius: 3px; }
 .welcome-strip > div:first-child { position: relative; z-index: 1; }
-.welcome-strip > div > span { display: block; margin-bottom: 8px; color: var(--accent-dark); font-size: 13px; font-weight: 700; }
-.welcome-strip p { max-width: 580px; margin: 13px 0 0; color: var(--muted); font-size: 15px; line-height: 1.6; }
-.welcome-strip__stamp { position: relative; z-index: 1; justify-self: center; }
-.book-stamp { width: 122px; height: 122px; display: grid; place-content: center; justify-items: center; gap: 8px; color: var(--accent-dark); border: 2px solid rgba(var(--accent-rgb), 0.36); border-radius: 50%; transform: rotate(7deg); }
-.book-stamp i { font-size: 38px; }
-.book-stamp span { margin: 0 !important; font-size: 12px !important; text-transform: uppercase; letter-spacing: 0.08em; }
 
 .theme-panel {
   display: grid; grid-template-columns: minmax(250px, 0.62fr) minmax(0, 1.38fr); align-items: center; gap: 24px;
