@@ -872,20 +872,6 @@ select.custom-select-native-hidden, .custom-select-native-hidden {
   transition: transform 0.16s cubic-bezier(0.16, 1, 0.3, 1);
   will-change: transform;
 }
-.hallmark-hero__glow--1 {
-  width: 450px;
-  height: 450px;
-  top: -100px;
-  left: -100px;
-  background: linear-gradient(135deg, #3b82f6, #6366f1);
-}
-.hallmark-hero__glow--2 {
-  width: 400px;
-  height: 400px;
-  bottom: -80px;
-  right: -80px;
-  background: linear-gradient(135deg, #8b5cf6, #ec4899);
-}
 
 .hallmark-brand {
   position: relative;
@@ -1140,6 +1126,21 @@ select.custom-select-native-hidden, .custom-select-native-hidden {
   pointer-events: none;
   animation: hallmark-border-glow 6s ease infinite;
   z-index: 6;
+}
+
+/* Soft ambient glow tightly under card */
+.login-panel.hallmark-panel.hallmark-panel--centered::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 20px;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(147, 51, 234, 0.25), rgba(236, 72, 153, 0.25));
+  background-size: 300% 300%;
+  filter: blur(12px);
+  opacity: 0.6;
+  pointer-events: none;
+  z-index: -1;
+  animation: hallmark-border-glow 6s ease infinite;
 }
 
 @keyframes hallmark-border-glow {
