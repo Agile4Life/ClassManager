@@ -270,9 +270,20 @@ export default function LoginPage() {
       <div
         className="hallmark-hero__glow hallmark-hero__glow--mouse"
         style={{
-          transform: `translate3d(${mousePos.x - 300}px, ${mousePos.y - 300}px, 0)`,
+          transform: `translate3d(${mousePos.x - 250}px, ${mousePos.y - 250}px, 0)`,
         }}
       />
+
+      {/* Decorative background shapes */}
+      <div className="hallmark-deco hallmark-deco--1" />
+      <div className="hallmark-deco hallmark-deco--2" />
+      <div className="hallmark-deco hallmark-deco--3" />
+
+      {/* Brand mark */}
+      <div className="hallmark-brand-mark">
+        <BookOpen24Filled />
+        <span>ClassManager</span>
+      </div>
 
       {/* Centered Login Panel */}
       <section className="login-panel hallmark-panel hallmark-panel--centered">

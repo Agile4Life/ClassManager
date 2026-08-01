@@ -859,16 +859,16 @@ select.custom-select-native-hidden, .custom-select-native-hidden {
 }
 .hallmark-hero__glow--mouse {
   position: fixed;
-  width: 600px;
-  height: 600px;
+  width: 500px;
+  height: 500px;
   top: 0;
   left: 0;
   border-radius: 50%;
-  background: radial-gradient(circle at center, rgba(59, 130, 246, 0.42) 0%, rgba(139, 92, 246, 0.25) 45%, rgba(236, 72, 153, 0.08) 65%, transparent 80%);
-  filter: blur(65px);
+  background: radial-gradient(circle at center, rgba(99, 102, 241, 0.18) 0%, rgba(139, 92, 246, 0.1) 45%, transparent 70%);
+  filter: blur(60px);
   pointer-events: none;
   z-index: 1;
-  opacity: 0.85;
+  opacity: 0.7;
   transition: transform 0.16s cubic-bezier(0.16, 1, 0.3, 1);
   will-change: transform;
 }
@@ -1087,19 +1087,82 @@ select.custom-select-native-hidden, .custom-select-native-hidden {
   height: 100dvh;
   max-height: 100dvh;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 20px;
   padding: 20px;
   position: relative;
   overflow: hidden;
-  background: linear-gradient(135deg, #2a3a52 0%, #1a2538 100%);
+  background: linear-gradient(150deg, #f0f4ff 0%, #e8edf8 40%, #f5f0ff 70%, #eef2ff 100%);
   color: #0f172a;
+}
+
+/* Subtle dot pattern overlay for classroom/notebook feel */
+.login-page.hallmark-login.hallmark-login--centered::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle, rgba(99, 102, 241, 0.06) 1px, transparent 1px);
+  background-size: 28px 28px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Decorative floating shapes */
+.hallmark-deco {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+}
+.hallmark-deco--1 {
+  width: 280px;
+  height: 280px;
+  top: -60px;
+  right: -40px;
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.1), transparent 70%);
+  filter: blur(40px);
+}
+.hallmark-deco--2 {
+  width: 220px;
+  height: 220px;
+  bottom: -30px;
+  left: -30px;
+  background: radial-gradient(circle, rgba(167, 139, 250, 0.1), transparent 70%);
+  filter: blur(40px);
+}
+.hallmark-deco--3 {
+  width: 160px;
+  height: 160px;
+  top: 20%;
+  left: 12%;
+  border-radius: 24px;
+  background: rgba(96, 165, 250, 0.06);
+  transform: rotate(25deg);
+  filter: blur(1px);
 }
 
 /* Hide global body aurora glows on login page */
 body:has(.hallmark-login--centered)::before,
 body:has(.hallmark-login--centered)::after {
   display: none;
+}
+
+/* Brand mark above card */
+.hallmark-brand-mark {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  z-index: 5;
+  color: #4338ca;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  user-select: none;
+}
+.hallmark-brand-mark i {
+  font-size: 26px;
 }
 
 /* Panel Section (Compact Centered Card with Multi-Layer Gradient Border Glow) */
@@ -1111,19 +1174,19 @@ body:has(.hallmark-login--centered)::after {
   padding: 28px 32px;
   background: #ffffff;
   border-radius: 20px;
-  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.45), 0 6px 20px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 8px 32px rgba(99, 102, 241, 0.1), 0 2px 8px rgba(0, 0, 0, 0.04);
   position: relative;
   z-index: 5;
 }
 
-/* Sharp animated gradient border */
+/* Soft animated gradient border — light classroom theme */
 .login-panel.hallmark-panel.hallmark-panel--centered::before {
   content: '';
   position: absolute;
   inset: -2px;
   border-radius: 22px;
   padding: 2px;
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.75), rgba(147, 51, 234, 0.65), rgba(236, 72, 153, 0.75), rgba(59, 130, 246, 0.75));
+  background: linear-gradient(135deg, rgba(96, 165, 250, 0.6), rgba(129, 140, 248, 0.55), rgba(167, 139, 250, 0.6), rgba(96, 165, 250, 0.6));
   background-size: 300% 300%;
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
@@ -1222,8 +1285,8 @@ body:has(.hallmark-login--centered)::after {
 }
 .hallmark-form .form-control:focus {
   background: #ffffff;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12);
+  border-color: #818cf8;
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.12);
   outline: none;
 }
 .hallmark-form .input-group {
@@ -1273,8 +1336,8 @@ body:has(.hallmark-login--centered)::after {
   border-color: #cbd5e1;
 }
 .hallmark-options-row .form-check-input:checked {
-  background-color: #2563eb;
-  border-color: #2563eb;
+  background-color: #6366f1;
+  border-color: #6366f1;
 }
 .hallmark-options-row .form-check-label {
   font-size: 13px;
@@ -1284,7 +1347,7 @@ body:has(.hallmark-login--centered)::after {
 .btn-forgot-password {
   background: transparent;
   border: none;
-  color: #2563eb;
+  color: #6366f1;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
@@ -1292,7 +1355,7 @@ body:has(.hallmark-login--centered)::after {
   transition: color 0.15s ease;
 }
 .btn-forgot-password:hover {
-  color: #1d4ed8;
+  color: #4f46e5;
   text-decoration: underline;
 }
 
@@ -1314,7 +1377,7 @@ body:has(.hallmark-login--centered)::after {
   background: rgba(0, 0, 0, 0.05);
 }
 
-/* Buttons */
+/* Buttons — indigo classroom gradient */
 .hallmark-btn-submit {
   width: 100%;
   min-height: 52px;
@@ -1323,19 +1386,19 @@ body:has(.hallmark-login--centered)::after {
   font-size: 15px;
   font-weight: 700;
   color: #ffffff !important;
-  background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
+  background: linear-gradient(135deg, #6366f1, #4f46e5) !important;
   border: none !important;
-  box-shadow: 0 8px 24px rgba(37, 99, 235, 0.28) !important;
+  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.3) !important;
   transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 .hallmark-btn-submit:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 12px 30px rgba(37, 99, 235, 0.38) !important;
-  background: linear-gradient(135deg, #3b82f6, #1d4ed8) !important;
+  box-shadow: 0 10px 28px rgba(99, 102, 241, 0.4) !important;
+  background: linear-gradient(135deg, #818cf8, #4f46e5) !important;
 }
 .hallmark-btn-submit:active:not(:disabled) {
   transform: translateY(0);
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2) !important;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2) !important;
 }
 
 /* Divider & Google Login */
