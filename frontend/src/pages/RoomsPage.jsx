@@ -231,7 +231,7 @@ export default function RoomsPage() {
             <form onSubmit={handleSave}>
               <DialogBody>
                 <DialogTitle>{editingRoom ? 'Chỉnh sửa phòng học' : 'Thêm phòng học mới'}</DialogTitle>
-                <DialogContent className="form-grid" style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '12px' }}>
+                <DialogContent className="room-dialog-form">
                   {formError && (
                     <MessageBar intent="error">
                       <MessageBarBody>{formError}</MessageBarBody>
@@ -272,7 +272,7 @@ export default function RoomsPage() {
                     </Select>
                   </Field>
                 </DialogContent>
-                <DialogActions style={{ marginTop: '20px' }}>
+                <DialogActions className="room-dialog-actions">
                   <Button type="button" appearance="secondary" onClick={() => closeDialog()} disabled={saving}>
                     Hủy
                   </Button>
@@ -292,7 +292,7 @@ export default function RoomsPage() {
           <DialogSurface>
             <DialogBody>
               <DialogTitle>Xóa phòng học</DialogTitle>
-              <DialogContent style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <DialogContent className="room-delete-content">
                 {deleteError && (
                   <MessageBar intent="error">
                     <MessageBarBody>{deleteError}</MessageBarBody>
@@ -301,15 +301,15 @@ export default function RoomsPage() {
                 <p>
                   Bạn có chắc chắn muốn xóa phòng học <strong>{deleteTarget.room_name}</strong> không?
                 </p>
-                <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
+                <p className="room-delete-note">
                   Hệ thống sử dụng cơ chế xóa mềm (Soft Delete), phòng học này sẽ được ẩn khỏi danh sách nhưng không làm ảnh hưởng đến lịch sử các lớp học cũ từng sử dụng phòng này.
                 </p>
               </DialogContent>
-              <DialogActions style={{ marginTop: '20px' }}>
+              <DialogActions className="room-dialog-actions">
                 <Button type="button" appearance="secondary" onClick={() => setDeleteTarget(null)} disabled={deleting}>
                   Hủy
                 </Button>
-                <Button type="button" appearance="primary" style={{ backgroundColor: 'var(--danger, #dc2626)', color: '#fff' }} onClick={handleDelete} disabled={deleting}>
+                <Button type="button" appearance="primary" className="danger-button" onClick={handleDelete} disabled={deleting}>
                   {deleting ? 'Đang xóa...' : 'Xóa phòng học'}
                 </Button>
               </DialogActions>

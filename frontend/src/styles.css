@@ -70,6 +70,7 @@
 }
 
 * { box-sizing: border-box; }
+html, body { overflow-x: clip; }
 html { background: var(--canvas); }
 
 /* Ý tưởng 4: Bôi đen văn bản đổi màu theo thứ */
@@ -271,6 +272,15 @@ select option, .form-select option {
   width: 100%;
 }
 
+.custom-select__value,
+.custom-select__option-label {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* Ẩn select gốc tuyệt đối không để lộ bất kỳ dấu vết nào dù ở trạng thái disabled hay active */
 select.custom-select-native-hidden, .custom-select-native-hidden {
   display: none !important;
@@ -317,6 +327,12 @@ select.custom-select-native-hidden, .custom-select-native-hidden {
 .custom-select__item:hover:not(.custom-select__item--disabled) {
   background-color: color-mix(in srgb, var(--accent-soft) 75%, var(--paper));
   color: var(--accent-dark);
+}
+
+.custom-select__item--active:not(.custom-select__item--disabled) {
+  background-color: color-mix(in srgb, var(--accent-soft) 72%, var(--paper));
+  color: var(--accent-dark);
+  box-shadow: inset 3px 0 0 var(--accent);
 }
 
 .custom-select__item--selected {
@@ -544,6 +560,21 @@ select.custom-select-native-hidden, .custom-select-native-hidden {
 .delete-confirmation { margin: 8px 0 0; color: var(--muted); line-height: 1.6; }
 .danger-button { color: #fff !important; background: #a33a3a !important; }
 .danger-button:hover { background: #8c3030 !important; }
+.room-dialog-form,
+.room-delete-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 12px;
+}
+.room-delete-content { gap: 12px; }
+.room-delete-note {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.55;
+}
+.room-dialog-actions { margin-top: 20px; }
 .primary-cell { display: flex; align-items: center; gap: 11px; min-width: 180px; }
 .primary-cell strong, .primary-cell span, .stacked-cell strong, .stacked-cell span, .stacked-cell small { display: block; }
 .primary-cell > div > span, .stacked-cell small { margin-top: 3px; color: var(--muted); font-size: 11px; }

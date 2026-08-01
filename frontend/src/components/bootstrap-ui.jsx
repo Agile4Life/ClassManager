@@ -1,4 +1,4 @@
-import React, { Children, createContext, forwardRef, isValidElement, useContext, useEffect, useRef, useState } from 'react';
+import React, { Children, createContext, forwardRef, isValidElement, useContext, useEffect, useId, useRef, useState } from 'react';
 
 function join(...values) {
   return values.filter(Boolean).join(' ');
@@ -51,7 +51,9 @@ export const Textarea = forwardRef(function Textarea({ onChange, className, resi
 
 export const Select = forwardRef(function Select({ className, children, style, value, onChange, disabled, name, ...props }, ref) {
   const [isOpen, setIsOpen] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(-1);
   const containerRef = useRef(null);
+  const selectId = useId();
 
   useEffect(() => {
     if (!isOpen) return;
@@ -83,7 +85,61 @@ export const Select = forwardRef(function Select({ className, children, style, v
 
   const options = parseOpts(children);
   const selectedOption = options.find(o => String(o.value) === String(value ?? ''));
+  const selectedIndex = options.findIndex(o => String(o.value) === String(value ?? ''));
   const displayLabel = selectedOption ? selectedOption.label : (options[0]?.label || 'Chọn...');
+  const listboxId = `${selectId}-listbox`;
+  const activeOptionId = activeIndex >= 0 ? `${selectId}-option-${activeIndex}` : undefined;
+
+  function enabledOptionIndex(startIndex, direction = 1) {
+    if (!options.length) return -1;
+    for (let offset = 0; offset < options.length; offset += 1) {
+      const index = (startIndex + offset * direction + options.length) % options.length;
+      if (!options[index]?.disabled) return index;
+    }
+    return -1;
+  }
+
+  function openMenu(nextIndex = selectedIndex) {
+    if (disabled) return;
+    const fallbackIndex = nextIndex >= 0 ? nextIndex : 0;
+    setActiveIndex(enabledOptionIndex(fallbackIndex));
+    setIsOpen(true);
+  }
+
+  function chooseOption(option) {
+    if (!option || option.disabled) return;
+    onChange?.({
+      target: { value: option.value, name },
+      currentTarget: { value: option.value, name },
+      preventDefault: () => {},
+      stopPropagation: () => {}
+    });
+    setIsOpen(false);
+  }
+
+  function handleComboboxKeyDown(event) {
+    if (disabled) return;
+    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+      event.preventDefault();
+      if (!isOpen) {
+        openMenu(selectedIndex);
+        return;
+      }
+      const direction = event.key === 'ArrowDown' ? 1 : -1;
+      const startIndex = activeIndex >= 0 ? activeIndex + direction : selectedIndex + direction;
+      setActiveIndex(enabledOptionIndex(startIndex, direction));
+      return;
+    }
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      if (!isOpen) openMenu(selectedIndex);
+      else chooseOption(options[activeIndex]);
+      return;
+    }
+    if (event.key === 'Escape') {
+      setIsOpen(false);
+    }
+  }
 
   return (
     <div className="custom-select-container" ref={containerRef} style={style}>
@@ -105,47 +161,41 @@ export const Select = forwardRef(function Select({ className, children, style, v
         className={join('form-select', isOpen && 'form-select--open', disabled && 'disabled', className)}
         onClick={() => {
           if (disabled) return;
-          setIsOpen(!isOpen);
+          if (isOpen) setIsOpen(false);
+          else openMenu(selectedIndex);
         }}
+        onKeyDown={handleComboboxKeyDown}
         role="combobox"
         aria-expanded={isOpen}
+        aria-controls={listboxId}
+        aria-activedescendant={isOpen ? activeOptionId : undefined}
+        aria-disabled={disabled || undefined}
+        tabIndex={disabled ? -1 : 0}
       >
-        <span style={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-          {displayLabel}
-        </span>
+        <span className="custom-select__value">{displayLabel}</span>
       </div>
 
       {isOpen && !disabled && (
-        <div className="custom-select__menu" role="listbox">
+        <div className="custom-select__menu" id={listboxId} role="listbox">
           {options.map((opt, idx) => {
             const isSel = String(opt.value) === String(value ?? '');
+            const isActive = idx === activeIndex;
             return (
               <div
                 key={idx}
+                id={`${selectId}-option-${idx}`}
                 role="option"
                 aria-selected={isSel}
                 className={join(
                   'custom-select__item',
                   isSel && 'custom-select__item--selected',
+                  isActive && 'custom-select__item--active',
                   opt.disabled && 'custom-select__item--disabled'
                 )}
-                onClick={() => {
-                  if (opt.disabled) return;
-                  if (onChange) {
-                    const syntheticEvt = {
-                      target: { value: opt.value, name },
-                      currentTarget: { value: opt.value, name },
-                      preventDefault: () => {},
-                      stopPropagation: () => {}
-                    };
-                    onChange(syntheticEvt);
-                  }
-                  setIsOpen(false);
-                }}
+                onMouseEnter={() => !opt.disabled && setActiveIndex(idx)}
+                onClick={() => chooseOption(opt)}
               >
-                <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {opt.label}
-                </span>
+                <span className="custom-select__option-label">{opt.label}</span>
                 {isSel && <span className="custom-select__item-check">✓</span>}
               </div>
             );
