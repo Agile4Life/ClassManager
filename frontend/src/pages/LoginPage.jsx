@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  Button, Field, Input, MessageBar, MessageBarBody, MessageBarTitle, Tab, TabList,
+  Button, Field, Input, MessageBar, MessageBarBody, MessageBarTitle, Tab, TabList, Checkbox,
 } from '../components/bootstrap-ui';
 import {
   BookOpen24Filled, Key24Regular, Person24Regular, TeacherIcon, Eye24Regular, EyeOff24Regular, PeopleCommunity24Regular, DataTrending24Regular
@@ -65,9 +65,20 @@ export default function LoginPage() {
   const [googleButtonReady, setGoogleButtonReady] = useState(false);
   const [googleSetup, setGoogleSetup] = useState(null);
   const [googleProfile, setGoogleProfile] = useState({});
+  const [rememberMe, setRememberMe] = useState(() => {
+    return localStorage.getItem('classmanager_remember_me') === 'true';
+  });
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const redirectTo = location.state?.from?.pathname || '/';
+
+  useEffect(() => {
+    const isRemembered = localStorage.getItem('classmanager_remember_me') === 'true';
+    const savedUsername = localStorage.getItem('classmanager_remembered_username');
+    if (isRemembered && savedUsername) {
+      setUsername(savedUsername);
+    }
+  }, []);
 
   const handleGoogleCredential = useCallback(async (response) => {
     if (!response?.credential) return;
@@ -204,6 +215,13 @@ export default function LoginPage() {
     try {
       if (mode === 'login') {
         await login(username.trim(), password);
+        if (rememberMe) {
+          localStorage.setItem('classmanager_remember_me', 'true');
+          localStorage.setItem('classmanager_remembered_username', username.trim());
+        } else {
+          localStorage.removeItem('classmanager_remember_me');
+          localStorage.removeItem('classmanager_remembered_username');
+        }
         navigate(redirectTo, { replace: true });
       } else {
         if (registration.password !== registration.confirm_password) {
@@ -238,8 +256,23 @@ export default function LoginPage() {
     && registration.password
     && registration.confirm_password;
 
+  const [mousePos, setMousePos] = useState({
+    x: typeof window !== 'undefined' ? window.innerWidth / 2 : 0,
+    y: typeof window !== 'undefined' ? window.innerHeight / 2 : 0,
+  });
+
+  const handleMouseMove = useCallback((e) => {
+    setMousePos({ x: e.clientX, y: e.clientY });
+  }, []);
+
   return (
-    <main className="login-page hallmark-login hallmark-login--centered">
+    <main className="login-page hallmark-login hallmark-login--centered" onMouseMove={handleMouseMove}>
+      <div
+        className="hallmark-hero__glow hallmark-hero__glow--mouse"
+        style={{
+          transform: `translate3d(${mousePos.x - 300}px, ${mousePos.y - 300}px, 0)`,
+        }}
+      />
       <div className="hallmark-hero__glow hallmark-hero__glow--1" />
       <div className="hallmark-hero__glow hallmark-hero__glow--2" />
       <div className="hallmark-hero__mesh" />
@@ -340,6 +373,21 @@ export default function LoginPage() {
                       autoComplete="current-password"
                     />
                   </Field>
+
+                  <div className="hallmark-options-row">
+                    <Checkbox
+                      label="Ghi nhớ đăng nhập"
+                      checked={rememberMe}
+                      onChange={(_, data) => setRememberMe(data.checked)}
+                    />
+                    <button
+                      type="button"
+                      className="btn-forgot-password"
+                      onClick={() => setError('Vui lòng liên hệ quản trị viên Trung tâm để hỗ trợ cấp lại mật khẩu.')}
+                    >
+                      Quên mật khẩu?
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <div className="register-grid hallmark-register-grid">

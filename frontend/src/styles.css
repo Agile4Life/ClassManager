@@ -857,6 +857,21 @@ select.custom-select-native-hidden, .custom-select-native-hidden {
   pointer-events: none;
   opacity: 0.6;
 }
+.hallmark-hero__glow--mouse {
+  position: fixed;
+  width: 600px;
+  height: 600px;
+  top: 0;
+  left: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle at center, rgba(59, 130, 246, 0.42) 0%, rgba(139, 92, 246, 0.25) 45%, rgba(236, 72, 153, 0.08) 65%, transparent 80%);
+  filter: blur(65px);
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.85;
+  transition: transform 0.16s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform;
+}
 .hallmark-hero__glow--1 {
   width: 450px;
   height: 450px;
@@ -1101,7 +1116,7 @@ select.custom-select-native-hidden, .custom-select-native-hidden {
   color: #0f172a;
 }
 
-/* Panel Section (Compact Centered Card) */
+/* Panel Section (Compact Centered Card with Multi-Layer Gradient Border Glow) */
 .login-panel.hallmark-panel.hallmark-panel--centered {
   width: 100%;
   max-width: 440px;
@@ -1109,11 +1124,48 @@ select.custom-select-native-hidden, .custom-select-native-hidden {
   margin: 0 auto;
   padding: 28px 32px;
   background: #ffffff;
-  border: 1px solid rgba(255, 255, 255, 0.9);
   border-radius: 20px;
-  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.4), 0 6px 20px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.45), 0 6px 20px rgba(0, 0, 0, 0.15);
   position: relative;
   z-index: 5;
+}
+
+/* Sharp animated gradient border */
+.login-panel.hallmark-panel.hallmark-panel--centered::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 22px;
+  padding: 2px;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.75), rgba(147, 51, 234, 0.65), rgba(236, 72, 153, 0.75), rgba(59, 130, 246, 0.75));
+  background-size: 300% 300%;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  animation: hallmark-border-glow 6s ease infinite;
+  z-index: 6;
+}
+
+/* Soft ambient glow behind card */
+.login-panel.hallmark-panel.hallmark-panel--centered::after {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border-radius: 26px;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.45), rgba(147, 51, 234, 0.35), rgba(236, 72, 153, 0.4));
+  background-size: 300% 300%;
+  filter: blur(16px);
+  opacity: 0.75;
+  pointer-events: none;
+  z-index: -1;
+  animation: hallmark-border-glow 6s ease infinite;
+}
+
+@keyframes hallmark-border-glow {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
 }
 
 /* Tabs */
@@ -1224,7 +1276,53 @@ select.custom-select-native-hidden, .custom-select-native-hidden {
   border-right: 0;
 }
 
-/* Password Toggle Button */
+/* Password Toggle Button & Options Row */
+.hallmark-options-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 4px;
+  padding: 0 2px;
+}
+.hallmark-options-row .form-check {
+  margin-bottom: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+.hallmark-options-row .form-check-input {
+  cursor: pointer;
+  width: 16px;
+  height: 16px;
+  margin-top: 0;
+  border-color: #cbd5e1;
+}
+.hallmark-options-row .form-check-input:checked {
+  background-color: #2563eb;
+  border-color: #2563eb;
+}
+.hallmark-options-row .form-check-label {
+  font-size: 13px;
+  color: #475569;
+  font-weight: 500;
+}
+.btn-forgot-password {
+  background: transparent;
+  border: none;
+  color: #2563eb;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.15s ease;
+}
+.btn-forgot-password:hover {
+  color: #1d4ed8;
+  text-decoration: underline;
+}
+
 .btn-password-toggle {
   background: transparent;
   border: none;
