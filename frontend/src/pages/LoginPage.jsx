@@ -209,6 +209,9 @@ export default function LoginPage() {
         if (registration.password !== registration.confirm_password) {
           throw new Error('Mật khẩu xác nhận chưa khớp');
         }
+        if (registration.password.length < 8 || !/[A-Za-zÀ-ỹ]/.test(registration.password) || !/\d/.test(registration.password)) {
+          throw new Error('Mật khẩu phải có tối thiểu 8 ký tự, bao gồm cả chữ và số.');
+        }
         await register({
           full_name: registration.full_name.trim(),
           phone: registration.phone.trim(),
@@ -236,14 +239,14 @@ export default function LoginPage() {
     && registration.confirm_password;
 
   return (
-    <main className="login-page hallmark-login">
-      {/* Dynamic Hallmark Hero Section */}
-      <section className="login-story hallmark-hero" aria-label="Giới thiệu ClassManager">
-        <div className="hallmark-hero__glow hallmark-hero__glow--1" />
-        <div className="hallmark-hero__glow hallmark-hero__glow--2" />
-        <div className="hallmark-hero__mesh" />
+    <main className="login-page hallmark-login hallmark-login--centered">
+      <div className="hallmark-hero__glow hallmark-hero__glow--1" />
+      <div className="hallmark-hero__glow hallmark-hero__glow--2" />
+      <div className="hallmark-hero__mesh" />
 
-        <div className="login-story__brand hallmark-brand">
+      {/* Centered Login Panel */}
+      <section className="login-panel hallmark-panel hallmark-panel--centered">
+        <div className="hallmark-brand hallmark-brand--centered mb-4">
           <div className="hallmark-brand__icon">
             <TeacherIcon />
           </div>
@@ -251,58 +254,6 @@ export default function LoginPage() {
           <span className="hallmark-brand__tag">Pro v2.0</span>
         </div>
 
-        <div className="login-story__copy hallmark-copy">
-          <div className="hallmark-pill">
-            <span className="hallmark-pill__dot" />
-            Nền tảng quản lý giáo dục thế hệ mới
-          </div>
-          <h1>Quản lý lớp học, <br /><span className="hallmark-gradient-text">nhẹ đầu hơn mỗi ngày.</span></h1>
-          <p>Tối ưu hóa thời gian giảng dạy, tự động hóa điểm danh, thời khóa biểu và kết nối phụ huynh trên cùng một nền tảng thông minh.</p>
-        </div>
-
-        {/* Floating Glassmorphism Cards Showcase */}
-        <div className="hallmark-showcase" aria-hidden="true">
-          <div className="hallmark-glass-card hallmark-glass-card--main">
-            <div className="hallmark-glass-card__header">
-              <div className="hallmark-glass-card__badge">
-                <BookOpen24Filled /> Lớp Toán 9A1
-              </div>
-              <span className="hallmark-glass-card__status">Đang diễn ra</span>
-            </div>
-            <div className="hallmark-glass-card__content">
-              <div className="hallmark-schedule-row">
-                <span>Ca học: 18:00 - 19:30</span>
-                <strong>28 / 30 Học sinh</strong>
-              </div>
-              <div className="hallmark-progress-bar">
-                <div className="hallmark-progress-bar__fill" style={{ width: '93.3%' }} />
-              </div>
-            </div>
-          </div>
-
-          <div className="hallmark-glass-card hallmark-glass-card--stat">
-            <div className="hallmark-stat-icon">
-              <DataTrending24Regular />
-            </div>
-            <div>
-              <strong>99.8%</strong>
-              <span>Tỷ lệ đi học đúng giờ</span>
-            </div>
-          </div>
-
-          <div className="hallmark-glass-card hallmark-glass-card--users">
-            <div className="hallmark-avatar-group">
-              <span className="hallmark-avatar">Th</span>
-              <span className="hallmark-avatar">Ph</span>
-              <span className="hallmark-avatar">Hs</span>
-            </div>
-            <span>Hơn 500+ giáo viên & phụ huynh tin dùng</span>
-          </div>
-        </div>
-      </section>
-
-      {/* Login & Form Panel */}
-      <section className="login-panel hallmark-panel">
         <form
           className={`login-form hallmark-form ${mode === 'register' ? 'login-form--register' : ''}`}
           onSubmit={googleSetup ? handleGoogleProfileSubmit : handleSubmit}

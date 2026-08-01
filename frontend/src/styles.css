@@ -1081,30 +1081,71 @@ select.custom-select-native-hidden, .custom-select-native-hidden {
   font-size: 10px;
   font-weight: 700;
   margin-left: -8px;
-}
-.hallmark-avatar:first-child { margin-left: 0; }
-.hallmark-glass-card--users span {
-  font-size: 12px;
-  color: rgba(226, 232, 240, 0.85);
-  font-weight: 500;
-}
-
-/* Panel Section (Right Column) */
-.login-panel.hallmark-panel {
+}/* Panel Section (Right Column) */
+.login-page.hallmark-login.hallmark-login--centered {
   min-height: 100dvh;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  padding: 48px clamp(24px, 5vw, 64px);
-  background: #ffffff;
+  padding: clamp(40px, 8vh, 96px) 20px 48px;
+  position: relative;
+  overflow-x: hidden;
+  overflow-y: auto;
+  background-color: #0b101d;
+  background-image: 
+    radial-gradient(circle at 50% 25%, rgba(59, 130, 246, 0.18), transparent 55%),
+    radial-gradient(circle at 80% 75%, rgba(139, 92, 246, 0.14), transparent 50%),
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 36px 36px, 36px 36px;
   color: #0f172a;
 }
 
-.login-form.hallmark-form {
+/* Panel Section (Centered Card) */
+.login-panel.hallmark-panel.hallmark-panel--centered {
   width: 100%;
-  max-width: 440px;
+  max-width: 500px;
+  min-height: auto;
+  margin: 0 auto;
+  padding: clamp(32px, 5vw, 44px);
+  background: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  border-radius: 24px;
+  box-shadow: 0 28px 70px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.15);
+  position: relative;
+  z-index: 5;
+}
+
+.hallmark-brand--centered {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+.hallmark-brand--centered .hallmark-brand__icon {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #eff6ff;
+  border: 1px solid #dbeafe;
+  border-radius: 12px;
+}
+.hallmark-brand--centered .hallmark-brand__name {
+  font-size: 22px;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.03em;
+}
+.hallmark-brand--centered .hallmark-brand__tag {
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #2563eb;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 20px;
 }
 
 /* Tabs */
@@ -1293,6 +1334,13 @@ select.custom-select-native-hidden, .custom-select-native-hidden {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
 }
+.hallmark-register-grid .register-grid__wide {
+  grid-column: 1 / -1;
+}
+.hallmark-register-grid .form-field {
+  display: flex;
+  flex-direction: column;
+}
 .hallmark-security-note {
   margin-top: 20px;
   font-size: 12px;
@@ -1334,11 +1382,8 @@ select.custom-select-native-hidden, .custom-select-native-hidden {
   .notification-workspace { grid-template-columns: 1fr; }
   .notification-preview { position: static; max-width: none; max-height: none; resize: none; }
   .theme-panel { grid-template-columns: 1fr; gap: 16px; }
-  .login-page.hallmark-login { grid-template-columns: 1fr; }
-  .login-story.hallmark-hero { min-height: auto; padding: calc(36px + env(safe-area-inset-top)) max(24px, env(safe-area-inset-right)) 42px max(24px, env(safe-area-inset-left)); }
-  .hallmark-copy { margin: 40px 0 32px; }
-  .hallmark-showcase { display: none; }
-  .login-panel.hallmark-panel { min-height: auto; padding: 42px max(20px, env(safe-area-inset-right)) calc(48px + env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left)); }
+  .login-page.hallmark-login.hallmark-login--centered { padding: calc(20px + env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) calc(40px + env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left)); }
+  .login-panel.hallmark-panel.hallmark-panel--centered { padding: 28px 20px; border-radius: 20px; }
   .attendance-context { grid-template-columns: 1fr 1fr; }
   .attendance-session-summary { grid-column: 1 / -1; }
   .learning-history-filters { grid-template-columns: 1fr 1fr; }
