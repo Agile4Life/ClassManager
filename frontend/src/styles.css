@@ -1096,6 +1096,12 @@ select.custom-select-native-hidden, .custom-select-native-hidden {
   color: #0f172a;
 }
 
+/* Hide global body aurora glows on login page */
+body:has(.hallmark-login--centered)::before,
+body:has(.hallmark-login--centered)::after {
+  display: none;
+}
+
 /* Panel Section (Compact Centered Card with Multi-Layer Gradient Border Glow) */
 .login-panel.hallmark-panel.hallmark-panel--centered {
   width: 100%;
