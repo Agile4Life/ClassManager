@@ -40,7 +40,7 @@ export default function DashboardPage() {
 
   const displayName = user.full_name || user.username || 'bạn';
   const studentsPath = ['admin', 'staff', 'teacher'].includes(user.role) ? '/students' : '/classes';
-  const shortcutItems = navItems.filter((item) => item.roles.includes(user.role));
+  const shortcutItems = navItems.filter((item) => item.to !== '/' && item.roles.includes(user.role));
 
   return (
     <div className="page-flow">
