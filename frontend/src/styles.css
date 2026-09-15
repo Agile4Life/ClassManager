@@ -283,7 +283,19 @@ select option, .form-select option {
 
 /* Ẩn select gốc tuyệt đối không để lộ bất kỳ dấu vết nào dù ở trạng thái disabled hay active */
 select.custom-select-native-hidden, .custom-select-native-hidden {
-  display: none !important;
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  min-height: 0 !important;
+  min-width: 0 !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  border: 0 !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  clip: rect(0, 0, 0, 0) !important;
+  overflow: hidden !important;
+  background: transparent !important;
 }
 
 /* Menu Dropdown nổi mở ra */
