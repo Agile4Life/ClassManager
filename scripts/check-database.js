@@ -1,5 +1,5 @@
 require('dotenv').config();
-const pool = require('../src/config/db');
+const pool = require('../backend/config/db');
 
 async function checkDatabase() {
   const database = await pool.query('select current_database() as database, now() as server_time');

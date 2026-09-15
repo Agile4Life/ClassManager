@@ -1,10 +1,10 @@
 const assert = require('assert');
-const { buildInsert, buildUpdate } = require('../src/utils/query');
-const { timeToMinutes, isIsoDate, getPagination } = require('../src/utils/validation');
-const { parseOrigins, isOriginAllowed } = require('../src/utils/cors');
-const { generateNextCode } = require('../src/utils/code-generator');
-const { validateRegistration } = require('../src/utils/registration');
-const { normalizeStudentImportRows } = require('../src/utils/student-import');
+const { buildInsert, buildUpdate } = require('../backend/utils/query');
+const { timeToMinutes, isIsoDate, getPagination } = require('../backend/utils/validation');
+const { parseOrigins, isOriginAllowed } = require('../backend/utils/cors');
+const { generateNextCode } = require('../backend/utils/code-generator');
+const { validateRegistration } = require('../backend/utils/registration');
+const { normalizeStudentImportRows } = require('../backend/utils/student-import');
 
 const insert = buildInsert('students', { student_code: 'S100', full_name: 'Test Student' });
 assert.strictEqual(

@@ -1,4 +1,5 @@
-const pool = require('./src/config/db');
+const pool = require('../../backend/config/db');
+
 async function run() {
   try {
     await pool.query('ALTER TABLE students ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN NOT NULL DEFAULT FALSE;');
@@ -9,4 +10,9 @@ async function run() {
     pool.end();
   }
 }
-run();
+
+if (require.main === module) {
+  run();
+}
+
+module.exports = run;

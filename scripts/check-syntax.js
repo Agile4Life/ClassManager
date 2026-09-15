@@ -10,7 +10,7 @@ function collectJavaScript(directory) {
 }
 
 const files = [
-  ...collectJavaScript(path.join(process.cwd(), 'src')),
+  ...collectJavaScript(path.join(process.cwd(), 'backend')),
   ...collectJavaScript(path.join(process.cwd(), 'scripts')),
 ];
 for (const file of files) {

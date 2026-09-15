@@ -2,10 +2,10 @@
   "name": "class-manager-backend",
   "version": "1.0.0",
   "description": "Backend API for the ClassManager tuition center system",
-  "main": "src/server.js",
+  "main": "backend/server.js",
   "scripts": {
-    "start": "node src/server.js",
-    "dev": "nodemon src/server.js",
+    "start": "node backend/server.js",
+    "dev": "nodemon backend/server.js",
     "check": "node scripts/check-syntax.js",
     "db:check": "node scripts/check-database.js",
     "test": "node scripts/check-regressions.js",
