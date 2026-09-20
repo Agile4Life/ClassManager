@@ -1,0 +1,588 @@
+{
+  "timestamp": "2026-09-20T14:23:37.934Z",
+  "durationSeconds": 659.8,
+  "stats": {
+    "suitesCount": 10,
+    "totalTests": 97,
+    "totalPassed": 97,
+    "totalFailed": 0,
+    "passRate": "100.0%"
+  },
+  "suites": [
+    {
+      "suiteTitle": "Suite 01: Health, Smoke & System Infrastructure",
+      "passed": 7,
+      "failed": 0,
+      "total": 7,
+      "errors": [],
+      "testResults": [
+        {
+          "name": "GET /api/health returns 200 with status ok and database time",
+          "status": "PASSED",
+          "duration": 200
+        },
+        {
+          "name": "Security: X-Powered-By header is disabled",
+          "status": "PASSED",
+          "duration": 200
+        },
+        {
+          "name": "Routing: Non-existent non-API endpoint /not-found-xyz returns 404",
+          "status": "PASSED",
+          "duration": 14
+        },
+        {
+          "name": "Routing: Authenticated call to unknown API endpoint /api/not-found-xyz returns 404 JSON",
+          "status": "PASSED",
+          "duration": 5032
+        },
+        {
+          "name": "CORS: Development localhost origin is permitted",
+          "status": "PASSED",
+          "duration": 198
+        },
+        {
+          "name": "Admin Debug: GET /api/admin/debug/class-schema requires admin auth",
+          "status": "PASSED",
+          "duration": 3803
+        },
+        {
+          "name": "Admin Debug: POST /api/admin/debug/class-create-probe safely executes and rolls back",
+          "status": "PASSED",
+          "duration": 8094
+        }
+      ]
+    },
+    {
+      "suiteTitle": "Suite 02: Authentication, Sessions & RBAC Authorization",
+      "passed": 14,
+      "failed": 0,
+      "total": 14,
+      "errors": [],
+      "testResults": [
+        {
+          "name": "Auth: Login succeeds with valid admin credentials",
+          "status": "PASSED",
+          "duration": 2290
+        },
+        {
+          "name": "Auth: Login succeeds for all standard roles (staff, teacher, parent, student)",
+          "status": "PASSED",
+          "duration": 10262
+        },
+        {
+          "name": "Auth: Login with invalid password returns 401 Unauthorized",
+          "status": "PASSED",
+          "duration": 965
+        },
+        {
+          "name": "Auth: Login with non-existent user returns 401 Unauthorized",
+          "status": "PASSED",
+          "duration": 973
+        },
+        {
+          "name": "Auth: Missing username or password returns 400 Bad Request",
+          "status": "PASSED",
+          "duration": 14
+        },
+        {
+          "name": "Auth: Protected route /api/auth/me rejects request without token with 401",
+          "status": "PASSED",
+          "duration": 15
+        },
+        {
+          "name": "Auth: Protected route /api/auth/me rejects invalid token with 401",
+          "status": "PASSED",
+          "duration": 16
+        },
+        {
+          "name": "Auth: /api/auth/me returns identity matching authenticated user",
+          "status": "PASSED",
+          "duration": 205
+        },
+        {
+          "name": "RBAC: Admin can access /api/admin/accounts (200 OK)",
+          "status": "PASSED",
+          "duration": 5329
+        },
+        {
+          "name": "RBAC: Staff is rejected from /api/admin/accounts (403 Forbidden)",
+          "status": "PASSED",
+          "duration": 1334
+        },
+        {
+          "name": "RBAC: Teacher is rejected from /api/admin/accounts (403 Forbidden)",
+          "status": "PASSED",
+          "duration": 1007
+        },
+        {
+          "name": "RBAC: Parent is rejected from /api/admin/accounts (403 Forbidden)",
+          "status": "PASSED",
+          "duration": 1361
+        },
+        {
+          "name": "RBAC: Student is rejected from /api/admin/accounts (403 Forbidden)",
+          "status": "PASSED",
+          "duration": 1354
+        },
+        {
+          "name": "Session & Logout: POST /api/auth/logout revokes session in DB",
+          "status": "PASSED",
+          "duration": 6158
+        }
+      ]
+    },
+    {
+      "suiteTitle": "Suite 03: Core Resources CRUD (Subjects, Rooms, Teachers, Parents, Classes)",
+      "passed": 15,
+      "failed": 0,
+      "total": 15,
+      "errors": [],
+      "testResults": [
+        {
+          "name": "Subjects: GET /api/subjects returns list of subjects",
+          "status": "PASSED",
+          "duration": 6470
+        },
+        {
+          "name": "Subjects: POST /api/subjects creates a new subject",
+          "status": "PASSED",
+          "duration": 12517
+        },
+        {
+          "name": "Subjects: GET /api/subjects/:id retrieves single subject",
+          "status": "PASSED",
+          "duration": 4587
+        },
+        {
+          "name": "Subjects: PUT /api/subjects/:id updates existing subject",
+          "status": "PASSED",
+          "duration": 3949
+        },
+        {
+          "name": "Rooms: GET /api/rooms returns list of rooms",
+          "status": "PASSED",
+          "duration": 2568
+        },
+        {
+          "name": "Rooms: POST /api/rooms creates a new room",
+          "status": "PASSED",
+          "duration": 10923
+        },
+        {
+          "name": "Rooms: PUT /api/rooms/:id updates room capacity",
+          "status": "PASSED",
+          "duration": 7578
+        },
+        {
+          "name": "Teachers: POST /api/teachers creates a new teacher",
+          "status": "PASSED",
+          "duration": 6072
+        },
+        {
+          "name": "Teachers: GET /api/teachers returns teacher list including new teacher",
+          "status": "PASSED",
+          "duration": 4319
+        },
+        {
+          "name": "Teachers: DELETE /api/teachers/:id soft deletes teacher",
+          "status": "PASSED",
+          "duration": 13318
+        },
+        {
+          "name": "Parents: POST /api/parents creates a parent record",
+          "status": "PASSED",
+          "duration": 2480
+        },
+        {
+          "name": "Classes: Validation rejects negative tuition fee (400)",
+          "status": "PASSED",
+          "duration": 2564
+        },
+        {
+          "name": "Classes: Validation rejects non-positive max_students (400)",
+          "status": "PASSED",
+          "duration": 4693
+        },
+        {
+          "name": "Classes: POST /api/classes creates a valid class with room and subject",
+          "status": "PASSED",
+          "duration": 10815
+        },
+        {
+          "name": "Classes: GET /api/classes retrieves list with decorated teachers",
+          "status": "PASSED",
+          "duration": 4548
+        }
+      ]
+    },
+    {
+      "suiteTitle": "Suite 04: Students, Parents Links, Import & Class Enrollment",
+      "passed": 11,
+      "failed": 0,
+      "total": 11,
+      "errors": [],
+      "testResults": [
+        {
+          "name": "Students: GET /api/students returns paginated student list",
+          "status": "PASSED",
+          "duration": 8257
+        },
+        {
+          "name": "Students: POST /api/students creates a student with auto-generated student_code",
+          "status": "PASSED",
+          "duration": 8806
+        },
+        {
+          "name": "Students: GET /api/students/:id returns student profile",
+          "status": "PASSED",
+          "duration": 6451
+        },
+        {
+          "name": "Students: PUT /api/students/:id updates student record",
+          "status": "PASSED",
+          "duration": 5628
+        },
+        {
+          "name": "Students: POST /api/students/import normalizes and batch creates students",
+          "status": "PASSED",
+          "duration": 8390
+        },
+        {
+          "name": "Relationships: Link student to parent via POST /api/students/:id/parents/:parentId",
+          "status": "PASSED",
+          "duration": 4169
+        },
+        {
+          "name": "Relationships: GET /api/students/:id/parents lists linked parents",
+          "status": "PASSED",
+          "duration": 773
+        },
+        {
+          "name": "Enrollment: POST /api/classes/:classId/enroll/:studentId enrolls student",
+          "status": "PASSED",
+          "duration": 2543
+        },
+        {
+          "name": "Enrollment: Duplicate enrollment attempt is rejected with 409 Conflict",
+          "status": "PASSED",
+          "duration": 1916
+        },
+        {
+          "name": "Enrollment: GET /api/classes/:classId/students lists enrolled students",
+          "status": "PASSED",
+          "duration": 3548
+        },
+        {
+          "name": "Students: DELETE /api/students/:id marks student as soft-deleted",
+          "status": "PASSED",
+          "duration": 12437
+        }
+      ]
+    },
+    {
+      "suiteTitle": "Suite 05: Schedules, Sessions, Timetable & Attendance",
+      "passed": 9,
+      "failed": 0,
+      "total": 9,
+      "errors": [],
+      "testResults": [
+        {
+          "name": "Schedules: POST /api/classes/:classId/schedules creates a recurring schedule",
+          "status": "PASSED",
+          "duration": 2449
+        },
+        {
+          "name": "Sessions: POST /api/classes/:classId/generate-sessions generates session rows",
+          "status": "PASSED",
+          "duration": 3401
+        },
+        {
+          "name": "Sessions: GET /api/classes/:classId/sessions lists generated sessions",
+          "status": "PASSED",
+          "duration": 928
+        },
+        {
+          "name": "Sessions: PUT /api/sessions/:sessionId updates session topic/status",
+          "status": "PASSED",
+          "duration": 1058
+        },
+        {
+          "name": "Timetable: GET /api/timetable returns system calendar events",
+          "status": "PASSED",
+          "duration": 597
+        },
+        {
+          "name": "Timetable: GET /api/timetable/class/:classId returns class schedule",
+          "status": "PASSED",
+          "duration": 1529
+        },
+        {
+          "name": "Attendance: POST /api/sessions/:sessionId/attendance records student attendance",
+          "status": "PASSED",
+          "duration": 1674
+        },
+        {
+          "name": "Attendance: GET /api/sessions/:sessionId/attendance returns saved records",
+          "status": "PASSED",
+          "duration": 2561
+        },
+        {
+          "name": "Attendance: GET /api/classes/:classId/attendance-history returns class attendance",
+          "status": "PASSED",
+          "duration": 1734
+        }
+      ]
+    },
+    {
+      "suiteTitle": "Suite 06: Academic Topics, Assignments, Questions & Submissions",
+      "passed": 11,
+      "failed": 0,
+      "total": 11,
+      "errors": [],
+      "testResults": [
+        {
+          "name": "Topics: GET /api/topics lists academic topics",
+          "status": "PASSED",
+          "duration": 732
+        },
+        {
+          "name": "Topics: POST /api/topics creates a new learning topic",
+          "status": "PASSED",
+          "duration": 582
+        },
+        {
+          "name": "Topics: PUT /api/topics/:topicId updates difficulty and description",
+          "status": "PASSED",
+          "duration": 562
+        },
+        {
+          "name": "Assignments: POST /api/classes/:classId/assignments creates an assignment",
+          "status": "PASSED",
+          "duration": 1234
+        },
+        {
+          "name": "Assignments: GET /api/classes/:classId/assignments lists class assignments",
+          "status": "PASSED",
+          "duration": 725
+        },
+        {
+          "name": "Assignments: GET /api/assignments/:id retrieves assignment details",
+          "status": "PASSED",
+          "duration": 965
+        },
+        {
+          "name": "Questions: POST /api/assignments/:id/questions adds question to assignment",
+          "status": "PASSED",
+          "duration": 1750
+        },
+        {
+          "name": "Questions: GET /api/assignments/:id/questions lists questions",
+          "status": "PASSED",
+          "duration": 2330
+        },
+        {
+          "name": "Submissions: POST /api/assignments/:id/submissions creates student submission",
+          "status": "PASSED",
+          "duration": 1444
+        },
+        {
+          "name": "Answers: POST /api/submissions/:id/answers saves student answer and grade",
+          "status": "PASSED",
+          "duration": 4268
+        },
+        {
+          "name": "Submissions: GET /api/students/:id/submissions lists student submissions",
+          "status": "PASSED",
+          "duration": 6852
+        }
+      ]
+    },
+    {
+      "suiteTitle": "Suite 07: Finance, Invoices & Payments",
+      "passed": 8,
+      "failed": 0,
+      "total": 8,
+      "errors": [],
+      "testResults": [
+        {
+          "name": "Invoices: GET /api/invoices lists tuition invoices",
+          "status": "PASSED",
+          "duration": 1465
+        },
+        {
+          "name": "Invoices: POST /api/invoices generates a new student invoice",
+          "status": "PASSED",
+          "duration": 6572
+        },
+        {
+          "name": "Invoices: GET /api/invoices/:id retrieves invoice details",
+          "status": "PASSED",
+          "duration": 1527
+        },
+        {
+          "name": "Invoices: GET /api/students/:id/invoices lists invoices for student",
+          "status": "PASSED",
+          "duration": 1467
+        },
+        {
+          "name": "Payments: POST /api/payments records tuition payment",
+          "status": "PASSED",
+          "duration": 9021
+        },
+        {
+          "name": "Payments: GET /api/payments lists recorded payments",
+          "status": "PASSED",
+          "duration": 1507
+        },
+        {
+          "name": "Payments: GET /api/students/:id/payments lists payments for student",
+          "status": "PASSED",
+          "duration": 695
+        },
+        {
+          "name": "Invoices: PUT /api/invoices/:id updates invoice status to paid",
+          "status": "PASSED",
+          "duration": 1975
+        }
+      ]
+    },
+    {
+      "suiteTitle": "Suite 08: Reports, Progress Tracking & Academic Analytics",
+      "passed": 8,
+      "failed": 0,
+      "total": 8,
+      "errors": [],
+      "testResults": [
+        {
+          "name": "Reports: GET /api/reports/weak-topics queries weak topics view",
+          "status": "PASSED",
+          "duration": 989
+        },
+        {
+          "name": "Reports: GET /api/reports/student/1/weak-topics queries specific student weak topics",
+          "status": "PASSED",
+          "duration": 891
+        },
+        {
+          "name": "Reports: GET /api/reports/student/1/assignment-summary returns student summary",
+          "status": "PASSED",
+          "duration": 1061
+        },
+        {
+          "name": "Reports: GET /api/reports/class/:id/performance returns class performance stats",
+          "status": "PASSED",
+          "duration": 7144
+        },
+        {
+          "name": "Reports: POST /api/reports creates student monthly progress report",
+          "status": "PASSED",
+          "duration": 866
+        },
+        {
+          "name": "Reports: GET /api/reports/student/1 retrieves list of student progress reports",
+          "status": "PASSED",
+          "duration": 2246
+        },
+        {
+          "name": "Reports: PUT /api/reports/:id updates status to sent",
+          "status": "PASSED",
+          "duration": 1763
+        },
+        {
+          "name": "Reports: DELETE /api/reports/:id deletes progress report",
+          "status": "PASSED",
+          "duration": 2122
+        }
+      ]
+    },
+    {
+      "suiteTitle": "Suite 09: Security, Input Validation & SQL Injection Defenses",
+      "passed": 11,
+      "failed": 0,
+      "total": 11,
+      "errors": [],
+      "testResults": [
+        {
+          "name": "SQLi: Search query with ' OR '1'='1' is treated as literal search text",
+          "status": "PASSED",
+          "duration": 3957
+        },
+        {
+          "name": "SQLi: Semicolon DROP TABLE attempt does not execute or harm database",
+          "status": "PASSED",
+          "duration": 10658
+        },
+        {
+          "name": "Query Builder: Malicious table name throws invalid table error",
+          "status": "PASSED",
+          "duration": 0
+        },
+        {
+          "name": "Query Builder: Malicious column name throws invalid column error",
+          "status": "PASSED",
+          "duration": 1
+        },
+        {
+          "name": "Query Builder: Malicious primary key throws invalid primary key error",
+          "status": "PASSED",
+          "duration": 0
+        },
+        {
+          "name": "Validation: timeToMinutes rejects invalid clock values",
+          "status": "PASSED",
+          "duration": 0
+        },
+        {
+          "name": "Validation: isIsoDate detects impossible calendar dates",
+          "status": "PASSED",
+          "duration": 0
+        },
+        {
+          "name": "Validation: getPagination enforces positive page bounds",
+          "status": "PASSED",
+          "duration": 1
+        },
+        {
+          "name": "Registration: Enforces username length, phone format and password rules",
+          "status": "PASSED",
+          "duration": 0
+        },
+        {
+          "name": "Privilege Escalation: Student cannot change role to admin via PUT /api/auth/me",
+          "status": "PASSED",
+          "duration": 1098
+        },
+        {
+          "name": "Privilege Escalation: Teacher cannot create admin user in /api/admin/accounts",
+          "status": "PASSED",
+          "duration": 867
+        }
+      ]
+    },
+    {
+      "suiteTitle": "Suite 10: Concurrency, Race Conditions & Stress Testing",
+      "passed": 3,
+      "failed": 0,
+      "total": 3,
+      "errors": [],
+      "testResults": [
+        {
+          "name": "Concurrency: Exactly 1 student enrolls when only 1 seat remains (Overbooking Defense)",
+          "status": "PASSED",
+          "duration": 52363
+        },
+        {
+          "name": "Stress: 6 parallel login requests complete successfully without pool exhaustion",
+          "status": "PASSED",
+          "duration": 8253
+        },
+        {
+          "name": "Concurrency: Advisory lock prevents duplicate parent account creation in parallel",
+          "status": "PASSED",
+          "duration": 2247
+        }
+      ]
+    }
+  ]
+}
